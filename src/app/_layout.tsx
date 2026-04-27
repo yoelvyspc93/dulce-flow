@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -9,6 +9,7 @@ import { useAppStore } from "@/store/app.store";
 import { colors, spacing, typography } from "@/theme";
 
 export default function RootLayout() {
+  const hasStartedBootstrap = useRef(false);
   const bootstrapStatus = useAppStore((state) => state.bootstrapStatus);
   const setBootstrapLoading = useAppStore((state) => state.setBootstrapLoading);
   const setBootstrapReady = useAppStore((state) => state.setBootstrapReady);
@@ -18,10 +19,20 @@ export default function RootLayout() {
     let isMounted = true;
 
     async function bootstrapAsync() {
+      if (hasStartedBootstrap.current) {
+        return;
+      }
+
+      hasStartedBootstrap.current = true;
       setBootstrapLoading();
 
       try {
-        const settings = await loadBusinessSettingsAsync();
+        const settings = await Promise.race([
+          loadBusinessSettingsAsync(),
+          new Promise<null>((resolve) => {
+            setTimeout(() => resolve(null), 3000);
+          }),
+        ]);
 
         if (isMounted) {
           setBootstrapReady(settings);
@@ -33,14 +44,12 @@ export default function RootLayout() {
       }
     }
 
-    if (bootstrapStatus === "idle") {
-      void bootstrapAsync();
-    }
+    void bootstrapAsync();
 
     return () => {
       isMounted = false;
     };
-  }, [bootstrapStatus, setBootstrapError, setBootstrapLoading, setBootstrapReady]);
+  }, [setBootstrapError, setBootstrapLoading, setBootstrapReady]);
 
   if (bootstrapStatus === "idle" || bootstrapStatus === "loading") {
     return (
