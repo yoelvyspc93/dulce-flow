@@ -96,11 +96,11 @@ Criterio de terminado: `typecheck`, `lint` y `test` corren sin errores.
 
 Criterio de terminado: la app abre en web, navega entre tabs y tiene una base visual consistente.
 
-## Fase 2 - SQLite Y Repositories
+## Fase 2 - SQLite Y Repositories `[x]`
 
-- [ ] Configurar conexion SQLite.
-- [ ] Crear migraciones.
-- [ ] Crear tablas:
+- [x] Configurar conexion SQLite.
+- [x] Crear migraciones.
+- [x] Crear tablas:
   - `products`
   - `supplies`
   - `orders`
@@ -108,8 +108,8 @@ Criterio de terminado: la app abre en web, navega entre tabs y tiene una base vi
   - `expenses`
   - `movements`
   - `settings`
-- [ ] Crear repositories por entidad.
-- [ ] Crear mappers snake_case/camelCase.
+- [x] Crear repositories por entidad.
+- [x] Crear mappers snake_case/camelCase.
 
 Criterio de terminado: se puede guardar y leer un setting desde SQLite con tests.
 
