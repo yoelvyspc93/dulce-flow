@@ -8,17 +8,19 @@ type ButtonProps = {
   variant?: "primary" | "secondary" | "ghost";
   onPress?: () => void;
   leftSlot?: ReactNode;
+  disabled?: boolean;
 };
 
-export function Button({ label, variant = "primary", onPress, leftSlot }: ButtonProps) {
+export function Button({ label, variant = "primary", onPress, leftSlot, disabled = false }: ButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
         variantStyles[variant],
-        pressed ? styles.pressed : null,
+        disabled ? styles.disabled : pressed ? styles.pressed : null,
       ]}
     >
       {leftSlot ? <View style={styles.leftSlot}>{leftSlot}</View> : null}
@@ -50,6 +52,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.86,
+  },
+  disabled: {
+    opacity: 0.45,
   },
   label: {
     ...typography.bodyStrong,

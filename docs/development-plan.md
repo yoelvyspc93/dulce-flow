@@ -113,15 +113,15 @@ Criterio de terminado: la app abre en web, navega entre tabs y tiene una base vi
 
 Criterio de terminado: se puede guardar y leer un setting desde SQLite con tests.
 
-## Fase 3 - Onboarding Y Ajustes
+## Fase 3 - Onboarding Y Ajustes `[x]`
 
-- [ ] Implementar onboarding:
+- [x] Implementar onboarding:
   - nombre del negocio.
   - moneda principal.
   - primer producto opcional.
-- [ ] Guardar configuracion en SQLite.
-- [ ] Redirigir segun onboarding completado.
-- [ ] Implementar Ajustes con accesos a productos, insumos y negocio.
+- [x] Guardar configuracion en SQLite.
+- [x] Redirigir segun onboarding completado.
+- [x] Implementar Ajustes con accesos a productos, insumos y negocio.
 
 Criterio de terminado: onboarding persiste y no reaparece despues de completarse.
 

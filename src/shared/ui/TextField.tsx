@@ -7,18 +7,28 @@ type TextFieldProps = {
   placeholder?: string;
   value?: string;
   multiline?: boolean;
+  editable?: boolean;
+  onChangeText?: (value: string) => void;
 };
 
-export function TextField({ label, placeholder, value, multiline = false }: TextFieldProps) {
+export function TextField({
+  label,
+  placeholder,
+  value,
+  multiline = false,
+  editable = true,
+  onChangeText,
+}: TextFieldProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        editable={false}
+        editable={editable}
         multiline={multiline}
+        onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
-        style={[styles.input, multiline ? styles.multiline : null]}
+        style={[styles.input, !editable ? styles.inputDisabled : null, multiline ? styles.multiline : null]}
         value={value}
       />
     </View>
@@ -43,6 +53,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     ...typography.body,
+  },
+  inputDisabled: {
+    opacity: 0.7,
   },
   multiline: {
     minHeight: 108,

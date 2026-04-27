@@ -2,12 +2,15 @@ import { View } from "react-native";
 
 import { MetricCard, SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
+import { useAppStore } from "@/store/app.store";
 
 export function HomeScreen() {
+  const businessSettings = useAppStore((state) => state.businessSettings);
+
   return (
     <Screen
-      title="DulceFlow"
-      subtitle="Controla ventas, gastos y movimientos sin perder el hilo del negocio."
+      title={businessSettings?.businessName ?? "DulceFlow"}
+      subtitle={`Controla ventas, gastos y movimientos${businessSettings ? ` en ${businessSettings.currency}` : ""}.`}
       action={<Badge label="MVP" />}
     >
       <View style={{ gap: 16 }}>

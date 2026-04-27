@@ -1,8 +1,15 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 
+import { useAppStore } from "@/store/app.store";
 import { colors, radius, spacing, typography } from "@/theme";
 
 export default function TabsLayout() {
+  const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
+
+  if (!hasCompletedOnboarding) {
+    return <Redirect href="/onboarding" />;
+  }
+
   return (
     <Tabs
       screenOptions={{

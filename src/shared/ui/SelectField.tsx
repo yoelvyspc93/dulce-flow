@@ -1,20 +1,21 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, radius, spacing, typography } from "@/theme";
 
 type SelectFieldProps = {
   label: string;
   value: string;
+  onPress?: () => void;
 };
 
-export function SelectField({ label, value }: SelectFieldProps) {
+export function SelectField({ label, value, onPress }: SelectFieldProps) {
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.control}>
+      <Pressable onPress={onPress} style={({ pressed }) => [styles.control, pressed ? styles.pressed : null]}>
         <Text style={styles.value}>{value}</Text>
-        <Text style={styles.chevron}>+</Text>
-      </View>
+        <Text style={styles.chevron}>{onPress ? ">" : "+"}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -37,6 +38,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  pressed: {
+    opacity: 0.86,
   },
   value: {
     color: colors.text,
