@@ -61,28 +61,28 @@ Se tomara como referencia una estetica movil oscura, limpia, moderna, con tarjet
 
 Criterio de terminado: `typecheck`, `lint` y `test` corren sin errores.
 
-## Fase 1 - Arquitectura, Navegacion Y UI Base
+## Fase 1 - Arquitectura, Navegacion Y UI Base `[x]`
 
-- [ ] Crear estructura modular:
+- [x] Crear estructura modular:
   - `features`
   - `database`
   - `shared`
   - `theme`
   - `store`
-- [ ] Configurar tabs:
+- [x] Configurar tabs:
   - Inicio
   - Ordenes
   - Gastos
   - Ajustes
-- [ ] Crear rutas internas para onboarding, ordenes, gastos, productos e insumos.
-- [ ] Crear tokens visuales inspirados en TaskEz:
+- [x] Crear rutas internas para onboarding, ordenes, gastos, productos e insumos.
+- [x] Crear tokens visuales inspirados en TaskEz:
   - fondo oscuro.
   - superficies elevadas.
   - tarjetas redondeadas.
   - acento principal brillante.
   - tipografia clara y compacta.
   - estados con colores diferenciados.
-- [ ] Crear componentes base:
+- [x] Crear componentes base:
   - `Screen`
   - `Button`
   - `IconButton`
