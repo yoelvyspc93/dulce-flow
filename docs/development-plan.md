@@ -36,16 +36,16 @@ Se tomara como referencia una estetica movil oscura, limpia, moderna, con tarjet
 - [x] La UI inicial sera funcional, pero desde el inicio usara tokens inspirados en TaskEz.
 - [x] No habra login, nube, sincronizacion, roles, PDF, Excel ni inventario automatico en el MVP.
 
-## Fase 0 - Base Del Proyecto
+## Fase 0 - Base Del Proyecto `[x]`
 
-- [ ] Configurar scripts:
+- [x] Configurar scripts:
   - `web`
   - `android`
   - `ios`
   - `lint`
   - `typecheck`
   - `test`
-- [ ] Instalar dependencias:
+- [x] Instalar dependencias:
   - `expo-sqlite`
   - `zustand`
   - `react-hook-form`
@@ -53,11 +53,11 @@ Se tomara como referencia una estetica movil oscura, limpia, moderna, con tarjet
   - `@hookform/resolvers`
   - `date-fns`
   - `lucide-react-native`
-- [ ] Instalar pruebas:
+- [x] Instalar pruebas:
   - `jest`
   - `jest-expo`
   - `@testing-library/react-native`
-- [ ] Configurar alias TypeScript completos.
+- [x] Configurar alias TypeScript completos.
 
 Criterio de terminado: `typecheck`, `lint` y `test` corren sin errores.
 
