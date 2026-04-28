@@ -4,7 +4,9 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import {
+  deleteSupplyPermanentlyAsync,
   getSupplyAsync,
+  getSupplyUsageCountAsync,
   setSupplyActiveAsync,
   updateSupplyAsync,
 } from "@/features/supplies/services/supply.service";
@@ -17,6 +19,7 @@ export function SupplyDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const supplyId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [supply, setSupply] = useState<Supply | null>(null);
+  const [usageCount, setUsageCount] = useState(0);
   const [name, setName] = useState("");
   const [unit, setUnit] = useState<(typeof SUPPLY_UNITS)[number]>("unidad");
   const [defaultPrice, setDefaultPrice] = useState("");
@@ -33,10 +36,14 @@ export function SupplyDetailsScreen() {
       setLoadErrorMessage("");
 
       try {
-        const loadedSupply = supplyId ? await getSupplyAsync(supplyId) : null;
+        const [loadedSupply, loadedUsageCount] = await Promise.all([
+          supplyId ? getSupplyAsync(supplyId) : Promise.resolve(null),
+          supplyId ? getSupplyUsageCountAsync(supplyId) : Promise.resolve(0),
+        ]);
 
         if (isActive) {
           setSupply(loadedSupply);
+          setUsageCount(loadedUsageCount);
 
           if (loadedSupply) {
             setName(loadedSupply.name);
@@ -97,6 +104,25 @@ export function SupplyDetailsScreen() {
     setSupply(updatedSupply);
   }
 
+  async function handleDeleteAsync() {
+    if (!supply) {
+      return;
+    }
+
+    setErrorMessage("");
+
+    try {
+      await deleteSupplyPermanentlyAsync(supply);
+      router.replace("/supplies");
+    } catch (error) {
+      if (error instanceof Error && error.message === "SUPPLY_HAS_HISTORY") {
+        setErrorMessage("Este insumo tiene gastos o recetas asociadas. Puedes desactivarlo para ocultarlo de nuevos registros.");
+      } else {
+        setErrorMessage("No se pudo eliminar el insumo.");
+      }
+    }
+  }
+
   if (isLoading) {
     return (
       <Screen title="Detalle de insumo" backHref="/supplies">
@@ -155,6 +181,11 @@ export function SupplyDetailsScreen() {
           onPress={handleToggleActiveAsync}
           variant="secondary"
         />
+        {usageCount === 0 ? (
+          <Button label="Eliminar permanentemente" onPress={handleDeleteAsync} variant="secondary" />
+        ) : (
+          <Text style={styles.helperText}>Este insumo tiene historial. Para conservar gastos y recetas, solo se puede desactivar.</Text>
+        )}
       </View>
     </Screen>
   );
@@ -174,5 +205,9 @@ const styles = StyleSheet.create({
   loadingText: {
     color: colors.textMuted,
     ...typography.body,
+  },
+  helperText: {
+    color: colors.textMuted,
+    ...typography.caption,
   },
 });

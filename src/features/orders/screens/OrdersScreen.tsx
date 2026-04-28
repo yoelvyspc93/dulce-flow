@@ -10,6 +10,7 @@ import {
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Order } from "@/shared/types";
+import { formatOrderStatus, formatPeriod } from "@/shared/utils/labels";
 
 const STATUSES: OrderStatusFilter[] = ["all", "pending", "delivered", "cancelled"];
 const PERIODS: OrderPeriodFilter[] = ["today", "week", "month", "all"];
@@ -53,7 +54,7 @@ export function OrdersScreen() {
           onValueChange={(selectedStatus) => {
             setStatusIndex(Math.max(0, STATUSES.findIndex((item) => item === selectedStatus)));
           }}
-          options={STATUSES.map((item) => ({ label: item, value: item }))}
+          options={STATUSES.map((item) => ({ label: formatOrderStatus(item), value: item }))}
           value={status}
         />
         <SelectField
@@ -61,7 +62,7 @@ export function OrdersScreen() {
           onValueChange={(selectedPeriod) => {
             setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
           }}
-          options={PERIODS.map((item) => ({ label: item, value: item }))}
+          options={PERIODS.map((item) => ({ label: formatPeriod(item), value: item }))}
           value={period}
         />
       </View>
@@ -87,7 +88,7 @@ export function OrdersScreen() {
             subtitle={`${order.customerName ?? "Sin cliente"} - $${order.total.toFixed(2)}`}
             trailing={
               <Badge
-                label={order.status}
+                label={formatOrderStatus(order.status)}
                 tone={order.status === "delivered" ? "success" : order.status === "cancelled" ? "danger" : "warning"}
               />
             }

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Check, ChevronDown } from "lucide-react-native";
 
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
+import { useAccessibleTheme } from "./useAccessibleTheme";
 
 export type SelectFieldOption = {
   label: string;
@@ -16,10 +17,12 @@ type SelectFieldProps = {
   options: SelectFieldOption[];
   onValueChange: (value: string) => void;
   disabled?: boolean;
+  helperText?: string;
 };
 
-export function SelectField({ label, value, options, onValueChange, disabled = false }: SelectFieldProps) {
+export function SelectField({ label, value, options, onValueChange, disabled = false, helperText }: SelectFieldProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const theme = useAccessibleTheme();
   const selectedOption = options.find((option) => option.value === value);
   const isDisabled = disabled || options.length === 0;
 
@@ -34,24 +37,39 @@ export function SelectField({ label, value, options, onValueChange, disabled = f
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: theme.colors.textMuted }, theme.typography.caption]}>{label}</Text>
       <Pressable
         disabled={isDisabled}
         onPress={() => setIsOpen(true)}
-        style={({ pressed }) => [styles.control, isDisabled ? styles.disabled : null, pressed ? styles.pressed : null]}
+        style={({ pressed }) => [
+          styles.control,
+          { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border },
+          isDisabled ? styles.disabled : null,
+          pressed ? styles.pressed : null,
+        ]}
       >
-        <Text numberOfLines={1} style={[styles.value, isDisabled ? styles.disabledText : null]}>
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.value,
+            { color: isDisabled ? theme.colors.textMuted : theme.colors.text },
+            theme.typography.body,
+          ]}
+        >
           {selectedOption?.label ?? value}
         </Text>
         <ChevronDown
-          color={isDisabled ? colors.textMuted : colors.accent}
+          color={isDisabled ? theme.colors.textMuted : theme.colors.accent}
           size={18}
           strokeWidth={2.4}
         />
       </Pressable>
+      {helperText ? (
+        <Text style={[styles.helperText, { color: theme.colors.textMuted }, theme.typography.caption]}>{helperText}</Text>
+      ) : null}
       <Modal animationType="fade" onRequestClose={() => setIsOpen(false)} transparent visible={isOpen}>
-        <Pressable onPress={() => setIsOpen(false)} style={styles.modalOverlay}>
-          <Pressable style={styles.menu}>
+        <Pressable onPress={() => setIsOpen(false)} style={[styles.modalOverlay, { backgroundColor: theme.colors.overlay }]}>
+          <Pressable style={[styles.menu, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }]}>
             <FlatList
               data={options}
               ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -73,14 +91,23 @@ export function SelectField({ label, value, options, onValueChange, disabled = f
                       numberOfLines={1}
                       style={[
                         styles.optionLabel,
+                        { color: item.disabled ? theme.colors.textMuted : theme.colors.text },
+                        theme.typography.bodyStrong,
                         isSelected ? styles.selectedOptionLabel : null,
-                        item.disabled ? styles.disabledText : null,
                       ]}
                     >
                       {item.label}
                     </Text>
-                    <View style={[styles.radio, isSelected ? styles.radioSelected : null]}>
-                      {isSelected ? <Check color={colors.text} size={14} strokeWidth={3} /> : null}
+                    <View
+                      style={[
+                        styles.radio,
+                        { borderColor: theme.colors.border },
+                        isSelected
+                          ? { borderColor: theme.colors.accent, backgroundColor: theme.colors.accentStrong }
+                          : null,
+                      ]}
+                    >
+                      {isSelected ? <Check color={theme.colors.text} size={14} strokeWidth={3} /> : null}
                     </View>
                   </Pressable>
                 );
@@ -99,16 +126,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   label: {
-    color: colors.textMuted,
-    ...typography.caption,
     textTransform: "uppercase",
   },
   control: {
     minHeight: 54,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
@@ -123,15 +146,9 @@ const styles = StyleSheet.create({
   },
   value: {
     flex: 1,
-    color: colors.text,
-    ...typography.body,
-  },
-  disabledText: {
-    color: colors.textMuted,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: colors.overlay,
     alignItems: "center",
     justifyContent: "center",
     padding: spacing.xl,
@@ -143,8 +160,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated,
   },
   option: {
     minHeight: 58,
@@ -159,27 +174,23 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     flex: 1,
-    color: colors.text,
-    ...typography.bodyStrong,
   },
   selectedOptionLabel: {
-    color: colors.text,
+    opacity: 1,
   },
   radio: {
     width: 22,
     height: 22,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
-  },
-  radioSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentStrong,
   },
   separator: {
     height: 1,
     backgroundColor: colors.border,
+  },
+  helperText: {
+    marginTop: -2,
   },
 });

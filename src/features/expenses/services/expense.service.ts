@@ -48,6 +48,14 @@ export function createExpenseMovement(expense: Expense, now: string): Movement {
   };
 }
 
+export function calculateExpenseTotal(values: Pick<ExpenseFormValues, "quantity" | "unitPrice" | "total">): number {
+  if (values.quantity !== undefined && values.unitPrice !== undefined) {
+    return values.quantity * values.unitPrice;
+  }
+
+  return values.total;
+}
+
 export async function listExpensesAsync(filters?: {
   category?: ExpenseCategoryFilter;
   period?: ExpensePeriodFilter;
@@ -80,7 +88,8 @@ export async function createExpenseAsync(values: ExpenseFormValues): Promise<Exp
     category: parsed.category,
     quantity: parsed.quantity,
     unit: parsed.unit || undefined,
-    total: parsed.total,
+    unitPrice: parsed.unitPrice,
+    total: calculateExpenseTotal(parsed),
     status: "active",
     note: parsed.note || undefined,
     createdAt: now,
@@ -107,7 +116,8 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
     category: parsed.category,
     quantity: parsed.quantity,
     unit: parsed.unit || undefined,
-    total: parsed.total,
+    unitPrice: parsed.unitPrice,
+    total: calculateExpenseTotal(parsed),
     note: parsed.note || undefined,
     updatedAt: now,
   };
@@ -139,7 +149,7 @@ export async function deleteExpenseAsync(expense: Expense): Promise<void> {
     const movementRepository = new MovementRepository(transaction);
     const originalMovement = await movementRepository.getActiveBySourceAsync("expense", expense.id);
 
-    await expenseRepository.deleteAsync(expense.id);
+    await expenseRepository.updateStatusAsync(expense.id, "voided", now);
 
     if (originalMovement) {
       await movementRepository.updateStatusAsync(originalMovement.id, "voided", now);

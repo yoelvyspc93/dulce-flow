@@ -6,8 +6,8 @@ export const orderSchema = z.object({
   items: z.array(
     z.object({
       productId: z.string().min(1, "Debes seleccionar un producto."),
-      quantity: z.coerce.number().positive("La cantidad debe ser mayor que 0."),
-      unitPrice: z.coerce.number().positive("El precio debe ser mayor que 0."),
+      quantity: z.coerce.number().finite("La cantidad debe ser un numero valido.").positive("La cantidad debe ser mayor que 0."),
+      unitPrice: z.coerce.number().finite("El precio debe ser un numero valido.").positive("El precio debe ser mayor que 0."),
     })
   ).min(1, "Debes adicionar al menos un producto."),
   paymentStatus: z.enum(["pending", "paid"]).default("pending"),

@@ -23,6 +23,18 @@ export type Product = {
   updatedAt: string;
 };
 
+export type ProductRecipeItem = {
+  id: string;
+  productId: string;
+  supplyId?: string;
+  supplyName: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  subtotal: number;
+  createdAt: string;
+};
+
 export type Supply = {
   id: string;
   name: string;
@@ -69,6 +81,7 @@ export type Expense = {
   category: ExpenseCategory;
   quantity?: number;
   unit?: string;
+  unitPrice?: number;
   total: number;
   status: ExpenseStatus;
   note?: string;
@@ -105,4 +118,9 @@ export type BusinessSettings = {
   avatarId?: string;
   phone?: string;
   address?: string;
+};
+
+export type AccessibilitySettings = {
+  fontScale: number;
+  highContrastEnabled: boolean;
 };

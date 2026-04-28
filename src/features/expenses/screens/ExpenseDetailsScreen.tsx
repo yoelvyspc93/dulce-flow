@@ -11,6 +11,7 @@ import {
 import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.schema";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
+import { formatExpenseCategory } from "@/shared/utils/labels";
 import { colors, spacing, typography } from "@/theme";
 
 export function ExpenseDetailsScreen() {
@@ -21,6 +22,7 @@ export function ExpenseDetailsScreen() {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("");
+  const [unitPrice, setUnitPrice] = useState("");
   const [total, setTotal] = useState("");
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -28,6 +30,9 @@ export function ExpenseDetailsScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const category = EXPENSE_CATEGORIES[categoryIndex];
+  const calculatedTotal =
+    quantity && unitPrice ? Number(quantity || 0) * Number(unitPrice || 0) : Number(total || 0);
+  const canAutoCalculateTotal = Boolean(quantity && unitPrice);
 
   useEffect(() => {
     let isMounted = true;
@@ -47,6 +52,7 @@ export function ExpenseDetailsScreen() {
             setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === loadedExpense.category)));
             setQuantity(loadedExpense.quantity ? String(loadedExpense.quantity) : "");
             setUnit(loadedExpense.unit ?? "");
+            setUnitPrice(loadedExpense.unitPrice ? String(loadedExpense.unitPrice) : "");
             setTotal(String(loadedExpense.total));
             setNote(loadedExpense.note ?? "");
           }
@@ -69,6 +75,12 @@ export function ExpenseDetailsScreen() {
     };
   }, [expenseId]);
 
+  useEffect(() => {
+    if (expense?.status === "active" && canAutoCalculateTotal && Number.isFinite(calculatedTotal)) {
+      setTotal(String(Number(calculatedTotal.toFixed(2))));
+    }
+  }, [calculatedTotal, canAutoCalculateTotal, expense?.status]);
+
   async function handleSaveAsync() {
     if (!expense) {
       return;
@@ -84,6 +96,7 @@ export function ExpenseDetailsScreen() {
         category,
         quantity: quantity ? Number(quantity) : undefined,
         unit,
+        unitPrice: unitPrice ? Number(unitPrice) : undefined,
         total: Number(total),
         note,
       });
@@ -145,7 +158,7 @@ export function ExpenseDetailsScreen() {
         subtitle="Los gastos eliminados salen del listado y no crean ingresos"
         trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
       />
-      <ListItem title="Impacto" subtitle="Cada gasto genera un movement expense/out" />
+      <ListItem title="Impacto" subtitle="Cada gasto activo descuenta dinero del resumen financiero" />
       <TextField
         editable={expense.status === "active"}
         label="Nombre"
@@ -159,7 +172,7 @@ export function ExpenseDetailsScreen() {
         onValueChange={(selectedCategory) => {
           setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === selectedCategory)));
         }}
-        options={EXPENSE_CATEGORIES.map((item) => ({ label: item, value: item }))}
+        options={EXPENSE_CATEGORIES.map((item) => ({ label: formatExpenseCategory(item), value: item }))}
         value={category}
       />
       <TextField
@@ -169,6 +182,7 @@ export function ExpenseDetailsScreen() {
         onChangeText={setQuantity}
         placeholder="Opcional"
         value={quantity}
+        helperText="Cantidad comprada del insumo o gasto."
       />
       <TextField
         editable={expense.status === "active"}
@@ -180,10 +194,20 @@ export function ExpenseDetailsScreen() {
       <TextField
         editable={expense.status === "active"}
         keyboardType="decimal-pad"
+        label="Precio unitario"
+        onChangeText={setUnitPrice}
+        placeholder="$0.00"
+        value={unitPrice}
+        helperText="Si hay cantidad y precio unitario, el total se calcula automaticamente."
+      />
+      <TextField
+        editable={expense.status === "active" && !canAutoCalculateTotal}
+        keyboardType="decimal-pad"
         label="Total"
         onChangeText={setTotal}
         placeholder="$0.00"
         value={total}
+        helperText={canAutoCalculateTotal ? "Calculado como cantidad por precio unitario." : "Escribelo si no registras cantidad o precio unitario."}
       />
       <TextField
         editable={expense.status === "active"}
@@ -197,7 +221,7 @@ export function ExpenseDetailsScreen() {
       {expense.status === "active" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Eliminar gasto" onPress={handleDeleteAsync} variant="secondary" />
+          <Button label="Anular gasto" onPress={handleDeleteAsync} variant="secondary" />
         </View>
       ) : null}
     </Screen>

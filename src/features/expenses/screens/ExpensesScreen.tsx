@@ -11,6 +11,7 @@ import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.sche
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
+import { formatExpenseCategory, formatPeriod } from "@/shared/utils/labels";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
 const CATEGORIES: ExpenseCategoryFilter[] = ["all", ...EXPENSE_CATEGORIES];
@@ -54,7 +55,7 @@ export function ExpensesScreen() {
           onValueChange={(selectedCategory) => {
             setCategoryIndex(Math.max(0, CATEGORIES.findIndex((item) => item === selectedCategory)));
           }}
-          options={CATEGORIES.map((item) => ({ label: item, value: item }))}
+          options={CATEGORIES.map((item) => ({ label: formatExpenseCategory(item), value: item }))}
           value={category}
         />
         <SelectField
@@ -62,7 +63,7 @@ export function ExpensesScreen() {
           onValueChange={(selectedPeriod) => {
             setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
           }}
-          options={PERIODS.map((item) => ({ label: item, value: item }))}
+          options={PERIODS.map((item) => ({ label: formatPeriod(item), value: item }))}
           value={period}
         />
       </View>
@@ -85,7 +86,7 @@ export function ExpensesScreen() {
             key={expense.id}
             onPress={() => router.push(`/expenses/${expense.id}`)}
             title={expense.supplyName}
-            subtitle={`$${expense.total.toFixed(2)} - ${expense.category}`}
+            subtitle={`$${expense.total.toFixed(2)} - ${formatExpenseCategory(expense.category)}`}
             trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
           />
         ))}

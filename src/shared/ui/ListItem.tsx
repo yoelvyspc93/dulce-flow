@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
+import { useAccessibleTheme } from "./useAccessibleTheme";
 
 type ListItemProps = {
   title: string;
@@ -11,11 +12,20 @@ type ListItemProps = {
 };
 
 export function ListItem({ title, subtitle, trailing, onPress }: ListItemProps) {
+  const theme = useAccessibleTheme();
+
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed ? styles.pressed : null]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+        pressed ? styles.pressed : null,
+      ]}
+    >
       <View style={styles.textBlock}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.title, { color: theme.colors.text }, theme.typography.bodyStrong]}>{title}</Text>
+        {subtitle ? <Text style={[styles.subtitle, { color: theme.colors.textMuted }, theme.typography.caption]}>{subtitle}</Text> : null}
       </View>
       {trailing ? <View>{trailing}</View> : null}
     </Pressable>
@@ -42,13 +52,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
-    color: colors.text,
-    ...typography.bodyStrong,
     flexShrink: 1,
   },
   subtitle: {
-    color: colors.textMuted,
-    ...typography.caption,
     flexShrink: 1,
   },
 });

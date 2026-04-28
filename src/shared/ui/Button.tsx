@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
+import { useAccessibleTheme } from "./useAccessibleTheme";
 
 type ButtonProps = {
   label: string;
@@ -12,6 +13,8 @@ type ButtonProps = {
 };
 
 export function Button({ label, variant = "primary", onPress, leftSlot, disabled = false }: ButtonProps) {
+  const theme = useAccessibleTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -20,11 +23,25 @@ export function Button({ label, variant = "primary", onPress, leftSlot, disabled
       style={({ pressed }) => [
         styles.base,
         variantStyles[variant],
+        variant === "primary"
+          ? { backgroundColor: theme.colors.accent }
+          : variant === "secondary"
+            ? { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }
+            : null,
         disabled ? styles.disabled : pressed ? styles.pressed : null,
       ]}
     >
       {leftSlot ? <View style={styles.leftSlot}>{leftSlot}</View> : null}
-      <Text style={[styles.label, labelStyles[variant]]}>{label}</Text>
+      <Text
+        style={[
+          styles.label,
+          labelStyles[variant],
+          theme.typography.bodyStrong,
+          variant === "primary" ? null : { color: variant === "ghost" ? theme.colors.accent : theme.colors.text },
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -57,7 +74,6 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   label: {
-    ...typography.bodyStrong,
     flexShrink: 1,
     textAlign: "center",
   },

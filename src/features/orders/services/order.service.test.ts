@@ -2,6 +2,7 @@ import type { Movement, Order } from "@/shared/types";
 
 import {
   calculateOrderTotals,
+  createDeliveredPaidOrder,
   createIncomeMovement,
   createOrderReversalMovement,
   getOrderPeriodStart,
@@ -30,7 +31,7 @@ describe("order financial rules", () => {
     });
   });
 
-  it("creates an income movement for delivered orders", () => {
+  it("creates an income movement when an order is paid", () => {
     const movement = createIncomeMovement(baseOrder, "2026-04-28T11:00:00.000Z");
 
     expect(movement).toMatchObject({
@@ -43,7 +44,16 @@ describe("order financial rules", () => {
     });
   });
 
-  it("creates an outgoing reversal for cancelled delivered orders", () => {
+  it("marks delivered orders as paid in a single completion state", () => {
+    expect(createDeliveredPaidOrder(baseOrder, "2026-04-28T11:00:00.000Z")).toMatchObject({
+      status: "delivered",
+      paymentStatus: "paid",
+      deliveredAt: "2026-04-28T11:00:00.000Z",
+      updatedAt: "2026-04-28T11:00:00.000Z",
+    });
+  });
+
+  it("creates an outgoing reversal for cancelled paid orders", () => {
     const originalMovement: Movement = {
       id: "movement_1",
       type: "income",
