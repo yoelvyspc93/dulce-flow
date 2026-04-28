@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View, type KeyboardTypeOptions } from "react-native";
 
 import { colors, radius, spacing, typography } from "@/theme";
 
@@ -8,6 +8,7 @@ type TextFieldProps = {
   value?: string;
   multiline?: boolean;
   editable?: boolean;
+  keyboardType?: KeyboardTypeOptions;
   onChangeText?: (value: string) => void;
 };
 
@@ -17,6 +18,7 @@ export function TextField({
   value,
   multiline = false,
   editable = true,
+  keyboardType = "default",
   onChangeText,
 }: TextFieldProps) {
   return (
@@ -24,6 +26,7 @@ export function TextField({
       <Text style={styles.label}>{label}</Text>
       <TextInput
         editable={editable}
+        keyboardType={keyboardType}
         multiline={multiline}
         onChangeText={onChangeText}
         placeholder={placeholder}

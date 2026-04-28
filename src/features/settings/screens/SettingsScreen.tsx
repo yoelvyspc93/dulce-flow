@@ -11,7 +11,7 @@ export function SettingsScreen() {
       title="Ajustes"
       subtitle={
         businessSettings
-          ? `${businessSettings.businessName} · Moneda ${businessSettings.currency}`
+          ? `${businessSettings.businessName} - Moneda ${businessSettings.currency}`
           : "Catalogos, negocio y onboarding de la app."
       }
     >
@@ -21,11 +21,21 @@ export function SettingsScreen() {
         subtitle="Nombre del negocio y moneda principal"
         trailing=">"
       />
-      <ListItem title="Productos" subtitle="Gestion del catalogo" trailing=">" />
-      <ListItem title="Insumos" subtitle="Gestion del catalogo de gastos" trailing=">" />
+      <ListItem
+        onPress={() => router.push("/products")}
+        title="Productos"
+        subtitle="Gestion del catalogo"
+        trailing=">"
+      />
+      <ListItem
+        onPress={() => router.push("/supplies")}
+        title="Insumos"
+        subtitle="Gestion del catalogo de gastos"
+        trailing=">"
+      />
       <ListItem
         title="Datos del negocio"
-        subtitle={businessSettings ? `${businessSettings.businessName} · ${businessSettings.currency}` : "Pendiente"}
+        subtitle={businessSettings ? `${businessSettings.businessName} - ${businessSettings.currency}` : "Pendiente"}
         trailing=">"
       />
     </Screen>

@@ -28,6 +28,11 @@ function mapSupplyRow(row: SupplyRow): Supply {
 export class SupplyRepository {
   constructor(private readonly client: DatabaseClient) {}
 
+  async getByIdAsync(id: string): Promise<Supply | null> {
+    const row = await this.client.getFirstAsync<SupplyRow>("SELECT * FROM supplies WHERE id = ? LIMIT 1;", [id]);
+    return row ? mapSupplyRow(row) : null;
+  }
+
   async getAllAsync(): Promise<Supply[]> {
     const rows = await this.client.getAllAsync<SupplyRow>("SELECT * FROM supplies ORDER BY created_at DESC;");
     return rows.map(mapSupplyRow);
