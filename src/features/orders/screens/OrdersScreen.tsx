@@ -45,7 +45,7 @@ export function OrdersScreen() {
   );
 
   return (
-    <Screen title="Ordenes" subtitle="Pendientes, entregadas y canceladas con reglas financieras claras.">
+    <Screen title="Ordenes">
       <View style={{ gap: 12 }}>
         <Button label="Crear orden" onPress={() => router.push("/orders/new")} />
         <SelectField

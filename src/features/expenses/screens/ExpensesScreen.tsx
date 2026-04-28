@@ -46,7 +46,7 @@ export function ExpensesScreen() {
   );
 
   return (
-    <Screen title="Gastos" subtitle="Cada gasto activo impacta el dashboard y queda auditable.">
+    <Screen title="Gastos">
       <View style={{ gap: 12 }}>
         <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} />
         <SelectField

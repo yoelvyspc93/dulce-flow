@@ -82,7 +82,7 @@ export function NewOrderScreen() {
   }
 
   return (
-    <Screen title="Nueva orden" subtitle="Base de formulario para la fase de ordenes.">
+    <Screen title="Nueva orden">
       <TextField label="Cliente" onChangeText={setCustomerName} placeholder="Nombre del cliente" value={customerName} />
       <TextField label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
       <SelectField

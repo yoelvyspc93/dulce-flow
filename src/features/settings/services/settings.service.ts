@@ -4,6 +4,7 @@ import type { BusinessSettings } from "@/shared/types";
 
 const WEB_BUSINESS_NAME_KEY = "dulceflow.business_name";
 const WEB_CURRENCY_KEY = "dulceflow.currency";
+const WEB_AVATAR_ID_KEY = "dulceflow.avatar_id";
 const WEB_PHONE_KEY = "dulceflow.phone";
 const WEB_ADDRESS_KEY = "dulceflow.address";
 
@@ -51,6 +52,7 @@ export async function loadBusinessSettingsAsync(): Promise<BusinessSettings | nu
   return {
     businessName,
     currency,
+    avatarId: storage?.getItem(WEB_AVATAR_ID_KEY) ?? undefined,
     phone: storage?.getItem(WEB_PHONE_KEY) ?? undefined,
     address: storage?.getItem(WEB_ADDRESS_KEY) ?? undefined,
   };
@@ -64,6 +66,12 @@ export async function saveBusinessSettingsAsync(settings: BusinessSettings): Pro
   const storage = getWebStorage();
   storage?.setItem(WEB_BUSINESS_NAME_KEY, settings.businessName);
   storage?.setItem(WEB_CURRENCY_KEY, settings.currency);
+
+  if (settings.avatarId) {
+    storage?.setItem(WEB_AVATAR_ID_KEY, settings.avatarId);
+  } else {
+    storage?.removeItem(WEB_AVATAR_ID_KEY);
+  }
 
   if (settings.phone) {
     storage?.setItem(WEB_PHONE_KEY, settings.phone);

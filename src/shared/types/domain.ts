@@ -101,6 +101,7 @@ export type Setting = {
 export type BusinessSettings = {
   businessName: string;
   currency: string;
+  avatarId?: string;
   phone?: string;
   address?: string;
 };

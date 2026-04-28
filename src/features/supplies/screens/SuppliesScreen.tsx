@@ -34,7 +34,7 @@ export function SuppliesScreen() {
   );
 
   return (
-    <Screen title="Insumos" subtitle="Catalogo para registrar gastos con mayor rapidez.">
+    <Screen title="Insumos">
       <Button label="Nuevo insumo" onPress={() => router.push("/supplies/new")} />
 
       <SectionHeader

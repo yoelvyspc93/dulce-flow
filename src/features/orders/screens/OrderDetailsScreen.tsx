@@ -135,7 +135,7 @@ export function OrderDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de orden" subtitle="Cargando informacion operativa y financiera.">
+      <Screen title="Detalle de orden">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando orden...</Text>
@@ -146,7 +146,7 @@ export function OrderDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de orden" subtitle="Hubo un problema al abrir esta pantalla.">
+      <Screen title="Detalle de orden">
         <EmptyState eyebrow="Orden" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
       </Screen>
@@ -155,7 +155,7 @@ export function OrderDetailsScreen() {
 
   if (!details || !order) {
     return (
-      <Screen title="Detalle de orden" subtitle="Pantalla preparada para conectar estado y movimientos.">
+      <Screen title="Detalle de orden">
         <EmptyState eyebrow="Orden" title="Orden no encontrada" description="Vuelve al listado y selecciona otra orden." />
         <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
       </Screen>
@@ -171,7 +171,7 @@ export function OrderDetailsScreen() {
       : [{ label: selectedProductLabel, value: "empty", disabled: true }];
 
   return (
-    <Screen title="Detalle de orden" subtitle="Solo las ordenes entregadas generan ingreso real.">
+    <Screen title="Detalle de orden">
       <ListItem
         title="Estado"
         subtitle="Solo las ordenes entregadas generan ingreso"

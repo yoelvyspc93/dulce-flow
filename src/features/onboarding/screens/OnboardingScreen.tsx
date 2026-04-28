@@ -4,9 +4,9 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { saveBusinessSettingsAsync } from "@/features/settings/services/settings.service";
 import { SectionHeader } from "@/shared/components";
-import { Button, Screen, SelectField, TextField } from "@/shared/ui";
+import { AVATAR_OPTIONS, AvatarButton, Button, Screen, SelectField, TextField } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
-import { colors, spacing, typography } from "@/theme";
+import { colors, radius, spacing, typography } from "@/theme";
 
 const CURRENCIES = ["USD", "CUP", "EUR"] as const;
 
@@ -19,6 +19,7 @@ export function OnboardingScreen() {
     const index = CURRENCIES.findIndex((item) => item === existingSettings?.currency);
     return index >= 0 ? index : 0;
   });
+  const [avatarId, setAvatarId] = useState(existingSettings?.avatarId ?? AVATAR_OPTIONS[0].id);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -39,6 +40,7 @@ export function OnboardingScreen() {
       const settings = await saveBusinessSettingsAsync({
         businessName: trimmedName,
         currency,
+        avatarId,
       });
 
       updateBusinessSettings(settings);
@@ -51,11 +53,26 @@ export function OnboardingScreen() {
   }
 
   return (
-    <Screen
-      title={hasCompletedOnboarding ? "Datos del negocio" : "Primera configuracion"}
-      subtitle="Paso inicial para preparar el negocio."
-      scrollable={false}
-    >
+    <Screen title={hasCompletedOnboarding ? "Datos del negocio" : "Primera configuracion"}>
+      <View style={styles.avatarPanel}>
+        <SectionHeader
+          title="Avatar"
+          subtitle="Elige como se vera tu negocio en la barra superior."
+        />
+        <View style={styles.avatarGrid}>
+          {AVATAR_OPTIONS.map((avatar) => (
+            <AvatarButton
+              accessibilityLabel={`Seleccionar avatar ${avatar.id}`}
+              key={avatar.id}
+              avatarId={avatar.id}
+              onPress={() => setAvatarId(avatar.id)}
+              selected={avatarId === avatar.id}
+              size="lg"
+            />
+          ))}
+        </View>
+      </View>
+
       <SectionHeader
         title="Negocio"
         subtitle="Esta configuracion se guarda en SQLite y define el estado inicial de la app."
@@ -89,6 +106,19 @@ export function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  avatarPanel: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  avatarGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.md,
+  },
   helperText: {
     color: colors.textMuted,
     ...typography.caption,

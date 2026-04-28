@@ -9,6 +9,7 @@ type SettingRow = {
 
 const BUSINESS_NAME_KEY = "business_name";
 const CURRENCY_KEY = "currency";
+const AVATAR_ID_KEY = "avatar_id";
 const PHONE_KEY = "phone";
 const ADDRESS_KEY = "address";
 
@@ -62,6 +63,10 @@ export class SettingsRepository {
       entries.push({ key: PHONE_KEY, value: settings.phone, updatedAt });
     }
 
+    if (settings.avatarId !== undefined) {
+      entries.push({ key: AVATAR_ID_KEY, value: settings.avatarId, updatedAt });
+    }
+
     if (settings.address !== undefined) {
       entries.push({ key: ADDRESS_KEY, value: settings.address, updatedAt });
     }
@@ -74,7 +79,7 @@ export class SettingsRepository {
   }
 
   async getBusinessSettingsAsync(): Promise<BusinessSettings | null> {
-    const rows = await this.getManyAsync([BUSINESS_NAME_KEY, CURRENCY_KEY, PHONE_KEY, ADDRESS_KEY]);
+    const rows = await this.getManyAsync([BUSINESS_NAME_KEY, CURRENCY_KEY, AVATAR_ID_KEY, PHONE_KEY, ADDRESS_KEY]);
     const map = new Map(rows.map((row) => [row.key, row.value]));
 
     const businessName = map.get(BUSINESS_NAME_KEY);
@@ -87,6 +92,7 @@ export class SettingsRepository {
     return {
       businessName,
       currency,
+      avatarId: map.get(AVATAR_ID_KEY),
       phone: map.get(PHONE_KEY),
       address: map.get(ADDRESS_KEY),
     };

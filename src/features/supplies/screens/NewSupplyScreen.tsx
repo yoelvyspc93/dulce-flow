@@ -39,7 +39,7 @@ export function NewSupplyScreen() {
   }
 
   return (
-    <Screen title="Nuevo insumo" subtitle="Pantalla base del catalogo de insumos.">
+    <Screen title="Nuevo insumo">
       <TextField label="Nombre" onChangeText={setName} placeholder="Harina" value={name} />
       <TextField label="Unidad" onChangeText={setUnit} placeholder="kg, unidad, caja..." value={unit} />
       <SelectField

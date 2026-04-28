@@ -110,7 +110,7 @@ export function ExpenseDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de gasto" subtitle="Cargando informacion financiera.">
+      <Screen title="Detalle de gasto">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando gasto...</Text>
@@ -121,7 +121,7 @@ export function ExpenseDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de gasto" subtitle="Hubo un problema al abrir esta pantalla.">
+      <Screen title="Detalle de gasto">
         <EmptyState eyebrow="Gasto" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
       </Screen>
@@ -130,7 +130,7 @@ export function ExpenseDetailsScreen() {
 
   if (!expense) {
     return (
-      <Screen title="Detalle de gasto" subtitle="Preparado para soportar anulacion y reversal.">
+      <Screen title="Detalle de gasto">
         <EmptyState eyebrow="Gasto" title="Gasto no encontrado" description="Vuelve al listado y selecciona otro gasto." />
         <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
       </Screen>
@@ -138,7 +138,7 @@ export function ExpenseDetailsScreen() {
   }
 
   return (
-    <Screen title="Detalle de gasto" subtitle="Editar o anular mantiene auditoria financiera.">
+    <Screen title="Detalle de gasto">
       <ListItem
         title="Estado"
         subtitle="Los gastos anulados no se eliminan fisicamente"

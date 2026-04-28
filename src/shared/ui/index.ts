@@ -1,4 +1,5 @@
 export { AmountText } from "./AmountText";
+export { AvatarButton, AVATAR_OPTIONS, getAvatarOption } from "./AvatarButton";
 export { Badge } from "./Badge";
 export { Button } from "./Button";
 export { ConfirmDialog } from "./ConfirmDialog";

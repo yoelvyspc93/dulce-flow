@@ -76,7 +76,7 @@ export function NewExpenseScreen() {
   }
 
   return (
-    <Screen title="Nuevo gasto" subtitle="Base de formulario para la fase de gastos.">
+    <Screen title="Nuevo gasto">
       <SelectField
         label="Insumo"
         onValueChange={setSelectedSupplyId}

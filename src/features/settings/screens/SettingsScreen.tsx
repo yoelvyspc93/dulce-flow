@@ -9,14 +9,7 @@ export function SettingsScreen() {
   const businessSettings = useAppStore((state) => state.businessSettings);
 
   return (
-    <Screen
-      title="Ajustes"
-      subtitle={
-        businessSettings
-          ? `${businessSettings.businessName} - Moneda ${businessSettings.currency}`
-          : "Catalogos, negocio y onboarding de la app."
-      }
-    >
+    <Screen title="Ajustes">
       <ListItem
         onPress={() => router.push("/onboarding")}
         title="Configuracion inicial"

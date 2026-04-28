@@ -58,11 +58,7 @@ export function HomeScreen() {
   const latestMovements = dashboardData?.latestMovements ?? [];
 
   return (
-    <Screen
-      title={businessSettings?.businessName ?? "DulceFlow"}
-      subtitle={`Controla ventas, gastos y movimientos${businessSettings ? ` en ${businessSettings.currency}` : ""}.`}
-      action={<Badge label="MVP" />}
-    >
+    <Screen title={businessSettings?.businessName ?? "DulceFlow"}>
       <View style={{ gap: 16 }}>
         <MetricCard label="Ingresos del periodo" amount={formatAmount(summary.totalIn, currency)} tone="success" />
         <MetricCard label="Gastos del periodo" amount={formatAmount(summary.totalOut, currency)} tone="danger" />

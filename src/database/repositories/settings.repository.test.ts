@@ -12,6 +12,7 @@ describe("SettingsRepository", () => {
       {
         businessName: "Dulces Maria",
         currency: "USD",
+        avatarId: "chef",
         phone: "+53 555 1234",
       },
       "2026-04-27T14:00:00.000Z"
@@ -22,6 +23,7 @@ describe("SettingsRepository", () => {
     expect(settings).toEqual({
       businessName: "Dulces Maria",
       currency: "USD",
+      avatarId: "chef",
       phone: "+53 555 1234",
       address: undefined,
     });

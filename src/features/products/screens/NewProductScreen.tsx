@@ -37,7 +37,7 @@ export function NewProductScreen() {
   }
 
   return (
-    <Screen title="Nuevo producto" subtitle="Pantalla base del catalogo de productos.">
+    <Screen title="Nuevo producto">
       <TextField label="Nombre" onChangeText={setName} placeholder="Cupcake de vainilla" value={name} />
       <TextField
         keyboardType="decimal-pad"

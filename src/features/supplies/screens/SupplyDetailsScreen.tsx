@@ -100,7 +100,7 @@ export function SupplyDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de insumo" subtitle="Cargando informacion del catalogo.">
+      <Screen title="Detalle de insumo">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando insumo...</Text>
@@ -111,7 +111,7 @@ export function SupplyDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de insumo" subtitle="Hubo un problema al abrir esta pantalla.">
+      <Screen title="Detalle de insumo">
         <EmptyState eyebrow="Insumo" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
       </Screen>
@@ -120,7 +120,7 @@ export function SupplyDetailsScreen() {
 
   if (!supply) {
     return (
-      <Screen title="Detalle de insumo" subtitle="Quedara conectado al CRUD de insumos.">
+      <Screen title="Detalle de insumo">
         <EmptyState eyebrow="Insumo" title="Insumo no encontrado" description="Vuelve al catalogo y selecciona otro insumo." />
         <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
       </Screen>
@@ -128,7 +128,7 @@ export function SupplyDetailsScreen() {
   }
 
   return (
-    <Screen title="Detalle de insumo" subtitle="Edita datos sin eliminar el historial del catalogo.">
+    <Screen title="Detalle de insumo">
       <ListItem
         title="Estado"
         subtitle="Los insumos usados no se eliminan fisicamente"

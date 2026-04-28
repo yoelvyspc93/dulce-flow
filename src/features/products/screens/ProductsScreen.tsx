@@ -34,7 +34,7 @@ export function ProductsScreen() {
   );
 
   return (
-    <Screen title="Productos" subtitle="Catalogo para registrar ordenes y calcular ventas.">
+    <Screen title="Productos">
       <Button label="Nuevo producto" onPress={() => router.push("/products/new")} />
 
       <SectionHeader
