@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { View } from "react-native";
 
 import { listSuppliesAsync } from "@/features/supplies/services/supply.service";
@@ -11,25 +11,27 @@ export function SuppliesScreen() {
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useFocusEffect(() => {
-    let isActive = true;
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-    async function loadSuppliesAsync() {
-      setIsLoading(true);
-      const loadedSupplies = await listSuppliesAsync();
+      async function loadSuppliesAsync() {
+        setIsLoading(true);
+        const loadedSupplies = await listSuppliesAsync();
 
-      if (isActive) {
-        setSupplies(loadedSupplies);
-        setIsLoading(false);
+        if (isActive) {
+          setSupplies(loadedSupplies);
+          setIsLoading(false);
+        }
       }
-    }
 
-    void loadSuppliesAsync();
+      void loadSuppliesAsync();
 
-    return () => {
-      isActive = false;
-    };
-  });
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   return (
     <Screen title="Insumos" subtitle="Catalogo para registrar gastos con mayor rapidez.">

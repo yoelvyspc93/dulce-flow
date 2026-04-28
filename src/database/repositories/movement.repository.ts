@@ -73,6 +73,22 @@ export class MovementRepository {
     return rows.map(mapMovementRow);
   }
 
+  async getActiveBySourceAsync(sourceType: Movement["sourceType"], sourceId: string): Promise<Movement | null> {
+    const row = await this.client.getFirstAsync<MovementRow>(
+      `SELECT * FROM movements
+       WHERE source_type = ? AND source_id = ? AND status = 'active'
+       ORDER BY created_at DESC
+       LIMIT 1;`,
+      [sourceType, sourceId]
+    );
+
+    return row ? mapMovementRow(row) : null;
+  }
+
+  async updateStatusAsync(id: string, status: Movement["status"], updatedAt: string): Promise<void> {
+    await this.client.runAsync("UPDATE movements SET status = ?, updated_at = ? WHERE id = ?;", [status, updatedAt, id]);
+  }
+
   async getSummaryByDateRangeAsync(startDate: string, endDate: string): Promise<DashboardSummary> {
     const rows = await this.client.getAllAsync<{ direction: MovementDirection; total: number }>(
       `SELECT direction, COALESCE(SUM(amount), 0) AS total

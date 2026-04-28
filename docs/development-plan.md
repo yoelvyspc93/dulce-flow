@@ -125,22 +125,22 @@ Criterio de terminado: se puede guardar y leer un setting desde SQLite con tests
 
 Criterio de terminado: onboarding persiste y no reaparece despues de completarse.
 
-## Fase 4 - Productos E Insumos
+## Fase 4 - Productos E Insumos `[x]`
 
-- [ ] CRUD de productos.
-- [ ] CRUD de insumos.
-- [ ] Activar/desactivar sin eliminacion fisica.
-- [ ] Validaciones con Zod.
+- [x] CRUD de productos.
+- [x] CRUD de insumos.
+- [x] Activar/desactivar sin eliminacion fisica.
+- [x] Validaciones con Zod.
 
 Criterio de terminado: productos e insumos persisten y aparecen en formularios.
 
-## Fase 5 - Gastos Y Movimientos
+## Fase 5 - Gastos Y Movimientos `[x]`
 
-- [ ] Crear, listar, editar y anular gastos.
-- [ ] Crear movimiento `expense/out` al registrar gasto.
-- [ ] Crear movimiento `reversal/in` al anular gasto.
-- [ ] Agregar filtros por periodo y categoria.
-- [ ] Agregar estados vacios.
+- [x] Crear, listar, editar y anular gastos.
+- [x] Crear movimiento `expense/out` al registrar gasto.
+- [x] Crear movimiento `reversal/in` al anular gasto.
+- [x] Agregar filtros por periodo y categoria.
+- [x] Agregar estados vacios.
 
 Criterio de terminado: los gastos afectan el dashboard y las anulaciones revierten sin borrar auditoria.
 

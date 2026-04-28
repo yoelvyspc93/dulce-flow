@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { View } from "react-native";
 
 import { listProductsAsync } from "@/features/products/services/product.service";
@@ -11,25 +11,27 @@ export function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useFocusEffect(() => {
-    let isActive = true;
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
 
-    async function loadProductsAsync() {
-      setIsLoading(true);
-      const loadedProducts = await listProductsAsync();
+      async function loadProductsAsync() {
+        setIsLoading(true);
+        const loadedProducts = await listProductsAsync();
 
-      if (isActive) {
-        setProducts(loadedProducts);
-        setIsLoading(false);
+        if (isActive) {
+          setProducts(loadedProducts);
+          setIsLoading(false);
+        }
       }
-    }
 
-    void loadProductsAsync();
+      void loadProductsAsync();
 
-    return () => {
-      isActive = false;
-    };
-  });
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
 
   return (
     <Screen title="Productos" subtitle="Catalogo para registrar ordenes y calcular ventas.">

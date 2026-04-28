@@ -65,6 +65,27 @@ export class ExpenseRepository {
     );
   }
 
+  async updateAsync(expense: Expense): Promise<void> {
+    await this.client.runAsync(
+      `UPDATE expenses
+       SET supply_id = ?, supply_name = ?, category = ?, quantity = ?, unit = ?, total = ?,
+           status = ?, note = ?, updated_at = ?
+       WHERE id = ?;`,
+      [
+        expense.supplyId ?? null,
+        expense.supplyName,
+        expense.category,
+        expense.quantity ?? null,
+        expense.unit ?? null,
+        expense.total,
+        expense.status,
+        expense.note ?? null,
+        expense.updatedAt,
+        expense.id,
+      ]
+    );
+  }
+
   async updateStatusAsync(id: string, status: ExpenseStatus, updatedAt: string): Promise<void> {
     await this.client.runAsync("UPDATE expenses SET status = ?, updated_at = ? WHERE id = ?;", [status, updatedAt, id]);
   }
