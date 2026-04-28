@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 
 import {
   formatAmount,
@@ -11,6 +11,7 @@ import {
 import { MetricCard, SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
+import { colors, typography } from "@/theme";
 
 const PERIODS: DashboardPeriodFilter[] = ["today", "week", "month", "all"];
 const PERIOD_LABELS: Record<DashboardPeriodFilter, string> = {
@@ -58,7 +59,17 @@ export function HomeScreen() {
   const latestMovements = dashboardData?.latestMovements ?? [];
 
   return (
-    <Screen title={businessSettings?.businessName ?? "DulceFlow"}>
+    <Screen title="DulceFlow">
+      <View style={{ marginBottom: 8 }}>
+        <Text style={{ ...typography.title, color: colors.text }}>Hola,</Text>
+        <View style={{ alignItems: "center", flexDirection: "row" }}>
+          <Text style={{ ...typography.title, color: colors.text }}>{businessSettings?.businessName ?? "DulceFlow"} </Text>
+          <Text accessibilityLabel="mano saludando" style={{ ...typography.title }}>
+            👋
+          </Text>
+        </View>
+      </View>
+
       <View style={{ gap: 16 }}>
         <MetricCard label="Ingresos del periodo" amount={formatAmount(summary.totalIn, currency)} tone="success" />
         <MetricCard label="Gastos del periodo" amount={formatAmount(summary.totalOut, currency)} tone="danger" />

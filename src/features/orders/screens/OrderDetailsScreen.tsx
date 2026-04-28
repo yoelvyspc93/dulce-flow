@@ -13,6 +13,7 @@ import {
 import { listProductsAsync } from "@/features/products/services/product.service";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Product } from "@/shared/types";
+import { formatOrderStatus, formatPaymentStatus } from "@/shared/utils/labels";
 import { colors, spacing, typography } from "@/theme";
 
 type OrderLine = {
@@ -221,15 +222,19 @@ export function OrderDetailsScreen() {
     <Screen title="Detalle de orden" backHref="/orders">
       <ListItem
         title="Estado"
-        subtitle="Solo las ordenes entregadas generan ingreso"
+        subtitle="Marcar entregada completa tambien el cobro"
         trailing={
           <Badge
-            label={order.status}
+            label={formatOrderStatus(order.status)}
             tone={order.status === "delivered" ? "success" : order.status === "cancelled" ? "danger" : "warning"}
           />
         }
       />
-      <ListItem title="Pago" subtitle="Se guarda aparte del estado operativo" trailing={<Badge label={order.paymentStatus} tone="warning" />} />
+      <ListItem
+        title="Pago"
+        subtitle="Se actualiza al cerrar la orden como entregada"
+        trailing={<Badge label={formatPaymentStatus(order.paymentStatus)} tone={order.paymentStatus === "paid" ? "success" : "warning"} />}
+      />
       <TextField editable={isEditable} label="Cliente" onChangeText={setCustomerName} placeholder="Nombre" value={customerName} />
       <TextField editable={isEditable} label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
       <View style={{ gap: 12 }}>
@@ -281,6 +286,9 @@ export function OrderDetailsScreen() {
           <Button label="Marcar entregada" onPress={handleDeliverAsync} />
           <Button label="Cancelar orden" onPress={handleCancelAsync} variant="secondary" />
         </View>
+      ) : null}
+      {order.status === "delivered" && order.paymentStatus === "pending" ? (
+        <Button label="Marcar entregada" onPress={handleDeliverAsync} />
       ) : null}
       {order.status === "delivered" ? (
         <Button label="Cancelar orden entregada" onPress={handleCancelAsync} variant="secondary" />

@@ -82,6 +82,27 @@ export function createOrderReversalMovement(order: Order, originalMovement: Move
   };
 }
 
+export function createDeliveredPaidOrder(order: Order, now: string): Order {
+  return {
+    ...order,
+    status: "delivered",
+    paymentStatus: "paid",
+    deliveredAt: order.deliveredAt ?? now,
+    updatedAt: now,
+  };
+}
+
+async function createIncomeMovementIfMissingAsync(
+  movementRepository: MovementRepository,
+  order: Order,
+  now: string
+): Promise<void> {
+  const activeMovement = await movementRepository.getActiveBySourceAsync("order", order.id);
+  if (!activeMovement) {
+    await movementRepository.createAsync(createIncomeMovement(order, now));
+  }
+}
+
 export async function listOrdersAsync(filters?: {
   status?: OrderStatusFilter;
   period?: OrderPeriodFilter;
@@ -233,7 +254,7 @@ export async function updatePendingOrderAsync(order: Order, values: OrderFormVal
 }
 
 export async function deliverOrderAsync(order: Order): Promise<Order> {
-  if (order.status === "delivered") {
+  if (order.status === "delivered" && order.paymentStatus === "paid") {
     return order;
   }
 
@@ -242,24 +263,23 @@ export async function deliverOrderAsync(order: Order): Promise<Order> {
   }
 
   const now = new Date().toISOString();
-  const updatedOrder: Order = {
-    ...order,
-    status: "delivered",
-    deliveredAt: now,
-    updatedAt: now,
-  };
+  const updatedOrder = createDeliveredPaidOrder(order, now);
 
   const database = await getDatabaseAsync();
 
   await database.withTransactionAsync(async (transaction) => {
-    await new OrderRepository(transaction).updateStatusAsync({
+    const orderRepository = new OrderRepository(transaction);
+    const movementRepository = new MovementRepository(transaction);
+
+    await orderRepository.updateStatusAsync({
       id: order.id,
       status: "delivered",
       updatedAt: now,
-      deliveredAt: now,
+      deliveredAt: updatedOrder.deliveredAt,
       cancelledAt: undefined,
     });
-    await new MovementRepository(transaction).createAsync(createIncomeMovement(updatedOrder, now));
+    await orderRepository.updatePaymentStatusAsync(order.id, "paid", now);
+    await createIncomeMovementIfMissingAsync(movementRepository, updatedOrder, now);
   });
 
   return updatedOrder;
@@ -274,6 +294,7 @@ export async function cancelOrderAsync(order: Order): Promise<Order> {
   const updatedOrder: Order = {
     ...order,
     status: "cancelled",
+    paymentStatus: order.paymentStatus,
     cancelledAt: now,
     updatedAt: now,
   };
@@ -292,13 +313,11 @@ export async function cancelOrderAsync(order: Order): Promise<Order> {
       cancelledAt: now,
     });
 
-    if (order.status === "delivered") {
-      const originalMovement = await movementRepository.getActiveBySourceAsync("order", order.id);
+    const originalMovement = await movementRepository.getActiveBySourceAsync("order", order.id);
 
-      if (originalMovement) {
-        await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
-        await movementRepository.createAsync(createOrderReversalMovement(order, originalMovement, now));
-      }
+    if (originalMovement) {
+      await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
+      await movementRepository.createAsync(createOrderReversalMovement(order, originalMovement, now));
     }
   });
 

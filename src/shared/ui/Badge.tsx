@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
+import { useAccessibleTheme } from "./useAccessibleTheme";
 
 type BadgeProps = {
   label: string;
@@ -8,9 +9,19 @@ type BadgeProps = {
 };
 
 export function Badge({ label, tone = "neutral" }: BadgeProps) {
+  const theme = useAccessibleTheme();
+  const textColor =
+    tone === "success"
+      ? theme.colors.success
+      : tone === "warning"
+        ? theme.colors.warning
+        : tone === "danger"
+          ? theme.colors.danger
+          : theme.colors.text;
+
   return (
     <View style={[styles.base, toneStyles[tone]]}>
-      <Text style={[styles.text, textStyles[tone]]}>{label}</Text>
+      <Text style={[styles.text, theme.typography.caption, { color: textColor }]}>{label}</Text>
     </View>
   );
 }
@@ -23,7 +34,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   text: {
-    ...typography.caption,
   },
   neutral: {
     backgroundColor: colors.surfaceSoft,
@@ -56,11 +66,4 @@ const toneStyles = StyleSheet.create({
   success: styles.success,
   warning: styles.warning,
   danger: styles.danger,
-});
-
-const textStyles = StyleSheet.create({
-  neutral: styles.textNeutral,
-  success: styles.textSuccess,
-  warning: styles.textWarning,
-  danger: styles.textDanger,
 });

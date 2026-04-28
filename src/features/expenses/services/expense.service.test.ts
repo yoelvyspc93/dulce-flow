@@ -1,6 +1,7 @@
 import type { Expense } from "@/shared/types";
 
 import {
+  calculateExpenseTotal,
   createExpenseMovement,
   getExpensePeriodStart,
 } from "./expense.service";
@@ -27,6 +28,16 @@ describe("expense financial rules", () => {
       amount: 12,
       status: "active",
     });
+  });
+
+  it("calculates total from quantity and unit price", () => {
+    expect(
+      calculateExpenseTotal({
+        quantity: 3,
+        unitPrice: 4,
+        total: 1,
+      })
+    ).toBe(12);
   });
 
   it("returns a start date for week filters", () => {

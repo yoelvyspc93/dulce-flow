@@ -4,7 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { loadBusinessSettingsAsync } from "@/features/settings/services/settings.service";
+import { loadAppSettingsAsync } from "@/features/settings/services/settings.service";
 import { Button } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
 import { colors, spacing, typography } from "@/theme";
@@ -30,14 +30,14 @@ export default function RootLayout() {
 
       try {
         const settings = await Promise.race([
-          loadBusinessSettingsAsync(),
+          loadAppSettingsAsync(),
           new Promise<null>((resolve) => {
             setTimeout(() => resolve(null), 3000);
           }),
         ]);
 
         if (isMounted) {
-          setBootstrapReady(settings);
+          setBootstrapReady(settings?.businessSettings ?? null, settings?.accessibilitySettings);
         }
       } catch {
         if (isMounted) {

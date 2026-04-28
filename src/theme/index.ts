@@ -1,4 +1,4 @@
-export { colors } from "./colors";
+export { colors, highContrastColors } from "./colors";
 export { radius } from "./radius";
 export { spacing } from "./spacing";
-export { fontFamily, typography } from "./typography";
+export { fontFamily, scaleTypographyToken, typography } from "./typography";

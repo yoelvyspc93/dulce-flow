@@ -73,5 +73,8 @@ export function createMockDatabaseClient() {
     client,
     executedStatements,
     getUserVersion: () => userVersion,
+    setUserVersion: (version: number) => {
+      userVersion = version;
+    },
   };
 }

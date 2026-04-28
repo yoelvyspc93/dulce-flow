@@ -8,6 +8,7 @@ type ExpenseRow = {
   category: Expense["category"];
   quantity: number | null;
   unit: string | null;
+  unit_price: number | null;
   total: number;
   status: ExpenseStatus;
   note: string | null;
@@ -23,6 +24,7 @@ function mapExpenseRow(row: ExpenseRow): Expense {
     category: row.category,
     quantity: row.quantity ?? undefined,
     unit: row.unit ?? undefined,
+    unitPrice: row.unit_price ?? undefined,
     total: row.total,
     status: row.status,
     note: row.note ?? undefined,
@@ -47,8 +49,8 @@ export class ExpenseRepository {
   async createAsync(expense: Expense): Promise<void> {
     await this.client.runAsync(
       `INSERT INTO expenses (
-        id, supply_id, supply_name, category, quantity, unit, total, status, note, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        id, supply_id, supply_name, category, quantity, unit, unit_price, total, status, note, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         expense.id,
         expense.supplyId ?? null,
@@ -56,6 +58,7 @@ export class ExpenseRepository {
         expense.category,
         expense.quantity ?? null,
         expense.unit ?? null,
+        expense.unitPrice ?? null,
         expense.total,
         expense.status,
         expense.note ?? null,
@@ -68,7 +71,7 @@ export class ExpenseRepository {
   async updateAsync(expense: Expense): Promise<void> {
     await this.client.runAsync(
       `UPDATE expenses
-       SET supply_id = ?, supply_name = ?, category = ?, quantity = ?, unit = ?, total = ?,
+       SET supply_id = ?, supply_name = ?, category = ?, quantity = ?, unit = ?, unit_price = ?, total = ?,
            status = ?, note = ?, updated_at = ?
        WHERE id = ?;`,
       [
@@ -77,6 +80,7 @@ export class ExpenseRepository {
         expense.category,
         expense.quantity ?? null,
         expense.unit ?? null,
+        expense.unitPrice ?? null,
         expense.total,
         expense.status,
         expense.note ?? null,

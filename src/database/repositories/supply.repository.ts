@@ -81,4 +81,21 @@ export class SupplyRepository {
       ]
     );
   }
+
+  async deleteAsync(id: string): Promise<void> {
+    await this.client.runAsync("DELETE FROM supplies WHERE id = ?;", [id]);
+  }
+
+  async getUsageCountAsync(id: string): Promise<number> {
+    const expenseRow = await this.client.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM expenses WHERE supply_id = ?;",
+      [id]
+    );
+    const recipeRow = await this.client.getFirstAsync<{ count: number }>(
+      "SELECT COUNT(*) as count FROM product_recipe_items WHERE supply_id = ?;",
+      [id]
+    );
+
+    return (expenseRow?.count ?? 0) + (recipeRow?.count ?? 0);
+  }
 }

@@ -186,4 +186,12 @@ export class OrderRepository {
       [args.status, args.updatedAt, args.deliveredAt ?? null, args.cancelledAt ?? null, args.id]
     );
   }
+
+  async updatePaymentStatusAsync(id: string, paymentStatus: Order["paymentStatus"], updatedAt: string): Promise<void> {
+    await this.client.runAsync("UPDATE orders SET payment_status = ?, updated_at = ? WHERE id = ?;", [
+      paymentStatus,
+      updatedAt,
+      id,
+    ]);
+  }
 }

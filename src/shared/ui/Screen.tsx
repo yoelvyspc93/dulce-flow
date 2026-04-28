@@ -13,9 +13,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAppStore } from "@/store/app.store";
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
 
 import { AvatarButton } from "./AvatarButton";
+import { useAccessibleTheme } from "./useAccessibleTheme";
 
 type ScreenProps = PropsWithChildren<{
   title: string;
@@ -35,6 +36,7 @@ export function Screen({
   const pathname = usePathname();
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
   const avatarId = useAppStore((state) => state.businessSettings?.avatarId);
+  const theme = useAccessibleTheme();
   const isTabScreen = ["/home", "/orders", "/expenses", "/settings"].includes(pathname);
 
   function handleBack() {
@@ -66,12 +68,16 @@ export function Screen({
             accessibilityLabel="Volver"
             accessibilityRole="button"
             onPress={handleBack}
-            style={({ pressed }) => [styles.backButton, pressed ? styles.pressed : null]}
+            style={({ pressed }) => [
+              styles.backButton,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              pressed ? styles.pressed : null,
+            ]}
           >
-            <ArrowLeft color={colors.text} size={22} strokeWidth={2.4} />
+            <ArrowLeft color={theme.colors.text} size={22} strokeWidth={2.4} />
           </Pressable>
         ) : null}
-        <Text numberOfLines={1} style={styles.title}>
+        <Text numberOfLines={1} style={[styles.title, { color: theme.colors.text }, theme.typography.section]}>
           {title}
         </Text>
         <AvatarButton
@@ -92,6 +98,7 @@ export function Screen({
     <View
       style={[
         styles.safeArea,
+        { backgroundColor: theme.colors.background },
         { paddingTop: insets.top, paddingBottom: insets.bottom },
       ]}
     >
@@ -145,8 +152,6 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    color: colors.text,
-    ...typography.section,
   },
   backButton: {
     width: 40,
@@ -154,9 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   pressed: {
     opacity: 0.86,

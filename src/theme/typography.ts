@@ -6,7 +6,7 @@ export const fontFamily = {
   bold: "System",
 };
 
-type TypographyToken = Pick<TextStyle, "fontSize" | "fontWeight" | "lineHeight" | "letterSpacing">;
+type TypographyToken = Required<Pick<TextStyle, "fontSize" | "fontWeight" | "lineHeight" | "letterSpacing">>;
 
 export const typography: Record<string, TypographyToken> = {
   hero: {
@@ -46,3 +46,11 @@ export const typography: Record<string, TypographyToken> = {
     letterSpacing: 0,
   },
 };
+
+export function scaleTypographyToken(token: TypographyToken, scale: number): TypographyToken {
+  return {
+    ...token,
+    fontSize: Math.round(token.fontSize * scale),
+    lineHeight: Math.round(token.lineHeight * scale),
+  };
+}
