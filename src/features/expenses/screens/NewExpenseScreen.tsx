@@ -22,7 +22,7 @@ export function NewExpenseScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const selectedSupply = activeSupplies.find((supply) => supply.id === selectedSupplyId);
-  const category = selectedSupply?.category ?? EXPENSE_CATEGORIES[categoryIndex];
+  const category = EXPENSE_CATEGORIES[categoryIndex];
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +43,17 @@ export function NewExpenseScreen() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedSupply) {
+      return;
+    }
+
+    setUnit(selectedSupply.unit);
+    if (selectedSupply.defaultPrice) {
+      setTotal(String(selectedSupply.defaultPrice));
+    }
+  }, [selectedSupply]);
 
   const supplyOptions = [
     ...activeSupplies.map((supply) => ({ label: supply.name, value: supply.id })),
@@ -76,7 +87,7 @@ export function NewExpenseScreen() {
   }
 
   return (
-    <Screen title="Nuevo gasto">
+    <Screen title="Nuevo gasto" backHref="/expenses">
       <SelectField
         label="Insumo"
         onValueChange={setSelectedSupplyId}
@@ -88,7 +99,6 @@ export function NewExpenseScreen() {
       ) : null}
       <SelectField
         label="Categoria"
-        disabled={Boolean(selectedSupply)}
         onValueChange={(selectedCategory) => {
           setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === selectedCategory)));
         }}
@@ -96,7 +106,7 @@ export function NewExpenseScreen() {
         value={category}
       />
       <TextField keyboardType="decimal-pad" label="Cantidad" onChangeText={setQuantity} placeholder="Opcional" value={quantity} />
-      <TextField label="Unidad" onChangeText={setUnit} placeholder="kg, unidad, caja..." value={selectedSupply?.unit ?? unit} />
+      <TextField label="Unidad" onChangeText={setUnit} placeholder="kg, unidad, caja..." value={unit} />
       <TextField keyboardType="decimal-pad" label="Total" onChangeText={setTotal} placeholder="$0.00" value={total} />
       <TextField label="Nota" onChangeText={setNote} placeholder="Detalle opcional" value={note} multiline />
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}

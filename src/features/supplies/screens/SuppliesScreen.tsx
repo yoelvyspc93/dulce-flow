@@ -34,7 +34,7 @@ export function SuppliesScreen() {
   );
 
   return (
-    <Screen title="Insumos">
+    <Screen title="Insumos" backHref="/(tabs)/settings">
       <Button label="Nuevo insumo" onPress={() => router.push("/supplies/new")} />
 
       <SectionHeader
@@ -56,7 +56,7 @@ export function SuppliesScreen() {
             key={supply.id}
             onPress={() => router.push(`/supplies/${supply.id}`)}
             title={supply.name}
-            subtitle={`${supply.unit}${supply.category ? ` - ${supply.category}` : ""}`}
+            subtitle={`${supply.unit}${supply.defaultPrice ? ` - $${supply.defaultPrice.toFixed(2)}` : ""}`}
             trailing={
               <Badge label={supply.isActive ? "Activo" : "Inactivo"} tone={supply.isActive ? "success" : "neutral"} />
             }

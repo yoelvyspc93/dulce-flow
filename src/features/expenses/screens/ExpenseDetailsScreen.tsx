@@ -4,9 +4,9 @@ import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import {
+  deleteExpenseAsync,
   getExpenseAsync,
   updateExpenseAsync,
-  voidExpenseAsync,
 } from "@/features/expenses/services/expense.service";
 import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.schema";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
@@ -88,6 +88,7 @@ export function ExpenseDetailsScreen() {
         note,
       });
       setExpense(updatedExpense);
+      router.replace("/expenses");
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(error.issues[0]?.message ?? "Datos invalidos.");
@@ -99,18 +100,18 @@ export function ExpenseDetailsScreen() {
     }
   }
 
-  async function handleVoidAsync() {
+  async function handleDeleteAsync() {
     if (!expense) {
       return;
     }
 
-    const voidedExpense = await voidExpenseAsync(expense);
-    setExpense(voidedExpense);
+    await deleteExpenseAsync(expense);
+    router.replace("/expenses");
   }
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de gasto">
+      <Screen title="Detalle de gasto" backHref="/expenses">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando gasto...</Text>
@@ -121,7 +122,7 @@ export function ExpenseDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de gasto">
+      <Screen title="Detalle de gasto" backHref="/expenses">
         <EmptyState eyebrow="Gasto" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
       </Screen>
@@ -130,7 +131,7 @@ export function ExpenseDetailsScreen() {
 
   if (!expense) {
     return (
-      <Screen title="Detalle de gasto">
+      <Screen title="Detalle de gasto" backHref="/expenses">
         <EmptyState eyebrow="Gasto" title="Gasto no encontrado" description="Vuelve al listado y selecciona otro gasto." />
         <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
       </Screen>
@@ -138,10 +139,10 @@ export function ExpenseDetailsScreen() {
   }
 
   return (
-    <Screen title="Detalle de gasto">
+    <Screen title="Detalle de gasto" backHref="/expenses">
       <ListItem
         title="Estado"
-        subtitle="Los gastos anulados no se eliminan fisicamente"
+        subtitle="Los gastos eliminados salen del listado y no crean ingresos"
         trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
       />
       <ListItem title="Impacto" subtitle="Cada gasto genera un movement expense/out" />
@@ -196,7 +197,7 @@ export function ExpenseDetailsScreen() {
       {expense.status === "active" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Anular gasto" onPress={handleVoidAsync} variant="secondary" />
+          <Button label="Eliminar gasto" onPress={handleDeleteAsync} variant="secondary" />
         </View>
       ) : null}
     </Screen>

@@ -3,9 +3,13 @@ import { z } from "zod";
 export const orderSchema = z.object({
   customerName: z.string().trim().optional(),
   customerPhone: z.string().trim().optional(),
-  productId: z.string().min(1, "Debes seleccionar un producto."),
-  quantity: z.coerce.number().positive("La cantidad debe ser mayor que 0."),
-  discount: z.coerce.number().min(0, "El descuento no puede ser negativo.").default(0),
+  items: z.array(
+    z.object({
+      productId: z.string().min(1, "Debes seleccionar un producto."),
+      quantity: z.coerce.number().positive("La cantidad debe ser mayor que 0."),
+      unitPrice: z.coerce.number().positive("El precio debe ser mayor que 0."),
+    })
+  ).min(1, "Debes adicionar al menos un producto."),
   paymentStatus: z.enum(["pending", "paid"]).default("pending"),
   note: z.string().trim().optional(),
 });

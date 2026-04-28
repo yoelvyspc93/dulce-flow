@@ -48,23 +48,6 @@ export function createExpenseMovement(expense: Expense, now: string): Movement {
   };
 }
 
-export function createExpenseReversalMovement(expense: Expense, originalMovement: Movement, now: string): Movement {
-  return {
-    id: createId("movement"),
-    type: "reversal",
-    direction: "in",
-    sourceType: "expense",
-    sourceId: expense.id,
-    amount: originalMovement.amount,
-    description: `Reverso por anulacion de gasto ${expense.supplyName}`,
-    status: "active",
-    movementDate: now,
-    createdAt: now,
-    updatedAt: now,
-    reversedMovementId: originalMovement.id,
-  };
-}
-
 export async function listExpensesAsync(filters?: {
   category?: ExpenseCategoryFilter;
   period?: ExpensePeriodFilter;
@@ -140,7 +123,6 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
     const originalMovement = await movementRepository.getActiveBySourceAsync("expense", expense.id);
     if (originalMovement && originalMovement.amount !== updatedExpense.total) {
       await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
-      await movementRepository.createAsync(createExpenseReversalMovement(expense, originalMovement, now));
       await movementRepository.createAsync(createExpenseMovement(updatedExpense, now));
     }
   });
@@ -148,18 +130,8 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
   return updatedExpense;
 }
 
-export async function voidExpenseAsync(expense: Expense): Promise<Expense> {
-  if (expense.status === "voided") {
-    return expense;
-  }
-
+export async function deleteExpenseAsync(expense: Expense): Promise<void> {
   const now = new Date().toISOString();
-  const voidedExpense: Expense = {
-    ...expense,
-    status: "voided",
-    updatedAt: now,
-  };
-
   const database = await getDatabaseAsync();
 
   await database.withTransactionAsync(async (transaction) => {
@@ -167,13 +139,10 @@ export async function voidExpenseAsync(expense: Expense): Promise<Expense> {
     const movementRepository = new MovementRepository(transaction);
     const originalMovement = await movementRepository.getActiveBySourceAsync("expense", expense.id);
 
-    await expenseRepository.updateStatusAsync(expense.id, "voided", now);
+    await expenseRepository.deleteAsync(expense.id);
 
     if (originalMovement) {
-      await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
-      await movementRepository.createAsync(createExpenseReversalMovement(expense, originalMovement, now));
+      await movementRepository.updateStatusAsync(originalMovement.id, "voided", now);
     }
   });
-
-  return voidedExpense;
 }

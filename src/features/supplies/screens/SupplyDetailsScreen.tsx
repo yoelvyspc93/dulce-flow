@@ -8,7 +8,7 @@ import {
   setSupplyActiveAsync,
   updateSupplyAsync,
 } from "@/features/supplies/services/supply.service";
-import { SUPPLY_CATEGORIES } from "@/features/supplies/validations/supply.schema";
+import { SUPPLY_UNITS } from "@/features/supplies/validations/supply.schema";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
 import { colors, spacing, typography } from "@/theme";
@@ -18,13 +18,12 @@ export function SupplyDetailsScreen() {
   const supplyId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [supply, setSupply] = useState<Supply | null>(null);
   const [name, setName] = useState("");
-  const [unit, setUnit] = useState("");
-  const [categoryIndex, setCategoryIndex] = useState(0);
+  const [unit, setUnit] = useState<(typeof SUPPLY_UNITS)[number]>("unidad");
+  const [defaultPrice, setDefaultPrice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const category = SUPPLY_CATEGORIES[categoryIndex];
 
   useEffect(() => {
     let isActive = true;
@@ -41,8 +40,8 @@ export function SupplyDetailsScreen() {
 
           if (loadedSupply) {
             setName(loadedSupply.name);
-            setUnit(loadedSupply.unit);
-            setCategoryIndex(Math.max(0, SUPPLY_CATEGORIES.findIndex((item) => item === loadedSupply.category)));
+            setUnit(SUPPLY_UNITS.includes(loadedSupply.unit as (typeof SUPPLY_UNITS)[number]) ? (loadedSupply.unit as (typeof SUPPLY_UNITS)[number]) : "unidad");
+            setDefaultPrice(loadedSupply.defaultPrice ? String(loadedSupply.defaultPrice) : "");
           }
         }
       } catch {
@@ -75,7 +74,7 @@ export function SupplyDetailsScreen() {
       const updatedSupply = await updateSupplyAsync(supply, {
         name,
         unit,
-        category,
+        defaultPrice: defaultPrice ? Number(defaultPrice) : undefined,
       });
       setSupply(updatedSupply);
     } catch (error) {
@@ -100,7 +99,7 @@ export function SupplyDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de insumo">
+      <Screen title="Detalle de insumo" backHref="/supplies">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando insumo...</Text>
@@ -111,7 +110,7 @@ export function SupplyDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de insumo">
+      <Screen title="Detalle de insumo" backHref="/supplies">
         <EmptyState eyebrow="Insumo" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
       </Screen>
@@ -120,7 +119,7 @@ export function SupplyDetailsScreen() {
 
   if (!supply) {
     return (
-      <Screen title="Detalle de insumo">
+      <Screen title="Detalle de insumo" backHref="/supplies">
         <EmptyState eyebrow="Insumo" title="Insumo no encontrado" description="Vuelve al catalogo y selecciona otro insumo." />
         <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
       </Screen>
@@ -128,21 +127,25 @@ export function SupplyDetailsScreen() {
   }
 
   return (
-    <Screen title="Detalle de insumo">
+    <Screen title="Detalle de insumo" backHref="/supplies">
       <ListItem
         title="Estado"
         subtitle="Los insumos usados no se eliminan fisicamente"
         trailing={<Badge label={supply.isActive ? "Activo" : "Inactivo"} tone={supply.isActive ? "success" : "neutral"} />}
       />
       <TextField label="Nombre" onChangeText={setName} placeholder="Harina" value={name} />
-      <TextField label="Unidad" onChangeText={setUnit} placeholder="kg, unidad, caja..." value={unit} />
       <SelectField
-        label="Categoria sugerida"
-        onValueChange={(selectedCategory) => {
-          setCategoryIndex(Math.max(0, SUPPLY_CATEGORIES.findIndex((item) => item === selectedCategory)));
-        }}
-        options={SUPPLY_CATEGORIES.map((item) => ({ label: item, value: item }))}
-        value={category}
+        label="Unidad"
+        onValueChange={(selectedUnit) => setUnit(selectedUnit as (typeof SUPPLY_UNITS)[number])}
+        options={SUPPLY_UNITS.map((item) => ({ label: item, value: item }))}
+        value={unit}
+      />
+      <TextField
+        keyboardType="decimal-pad"
+        label="Precio establecido"
+        onChangeText={setDefaultPrice}
+        placeholder="$0.00"
+        value={defaultPrice}
       />
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       <View style={{ gap: 12 }}>

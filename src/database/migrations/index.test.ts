@@ -7,7 +7,7 @@ describe("migrateDatabaseAsync", () => {
 
     await migrateDatabaseAsync(mock.client);
 
-    expect(mock.getUserVersion()).toBe(1);
+    expect(mock.getUserVersion()).toBe(2);
     expect(mock.executedStatements.some((statement) => statement.includes("CREATE TABLE IF NOT EXISTS settings"))).toBe(
       true
     );

@@ -15,26 +15,32 @@ import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } f
 import type { Product } from "@/shared/types";
 import { colors, spacing, typography } from "@/theme";
 
+type OrderLine = {
+  id: string;
+  productId: string;
+  quantity: string;
+  unitPrice: string;
+};
+
 export function OrderDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
   const orderId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [details, setDetails] = useState<OrderDetails | null>(null);
   const [activeProducts, setActiveProducts] = useState<Product[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [quantity, setQuantity] = useState("1");
-  const [discount, setDiscount] = useState("0");
+  const [items, setItems] = useState<OrderLine[]>([]);
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const order = details?.order;
-  const selectedProduct = activeProducts.find((product) => product.id === selectedProductId);
   const isEditable = order?.status === "pending";
-  const subtotal = selectedProduct ? selectedProduct.price * Number(quantity || 0) : order?.subtotal ?? 0;
-  const total = subtotal - Number(discount || 0);
+  const subtotal =
+    items.length > 0
+      ? items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0)
+      : order?.subtotal ?? 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -55,13 +61,16 @@ export function OrderDetailsScreen() {
           setActiveProducts(active);
 
           if (loadedDetails) {
-            const firstItem = loadedDetails.items[0];
-            const foundProductIndex = active.findIndex((product) => product.id === firstItem?.productId);
-            setSelectedProductId(foundProductIndex >= 0 ? active[foundProductIndex].id : active[0]?.id ?? "");
             setCustomerName(loadedDetails.order.customerName ?? "");
             setCustomerPhone(loadedDetails.order.customerPhone ?? "");
-            setQuantity(firstItem ? String(firstItem.quantity) : "1");
-            setDiscount(String(loadedDetails.order.discount));
+            setItems(
+              loadedDetails.items.map((item) => ({
+                id: item.id,
+                productId: item.productId ?? active[0]?.id ?? "",
+                quantity: String(item.quantity),
+                unitPrice: String(item.unitPrice),
+              }))
+            );
             setNote(loadedDetails.order.note ?? "");
           }
         }
@@ -83,8 +92,47 @@ export function OrderDetailsScreen() {
     };
   }, [orderId]);
 
+  function updateItem(id: string, patch: Partial<OrderLine>) {
+    setItems((current) =>
+      current.map((item) => {
+        if (item.id !== id) {
+          return item;
+        }
+
+        const next = { ...item, ...patch };
+        if (patch.productId) {
+          const product = activeProducts.find((candidate) => candidate.id === patch.productId);
+          next.unitPrice = product ? String(product.price) : next.unitPrice;
+        }
+
+        return next;
+      })
+    );
+  }
+
+  function addItem() {
+    const product = activeProducts[0];
+    if (!product) {
+      return;
+    }
+
+    setItems((current) => [
+      ...current,
+      {
+        id: `item_${Date.now()}`,
+        productId: product.id,
+        quantity: "1",
+        unitPrice: String(product.price),
+      },
+    ]);
+  }
+
+  function removeItem(id: string) {
+    setItems((current) => current.filter((item) => item.id !== id));
+  }
+
   async function handleSaveAsync() {
-    if (!details?.order || !selectedProduct) {
+    if (!details?.order || items.length === 0) {
       return;
     }
 
@@ -95,9 +143,11 @@ export function OrderDetailsScreen() {
       const updatedDetails = await updatePendingOrderAsync(details.order, {
         customerName,
         customerPhone,
-        productId: selectedProduct.id,
-        quantity: Number(quantity),
-        discount: Number(discount || 0),
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+        })),
         paymentStatus: details.order.paymentStatus,
         note,
       });
@@ -105,8 +155,8 @@ export function OrderDetailsScreen() {
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(error.issues[0]?.message ?? "Datos invalidos.");
-      } else if (error instanceof Error && error.message === "DISCOUNT_EXCEEDS_SUBTOTAL") {
-        setErrorMessage("El descuento no puede ser mayor que el subtotal.");
+      } else if (error instanceof Error && error.message === "PRODUCT_NOT_AVAILABLE") {
+        setErrorMessage("Uno de los productos seleccionados no esta disponible.");
       } else {
         setErrorMessage("No se pudo actualizar la orden.");
       }
@@ -135,7 +185,7 @@ export function OrderDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de orden">
+      <Screen title="Detalle de orden" backHref="/orders">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando orden...</Text>
@@ -146,7 +196,7 @@ export function OrderDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de orden">
+      <Screen title="Detalle de orden" backHref="/orders">
         <EmptyState eyebrow="Orden" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
       </Screen>
@@ -155,43 +205,73 @@ export function OrderDetailsScreen() {
 
   if (!details || !order) {
     return (
-      <Screen title="Detalle de orden">
+      <Screen title="Detalle de orden" backHref="/orders">
         <EmptyState eyebrow="Orden" title="Orden no encontrada" description="Vuelve al listado y selecciona otra orden." />
         <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
       </Screen>
     );
   }
 
-  const selectedProductLabel = selectedProduct
-    ? `${selectedProduct.name} - $${selectedProduct.price.toFixed(2)}`
-    : details.items[0]?.productName ?? "Sin producto";
   const productOptions =
     activeProducts.length > 0
-      ? activeProducts.map((product) => ({ label: `${product.name} - $${product.price.toFixed(2)}`, value: product.id }))
-      : [{ label: selectedProductLabel, value: "empty", disabled: true }];
+      ? activeProducts.map((product) => ({ label: product.name, value: product.id }))
+      : [{ label: "Sin productos activos", value: "empty", disabled: true }];
 
   return (
-    <Screen title="Detalle de orden">
+    <Screen title="Detalle de orden" backHref="/orders">
       <ListItem
         title="Estado"
         subtitle="Solo las ordenes entregadas generan ingreso"
-        trailing={<Badge label={order.status} tone={order.status === "delivered" ? "success" : order.status === "cancelled" ? "danger" : "warning"} />}
+        trailing={
+          <Badge
+            label={order.status}
+            tone={order.status === "delivered" ? "success" : order.status === "cancelled" ? "danger" : "warning"}
+          />
+        }
       />
       <ListItem title="Pago" subtitle="Se guarda aparte del estado operativo" trailing={<Badge label={order.paymentStatus} tone="warning" />} />
       <TextField editable={isEditable} label="Cliente" onChangeText={setCustomerName} placeholder="Nombre" value={customerName} />
       <TextField editable={isEditable} label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
-      <SelectField
-        label="Producto"
-        disabled={!isEditable || activeProducts.length === 0}
-        onValueChange={setSelectedProductId}
-        options={productOptions}
-        value={selectedProduct?.id ?? "empty"}
-      />
-      <TextField editable={isEditable} keyboardType="decimal-pad" label="Cantidad" onChangeText={setQuantity} placeholder="1" value={quantity} />
-      <TextField editable={isEditable} keyboardType="decimal-pad" label="Descuento" onChangeText={setDiscount} placeholder="0" value={discount} />
+      <View style={{ gap: 12 }}>
+        {items.map((item, index) => (
+          <View key={item.id} style={styles.itemCard}>
+            <Text style={styles.itemTitle}>Producto {index + 1}</Text>
+            <SelectField
+              label="Producto"
+              disabled={!isEditable || activeProducts.length === 0}
+              onValueChange={(productId) => updateItem(item.id, { productId })}
+              options={productOptions}
+              value={item.productId || "empty"}
+            />
+            <TextField
+              editable={isEditable}
+              keyboardType="decimal-pad"
+              label="Cantidad"
+              onChangeText={(quantity) => updateItem(item.id, { quantity })}
+              placeholder="1"
+              value={item.quantity}
+            />
+            <TextField
+              editable={isEditable}
+              keyboardType="decimal-pad"
+              label="Precio"
+              onChangeText={(unitPrice) => updateItem(item.id, { unitPrice })}
+              placeholder="$0.00"
+              value={item.unitPrice}
+            />
+            <Text style={styles.lineSubtotal}>
+              Subtotal: ${(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toFixed(2)}
+            </Text>
+            {isEditable && items.length > 1 ? (
+              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="secondary" />
+            ) : null}
+          </View>
+        ))}
+        {isEditable ? <Button label="Adicionar producto" onPress={addItem} variant="secondary" /> : null}
+      </View>
       <View style={styles.totals}>
         <Text style={styles.totalText}>Subtotal: ${subtotal.toFixed(2)}</Text>
-        <Text style={styles.totalText}>Total: ${Math.max(total, 0).toFixed(2)}</Text>
+        <Text style={styles.totalText}>Total: ${subtotal.toFixed(2)}</Text>
       </View>
       <TextField editable={isEditable} label="Nota" onChangeText={setNote} placeholder="Detalles" value={note} multiline />
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
@@ -210,6 +290,22 @@ export function OrderDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
+  itemCard: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  itemTitle: {
+    color: colors.text,
+    ...typography.bodyStrong,
+  },
+  lineSubtotal: {
+    color: colors.textMuted,
+    ...typography.caption,
+  },
   totals: {
     gap: spacing.xs,
   },

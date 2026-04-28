@@ -22,7 +22,7 @@ export async function createSupplyAsync(values: SupplyFormValues): Promise<Suppl
     id: createId("supply"),
     name: parsed.name,
     unit: parsed.unit,
-    category: parsed.category,
+    defaultPrice: parsed.defaultPrice,
     isActive: true,
     createdAt: now,
     updatedAt: now,
@@ -40,7 +40,8 @@ export async function updateSupplyAsync(supply: Supply, values: SupplyFormValues
     ...supply,
     name: parsed.name,
     unit: parsed.unit,
-    category: parsed.category,
+    category: undefined,
+    defaultPrice: parsed.defaultPrice,
     updatedAt: new Date().toISOString(),
   };
 

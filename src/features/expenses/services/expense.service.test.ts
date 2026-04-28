@@ -1,8 +1,7 @@
-import type { Expense, Movement } from "@/shared/types";
+import type { Expense } from "@/shared/types";
 
 import {
   createExpenseMovement,
-  createExpenseReversalMovement,
   getExpensePeriodStart,
 } from "./expense.service";
 
@@ -27,33 +26,6 @@ describe("expense financial rules", () => {
       sourceId: "expense_1",
       amount: 12,
       status: "active",
-    });
-  });
-
-  it("creates an incoming reversal when an expense is voided", () => {
-    const originalMovement: Movement = {
-      id: "movement_1",
-      type: "expense",
-      direction: "out",
-      sourceType: "expense",
-      sourceId: "expense_1",
-      amount: 12,
-      description: "Gasto",
-      status: "active",
-      movementDate: "2026-04-28T11:00:00.000Z",
-      createdAt: "2026-04-28T11:00:00.000Z",
-      updatedAt: "2026-04-28T11:00:00.000Z",
-    };
-
-    const movement = createExpenseReversalMovement(baseExpense, originalMovement, "2026-04-28T12:00:00.000Z");
-
-    expect(movement).toMatchObject({
-      type: "reversal",
-      direction: "in",
-      sourceType: "expense",
-      sourceId: "expense_1",
-      amount: 12,
-      reversedMovementId: "movement_1",
     });
   });
 

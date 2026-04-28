@@ -1,20 +1,11 @@
 import { z } from "zod";
 
-import type { ExpenseCategory } from "@/shared/types";
-
-export const SUPPLY_CATEGORIES: ExpenseCategory[] = [
-  "ingredients",
-  "packaging",
-  "decoration",
-  "transport",
-  "services",
-  "other",
-];
+export const SUPPLY_UNITS = ["kg", "g", "lb", "litro", "ml", "unidad", "paquete", "caja", "docena"] as const;
 
 export const supplySchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio."),
-  unit: z.string().trim().min(1, "La unidad es obligatoria."),
-  category: z.enum(SUPPLY_CATEGORIES).optional(),
+  unit: z.enum(SUPPLY_UNITS, "Debes seleccionar una unidad."),
+  defaultPrice: z.coerce.number().positive("El precio establecido debe ser mayor que 0.").optional(),
 });
 
 export type SupplyFormValues = z.infer<typeof supplySchema>;

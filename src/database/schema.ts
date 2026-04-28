@@ -1,5 +1,5 @@
 export const DATABASE_NAME = "dulceflow.db";
-export const DATABASE_VERSION = 1;
+export const DATABASE_VERSION = 2;
 
 export const CREATE_PRODUCTS_TABLE = `
   CREATE TABLE IF NOT EXISTS products (
@@ -20,6 +20,7 @@ export const CREATE_SUPPLIES_TABLE = `
     name TEXT NOT NULL,
     unit TEXT NOT NULL,
     category TEXT,
+    default_price REAL CHECK(default_price IS NULL OR default_price > 0),
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL

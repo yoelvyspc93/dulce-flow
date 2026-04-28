@@ -31,7 +31,6 @@ export function SettingsScreen() {
       <ListItem
         title="Datos del negocio"
         subtitle={businessSettings ? `${businessSettings.businessName} - ${businessSettings.currency}` : "Pendiente"}
-        trailing={<ChevronRight size={24} strokeWidth={2.4} color={colors.text} />}
       />
     </Screen>
   );

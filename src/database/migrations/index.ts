@@ -11,6 +11,12 @@ const MIGRATIONS: Migration[] = [
     version: 1,
     statements: SCHEMA_STATEMENTS,
   },
+  {
+    version: 2,
+    statements: [
+      "ALTER TABLE supplies ADD COLUMN default_price REAL CHECK(default_price IS NULL OR default_price > 0);",
+    ],
+  },
 ];
 
 export async function migrateDatabaseAsync(client: DatabaseClient): Promise<void> {
@@ -18,6 +24,17 @@ export async function migrateDatabaseAsync(client: DatabaseClient): Promise<void
   const currentVersion = row?.user_version ?? 0;
 
   if (currentVersion >= DATABASE_VERSION) {
+    return;
+  }
+
+  if (currentVersion === 0) {
+    await client.withTransactionAsync(async (transaction) => {
+      for (const statement of SCHEMA_STATEMENTS) {
+        await transaction.execAsync(statement);
+      }
+
+      await transaction.execAsync(`PRAGMA user_version = ${DATABASE_VERSION};`);
+    });
     return;
   }
 

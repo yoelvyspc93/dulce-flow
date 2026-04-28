@@ -20,9 +20,9 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
-          height: 76,
-          paddingTop: spacing.sm,
-          paddingBottom: spacing.md,
+          height: 64,
+          paddingTop: spacing.xs,
+          paddingBottom: spacing.xs,
         },
         tabBarLabelStyle: {
           fontSize: typography.caption.fontSize,
