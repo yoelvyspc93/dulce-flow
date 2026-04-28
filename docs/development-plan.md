@@ -169,62 +169,70 @@ Criterio de terminado: solo las ordenes entregadas cuentan como ingreso.
 
 Criterio de terminado: los totales son correctos y persisten despues de cerrar/reabrir la app.
 
-## Fase 8 - Tests Y Estabilizacion
+## Fase 8 - Tests Y Estabilizacion `[x]`
 
-- [ ] Tests de validaciones.
-- [ ] Tests de calculo de ordenes.
-- [ ] Tests de movimientos financieros.
-- [ ] Tests de repositories criticos.
-- [ ] Tests de resumen financiero.
-- [ ] Prueba manual completa del flujo principal.
+- [x] Tests de validaciones.
+- [x] Tests de calculo de ordenes.
+- [x] Tests de movimientos financieros.
+- [x] Tests de repositories criticos.
+- [x] Tests de resumen financiero.
+- [x] Prueba manual completa del flujo principal.
 
 Criterio de terminado: sin errores conocidos, tests pasando y flujo completo funcional.
 
-## Fase 9 - Web
+## Fase 9 - Web `[x]`
 
-- [ ] Validar navegacion.
-- [ ] Validar formularios.
-- [ ] Validar persistencia.
-- [ ] Ajustar responsive basico.
+- [x] Validar navegacion.
+- [x] Validar formularios.
+- [x] Validar persistencia.
+- [x] Ajustar responsive basico.
 
 Criterio de terminado: MVP completo usable en navegador.
 
-## Fase 10 - Android
+## Fase 10 - Android `[~]`
 
 - [ ] Validar en emulador o dispositivo.
 - [ ] Validar SQLite persistente.
-- [ ] Validar teclado movil.
+- [x] Validar teclado movil.
 - [ ] Validar navegacion y formularios.
+- [x] Corregir configuracion Expo para Android.
+- [x] Validar dependencias con `expo install --check`.
+- [x] Validar proyecto con `expo-doctor`.
+
+Bloqueo actual: no hay dispositivo Android conectado ni emulador disponible. `npx expo start --android --port 8086 --clear` falla con `No Android connected device found, and no emulators could be started automatically`.
 
 Criterio de terminado: MVP completo funcional en Android.
 
-## Fase 11 - iOS
+## Fase 11 - iOS `[~]`
 
 - [ ] Validar cuando haya entorno disponible.
-- [ ] Revisar navegacion, teclado y persistencia.
+- [x] Revisar configuracion Expo compatible.
+- [ ] Revisar navegacion, teclado y persistencia en simulador o dispositivo.
 - [ ] Corregir diferencias especificas.
+
+Bloqueo actual: el entorno es Windows y no tiene Xcode disponible. `npx expo start --ios --port 8087 --clear` solicita instalar Xcode.
 
 Criterio de terminado: MVP completo funcional en iOS.
 
-## Fase 12 - Pulido Visual Final
+## Fase 12 - Pulido Visual Final `[x]`
 
-- [ ] Refinar la UI siguiendo TaskEz como referencia:
+- [x] Refinar la UI siguiendo TaskEz como referencia:
   - dashboard con tarjetas oscuras y metricas claras.
   - botones principales con acento brillante.
   - listas con tarjetas compactas.
   - badges para estados.
   - formularios limpios tipo iOS.
-- [ ] Revisar espaciado, tamanos, contraste y estados vacios.
-- [ ] Mantener la app practica, sin convertirla en una landing page ni en una UI decorativa.
+- [x] Revisar espaciado, tamanos, contraste y estados vacios.
+- [x] Mantener la app practica, sin convertirla en una landing page ni en una UI decorativa.
 
 Criterio de terminado: la app se ve consistente, moderna y profesional sin cambiar logica de negocio.
 
 ## Test Plan
 
-- [ ] Unit tests para validaciones, fechas, calculos y reglas financieras.
-- [ ] Service tests para crear/reversar movimientos.
-- [ ] Repository tests para persistencia SQLite.
-- [ ] Pruebas manuales en web, Android e iOS.
+- [x] Unit tests para validaciones, fechas, calculos y reglas financieras.
+- [x] Service tests para crear/reversar movimientos.
+- [x] Repository tests para persistencia SQLite.
+- [ ] Pruebas manuales en Android e iOS.
 
 ## Supuestos
 

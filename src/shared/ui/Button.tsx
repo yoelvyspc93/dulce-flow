@@ -58,6 +58,8 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.bodyStrong,
+    flexShrink: 1,
+    textAlign: "center",
   },
   labelPrimary: {
     color: "#032033",

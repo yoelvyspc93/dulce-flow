@@ -24,7 +24,7 @@ export function ListItem({ title, subtitle, trailing, onPress }: ListItemProps) 
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -44,9 +44,11 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     ...typography.bodyStrong,
+    flexShrink: 1,
   },
   subtitle: {
     color: colors.textMuted,
     ...typography.caption,
+    flexShrink: 1,
   },
 });

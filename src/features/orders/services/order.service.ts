@@ -17,7 +17,7 @@ function startOfToday(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function getPeriodStart(period: OrderPeriodFilter, now = new Date()): Date | null {
+export function getOrderPeriodStart(period: OrderPeriodFilter, now = new Date()): Date | null {
   if (period === "all") {
     return null;
   }
@@ -41,7 +41,20 @@ function createOrderNumber(now = new Date()): string {
   return `ORD-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getTime()).slice(-6)}`;
 }
 
-function createIncomeMovement(order: Order, now: string): Movement {
+export function calculateOrderTotals(unitPrice: number, quantity: number, discount: number) {
+  const subtotal = unitPrice * quantity;
+
+  if (discount > subtotal) {
+    throw new Error("DISCOUNT_EXCEEDS_SUBTOTAL");
+  }
+
+  return {
+    subtotal,
+    total: subtotal - discount,
+  };
+}
+
+export function createIncomeMovement(order: Order, now: string): Movement {
   return {
     id: createId("movement"),
     type: "income",
@@ -57,7 +70,7 @@ function createIncomeMovement(order: Order, now: string): Movement {
   };
 }
 
-function createOrderReversalMovement(order: Order, originalMovement: Movement, now: string): Movement {
+export function createOrderReversalMovement(order: Order, originalMovement: Movement, now: string): Movement {
   return {
     id: createId("movement"),
     type: "reversal",
@@ -84,7 +97,7 @@ export async function listOrdersAsync(filters?: {
   const status = filters?.status ?? "all";
   const period = filters?.period ?? "all";
   const customerQuery = filters?.customerQuery?.trim().toLowerCase() ?? "";
-  const start = getPeriodStart(period);
+  const start = getOrderPeriodStart(period);
 
   return orders.filter((order) => {
     const matchesStatus = status === "all" || order.status === status;
@@ -123,12 +136,7 @@ export async function createOrderAsync(values: OrderFormValues): Promise<OrderDe
   }
 
   const now = new Date().toISOString();
-  const subtotal = product.price * parsed.quantity;
-  const total = subtotal - parsed.discount;
-
-  if (parsed.discount > subtotal) {
-    throw new Error("DISCOUNT_EXCEEDS_SUBTOTAL");
-  }
+  const { subtotal, total } = calculateOrderTotals(product.price, parsed.quantity, parsed.discount);
 
   const order: Order = {
     id: createId("order"),
@@ -178,11 +186,7 @@ export async function updatePendingOrderAsync(order: Order, values: OrderFormVal
   }
 
   const now = new Date().toISOString();
-  const subtotal = product.price * parsed.quantity;
-
-  if (parsed.discount > subtotal) {
-    throw new Error("DISCOUNT_EXCEEDS_SUBTOTAL");
-  }
+  const { subtotal, total } = calculateOrderTotals(product.price, parsed.quantity, parsed.discount);
 
   const updatedOrder: Order = {
     ...order,
@@ -190,7 +194,7 @@ export async function updatePendingOrderAsync(order: Order, values: OrderFormVal
     customerPhone: parsed.customerPhone || undefined,
     subtotal,
     discount: parsed.discount,
-    total: subtotal - parsed.discount,
+    total,
     paymentStatus: parsed.paymentStatus,
     note: parsed.note || undefined,
     updatedAt: now,

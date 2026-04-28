@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ChevronRight } from "lucide-react-native";
 
 import { colors, radius, spacing, typography } from "@/theme";
 
@@ -14,7 +15,11 @@ export function SelectField({ label, value, onPress }: SelectFieldProps) {
       <Text style={styles.label}>{label}</Text>
       <Pressable onPress={onPress} style={({ pressed }) => [styles.control, pressed ? styles.pressed : null]}>
         <Text style={styles.value}>{value}</Text>
-        <Text style={styles.chevron}>{onPress ? ">" : "+"}</Text>
+        <ChevronRight
+          color={onPress ? colors.accent : colors.textMuted}
+          size={18}
+          strokeWidth={2.4}
+        />
       </Pressable>
     </View>
   );
@@ -27,13 +32,14 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textMuted,
     ...typography.caption,
+    textTransform: "uppercase",
   },
   control: {
     minHeight: 54,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     paddingHorizontal: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
@@ -45,9 +51,5 @@ const styles = StyleSheet.create({
   value: {
     color: colors.text,
     ...typography.body,
-  },
-  chevron: {
-    color: colors.accent,
-    ...typography.bodyStrong,
   },
 });

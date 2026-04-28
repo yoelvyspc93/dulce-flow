@@ -12,7 +12,7 @@ function startOfToday(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-function getPeriodStart(period: ExpensePeriodFilter, now = new Date()): Date | null {
+export function getExpensePeriodStart(period: ExpensePeriodFilter, now = new Date()): Date | null {
   if (period === "all") {
     return null;
   }
@@ -32,7 +32,7 @@ function getPeriodStart(period: ExpensePeriodFilter, now = new Date()): Date | n
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
-function createExpenseMovement(expense: Expense, now: string): Movement {
+export function createExpenseMovement(expense: Expense, now: string): Movement {
   return {
     id: createId("movement"),
     type: "expense",
@@ -48,7 +48,7 @@ function createExpenseMovement(expense: Expense, now: string): Movement {
   };
 }
 
-function createReversalMovement(expense: Expense, originalMovement: Movement, now: string): Movement {
+export function createExpenseReversalMovement(expense: Expense, originalMovement: Movement, now: string): Movement {
   return {
     id: createId("movement"),
     type: "reversal",
@@ -73,7 +73,7 @@ export async function listExpensesAsync(filters?: {
   const expenses = await new ExpenseRepository(database).getAllAsync();
   const category = filters?.category ?? "all";
   const period = filters?.period ?? "all";
-  const start = getPeriodStart(period);
+  const start = getExpensePeriodStart(period);
 
   return expenses.filter((expense) => {
     const matchesCategory = category === "all" || expense.category === category;
@@ -140,7 +140,7 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
     const originalMovement = await movementRepository.getActiveBySourceAsync("expense", expense.id);
     if (originalMovement && originalMovement.amount !== updatedExpense.total) {
       await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
-      await movementRepository.createAsync(createReversalMovement(expense, originalMovement, now));
+      await movementRepository.createAsync(createExpenseReversalMovement(expense, originalMovement, now));
       await movementRepository.createAsync(createExpenseMovement(updatedExpense, now));
     }
   });
@@ -171,7 +171,7 @@ export async function voidExpenseAsync(expense: Expense): Promise<Expense> {
 
     if (originalMovement) {
       await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
-      await movementRepository.createAsync(createReversalMovement(expense, originalMovement, now));
+      await movementRepository.createAsync(createExpenseReversalMovement(expense, originalMovement, now));
     }
   });
 

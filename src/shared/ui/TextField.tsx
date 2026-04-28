@@ -45,13 +45,14 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textMuted,
     ...typography.caption,
+    textTransform: "uppercase",
   },
   input: {
     minHeight: 54,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceElevated,
     color: colors.text,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,

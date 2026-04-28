@@ -1,5 +1,13 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { colors, spacing, typography } from "@/theme";
 
@@ -32,11 +40,22 @@ export function Screen({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {scrollable ? (
-        <ScrollView contentContainerStyle={styles.scrollContent}>{content}</ScrollView>
-      ) : (
-        content
-      )}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardAvoidingView}
+      >
+        {scrollable ? (
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {content}
+          </ScrollView>
+        ) : (
+          content
+        )}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -46,11 +65,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
   },
   inner: {
     flex: 1,
+    width: "100%",
+    maxWidth: 680,
+    alignSelf: "center",
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing.xxl,
@@ -58,6 +83,7 @@ const styles = StyleSheet.create({
   },
   header: {
     gap: spacing.md,
+    paddingTop: spacing.sm,
   },
   headerText: {
     gap: spacing.xs,
