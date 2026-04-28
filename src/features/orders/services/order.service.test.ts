@@ -21,14 +21,13 @@ const baseOrder: Order = {
 
 describe("order financial rules", () => {
   it("calculates subtotal and total", () => {
-    expect(calculateOrderTotals(5, 3, 2)).toEqual({
-      subtotal: 15,
-      total: 13,
+    expect(calculateOrderTotals([
+      { unitPrice: 5, quantity: 3 },
+      { unitPrice: 2, quantity: 4 },
+    ])).toEqual({
+      subtotal: 23,
+      total: 23,
     });
-  });
-
-  it("rejects discounts greater than subtotal", () => {
-    expect(() => calculateOrderTotals(5, 1, 6)).toThrow("DISCOUNT_EXCEEDS_SUBTOTAL");
   });
 
   it("creates an income movement for delivered orders", () => {

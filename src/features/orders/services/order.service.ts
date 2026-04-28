@@ -41,16 +41,11 @@ function createOrderNumber(now = new Date()): string {
   return `ORD-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${String(now.getTime()).slice(-6)}`;
 }
 
-export function calculateOrderTotals(unitPrice: number, quantity: number, discount: number) {
-  const subtotal = unitPrice * quantity;
-
-  if (discount > subtotal) {
-    throw new Error("DISCOUNT_EXCEEDS_SUBTOTAL");
-  }
-
+export function calculateOrderTotals(items: { unitPrice: number; quantity: number }[]) {
+  const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   return {
     subtotal,
-    total: subtotal - discount,
+    total: subtotal,
   };
 }
 
@@ -129,14 +124,15 @@ export async function getOrderDetailsAsync(id: string): Promise<OrderDetails | n
 export async function createOrderAsync(values: OrderFormValues): Promise<OrderDetails> {
   const parsed = orderSchema.parse(values);
   const database = await getDatabaseAsync();
-  const product = await new ProductRepository(database).getByIdAsync(parsed.productId);
+  const productRepository = new ProductRepository(database);
+  const products = await Promise.all(parsed.items.map((item) => productRepository.getByIdAsync(item.productId)));
 
-  if (!product || !product.isActive) {
+  if (products.some((product) => !product || !product.isActive)) {
     throw new Error("PRODUCT_NOT_AVAILABLE");
   }
 
   const now = new Date().toISOString();
-  const { subtotal, total } = calculateOrderTotals(product.price, parsed.quantity, parsed.discount);
+  const { subtotal, total } = calculateOrderTotals(parsed.items);
 
   const order: Order = {
     id: createId("order"),
@@ -144,7 +140,7 @@ export async function createOrderAsync(values: OrderFormValues): Promise<OrderDe
     customerName: parsed.customerName || undefined,
     customerPhone: parsed.customerPhone || undefined,
     subtotal,
-    discount: parsed.discount,
+    discount: 0,
     total,
     status: "pending",
     paymentStatus: parsed.paymentStatus,
@@ -153,22 +149,30 @@ export async function createOrderAsync(values: OrderFormValues): Promise<OrderDe
     updatedAt: now,
   };
 
-  const item: OrderItem = {
-    id: createId("order_item"),
-    orderId: order.id,
-    productId: product.id,
-    productName: product.name,
-    quantity: parsed.quantity,
-    unitPrice: product.price,
-    subtotal,
-    createdAt: now,
-  };
+  const items: OrderItem[] = parsed.items.map((parsedItem, index) => {
+    const product = products[index];
 
-  await new OrderRepository(database).createAsync(order, [item]);
+    if (!product) {
+      throw new Error("PRODUCT_NOT_AVAILABLE");
+    }
+
+    return {
+      id: createId("order_item"),
+      orderId: order.id,
+      productId: product.id,
+      productName: product.name,
+      quantity: parsedItem.quantity,
+      unitPrice: parsedItem.unitPrice,
+      subtotal: parsedItem.quantity * parsedItem.unitPrice,
+      createdAt: now,
+    };
+  });
+
+  await new OrderRepository(database).createAsync(order, items);
 
   return {
     order,
-    items: [item],
+    items,
   };
 }
 
@@ -179,43 +183,52 @@ export async function updatePendingOrderAsync(order: Order, values: OrderFormVal
 
   const parsed = orderSchema.parse(values);
   const database = await getDatabaseAsync();
-  const product = await new ProductRepository(database).getByIdAsync(parsed.productId);
+  const productRepository = new ProductRepository(database);
+  const products = await Promise.all(parsed.items.map((item) => productRepository.getByIdAsync(item.productId)));
 
-  if (!product || !product.isActive) {
+  if (products.some((product) => !product || !product.isActive)) {
     throw new Error("PRODUCT_NOT_AVAILABLE");
   }
 
   const now = new Date().toISOString();
-  const { subtotal, total } = calculateOrderTotals(product.price, parsed.quantity, parsed.discount);
+  const { subtotal, total } = calculateOrderTotals(parsed.items);
 
   const updatedOrder: Order = {
     ...order,
     customerName: parsed.customerName || undefined,
     customerPhone: parsed.customerPhone || undefined,
     subtotal,
-    discount: parsed.discount,
+    discount: 0,
     total,
     paymentStatus: parsed.paymentStatus,
     note: parsed.note || undefined,
     updatedAt: now,
   };
 
-  const item: OrderItem = {
-    id: createId("order_item"),
-    orderId: order.id,
-    productId: product.id,
-    productName: product.name,
-    quantity: parsed.quantity,
-    unitPrice: product.price,
-    subtotal,
-    createdAt: now,
-  };
+  const items: OrderItem[] = parsed.items.map((parsedItem, index) => {
+    const product = products[index];
 
-  await new OrderRepository(database).updateAsync(updatedOrder, [item]);
+    if (!product) {
+      throw new Error("PRODUCT_NOT_AVAILABLE");
+    }
+
+    return {
+      id: createId("order_item"),
+      orderId: order.id,
+      productId: product.id,
+      productName: product.name,
+      quantity: parsedItem.quantity,
+      unitPrice: parsedItem.unitPrice,
+      subtotal: parsedItem.quantity * parsedItem.unitPrice,
+      createdAt: now,
+    };
+  });
+
+  await new OrderRepository(database).updateAsync(updatedOrder, items);
 
   return {
     order: updatedOrder,
-    items: [item],
+    items,
   };
 }
 

@@ -37,7 +37,7 @@ export function NewProductScreen() {
   }
 
   return (
-    <Screen title="Nuevo producto">
+    <Screen title="Nuevo producto" backHref="/products">
       <TextField label="Nombre" onChangeText={setName} placeholder="Cupcake de vainilla" value={name} />
       <TextField
         keyboardType="decimal-pad"

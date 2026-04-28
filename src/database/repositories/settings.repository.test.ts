@@ -27,6 +27,6 @@ describe("SettingsRepository", () => {
       phone: "+53 555 1234",
       address: undefined,
     });
-    expect(mock.getUserVersion()).toBe(1);
+    expect(mock.getUserVersion()).toBe(2);
   });
 });

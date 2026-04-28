@@ -4,20 +4,16 @@ describe("orderSchema", () => {
   it("accepts a valid order", () => {
     expect(
       orderSchema.parse({
-        productId: "product_1",
-        quantity: "2",
-        discount: "1",
+        items: [{ productId: "product_1", quantity: "2", unitPrice: "5" }],
         paymentStatus: "paid",
       })
     ).toEqual({
-      productId: "product_1",
-      quantity: 2,
-      discount: 1,
+      items: [{ productId: "product_1", quantity: 2, unitPrice: 5 }],
       paymentStatus: "paid",
     });
   });
 
   it("rejects missing product or invalid quantity", () => {
-    expect(() => orderSchema.parse({ productId: "", quantity: 0 })).toThrow();
+    expect(() => orderSchema.parse({ items: [{ productId: "", quantity: 0, unitPrice: 1 }] })).toThrow();
   });
 });

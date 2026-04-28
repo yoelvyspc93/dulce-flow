@@ -28,6 +28,7 @@ export type Supply = {
   name: string;
   unit: string;
   category?: ExpenseCategory;
+  defaultPrice?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

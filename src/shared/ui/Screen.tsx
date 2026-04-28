@@ -1,4 +1,4 @@
-import { router, usePathname } from "expo-router";
+import { type Href, router, usePathname } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import type { PropsWithChildren } from "react";
 import {
@@ -20,11 +20,15 @@ import { AvatarButton } from "./AvatarButton";
 type ScreenProps = PropsWithChildren<{
   title: string;
   scrollable?: boolean;
+  backHref?: Href;
+  onBackPress?: () => void;
 }>;
 
 export function Screen({
   title,
   scrollable = true,
+  backHref,
+  onBackPress,
   children,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
@@ -34,6 +38,16 @@ export function Screen({
   const isTabScreen = ["/home", "/orders", "/expenses", "/settings"].includes(pathname);
 
   function handleBack() {
+    if (onBackPress) {
+      onBackPress();
+      return;
+    }
+
+    if (backHref) {
+      router.replace(backHref);
+      return;
+    }
+
     if (router.canGoBack()) {
       router.back();
       return;

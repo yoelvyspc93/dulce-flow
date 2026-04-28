@@ -44,7 +44,7 @@ export function OnboardingScreen() {
       });
 
       updateBusinessSettings(settings);
-      router.replace("/(tabs)/home");
+      router.replace(hasCompletedOnboarding ? "/(tabs)/settings" : "/(tabs)/home");
     } catch {
       setErrorMessage("No se pudo guardar la configuracion inicial.");
     } finally {
@@ -53,7 +53,10 @@ export function OnboardingScreen() {
   }
 
   return (
-    <Screen title={hasCompletedOnboarding ? "Datos del negocio" : "Primera configuracion"}>
+    <Screen
+      title={hasCompletedOnboarding ? "Datos del negocio" : "Primera configuracion"}
+      backHref={hasCompletedOnboarding ? "/(tabs)/settings" : undefined}
+    >
       <View style={styles.avatarPanel}>
         <SectionHeader
           title="Avatar"

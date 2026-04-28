@@ -89,4 +89,8 @@ export class ExpenseRepository {
   async updateStatusAsync(id: string, status: ExpenseStatus, updatedAt: string): Promise<void> {
     await this.client.runAsync("UPDATE expenses SET status = ?, updated_at = ? WHERE id = ?;", [status, updatedAt, id]);
   }
+
+  async deleteAsync(id: string): Promise<void> {
+    await this.client.runAsync("DELETE FROM expenses WHERE id = ?;", [id]);
+  }
 }

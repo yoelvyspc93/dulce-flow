@@ -98,7 +98,7 @@ export function ProductDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de producto">
+      <Screen title="Detalle de producto" backHref="/products">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
           <Text style={styles.loadingText}>Buscando producto...</Text>
@@ -109,7 +109,7 @@ export function ProductDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de producto">
+      <Screen title="Detalle de producto" backHref="/products">
         <EmptyState eyebrow="Producto" title="No se pudo cargar" description={loadErrorMessage} />
         <Button label="Volver al catalogo" onPress={() => router.replace("/products")} />
       </Screen>
@@ -118,7 +118,7 @@ export function ProductDetailsScreen() {
 
   if (!product) {
     return (
-      <Screen title="Detalle de producto">
+      <Screen title="Detalle de producto" backHref="/products">
         <EmptyState eyebrow="Producto" title="Producto no encontrado" description="Vuelve al catalogo y selecciona otro producto." />
         <Button label="Volver al catalogo" onPress={() => router.replace("/products")} />
       </Screen>
@@ -126,7 +126,7 @@ export function ProductDetailsScreen() {
   }
 
   return (
-    <Screen title="Detalle de producto">
+    <Screen title="Detalle de producto" backHref="/products">
       <ListItem
         title="Estado"
         subtitle="Los productos usados no se eliminan fisicamente"
