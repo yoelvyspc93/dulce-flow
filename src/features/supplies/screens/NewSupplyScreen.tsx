@@ -44,7 +44,10 @@ export function NewSupplyScreen() {
       <TextField label="Unidad" onChangeText={setUnit} placeholder="kg, unidad, caja..." value={unit} />
       <SelectField
         label="Categoria sugerida"
-        onPress={() => setCategoryIndex((current) => (current + 1) % SUPPLY_CATEGORIES.length)}
+        onValueChange={(selectedCategory) => {
+          setCategoryIndex(Math.max(0, SUPPLY_CATEGORIES.findIndex((item) => item === selectedCategory)));
+        }}
+        options={SUPPLY_CATEGORIES.map((item) => ({ label: item, value: item }))}
         value={category}
       />
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}

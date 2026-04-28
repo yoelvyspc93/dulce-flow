@@ -11,7 +11,7 @@ import { colors, spacing, typography } from "@/theme";
 
 export function NewOrderScreen() {
   const [activeProducts, setActiveProducts] = useState<Product[]>([]);
-  const [productIndex, setProductIndex] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -19,7 +19,7 @@ export function NewOrderScreen() {
   const [note, setNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const selectedProduct = activeProducts[productIndex];
+  const selectedProduct = activeProducts.find((product) => product.id === selectedProductId);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,7 +30,7 @@ export function NewOrderScreen() {
       if (isMounted) {
         const active = products.filter((product) => product.isActive);
         setActiveProducts(active);
-        setProductIndex(0);
+        setSelectedProductId(active[0]?.id ?? "");
       }
     }
 
@@ -41,7 +41,10 @@ export function NewOrderScreen() {
     };
   }, []);
 
-  const productLabel = selectedProduct ? `${selectedProduct.name} - $${selectedProduct.price.toFixed(2)}` : "No tienes productos activos";
+  const productOptions =
+    activeProducts.length > 0
+      ? activeProducts.map((product) => ({ label: `${product.name} - $${product.price.toFixed(2)}`, value: product.id }))
+      : [{ label: "No tienes productos activos", value: "empty", disabled: true }];
   const subtotal = selectedProduct ? selectedProduct.price * Number(quantity || 0) : 0;
   const total = subtotal - Number(discount || 0);
 
@@ -84,8 +87,10 @@ export function NewOrderScreen() {
       <TextField label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
       <SelectField
         label="Productos"
-        onPress={() => setProductIndex((current) => (activeProducts.length === 0 ? 0 : (current + 1) % activeProducts.length))}
-        value={productLabel}
+        disabled={activeProducts.length === 0}
+        onValueChange={setSelectedProductId}
+        options={productOptions}
+        value={selectedProduct?.id ?? "empty"}
       />
       <TextField keyboardType="decimal-pad" label="Cantidad" onChangeText={setQuantity} placeholder="1" value={quantity} />
       <TextField keyboardType="decimal-pad" label="Descuento" onChangeText={setDiscount} placeholder="0" value={discount} />

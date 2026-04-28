@@ -68,10 +68,13 @@ export function OnboardingScreen() {
       />
       <SelectField
         label="Moneda principal"
-        onPress={() => setCurrencyIndex((current) => (current + 1) % CURRENCIES.length)}
+        onValueChange={(selectedCurrency) => {
+          setCurrencyIndex(Math.max(0, CURRENCIES.findIndex((item) => item === selectedCurrency)));
+        }}
+        options={CURRENCIES.map((item) => ({ label: item, value: item }))}
         value={currency}
       />
-      <Text style={styles.helperText}>Toca el selector para alternar entre USD, CUP y EUR.</Text>
+      <Text style={styles.helperText}>Toca el selector para elegir entre USD, CUP y EUR.</Text>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       <View style={{ gap: 12, marginTop: 8 }}>
         <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar y continuar"} onPress={handleSaveAsync} />

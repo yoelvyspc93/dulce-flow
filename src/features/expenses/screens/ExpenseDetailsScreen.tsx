@@ -154,7 +154,11 @@ export function ExpenseDetailsScreen() {
       />
       <SelectField
         label="Categoria"
-        onPress={expense.status === "active" ? () => setCategoryIndex((current) => (current + 1) % EXPENSE_CATEGORIES.length) : undefined}
+        disabled={expense.status !== "active"}
+        onValueChange={(selectedCategory) => {
+          setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === selectedCategory)));
+        }}
+        options={EXPENSE_CATEGORIES.map((item) => ({ label: item, value: item }))}
         value={category}
       />
       <TextField

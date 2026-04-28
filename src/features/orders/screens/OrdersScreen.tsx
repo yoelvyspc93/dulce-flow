@@ -8,7 +8,7 @@ import {
   type OrderStatusFilter,
 } from "@/features/orders/services/order.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
+import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Order } from "@/shared/types";
 
 const STATUSES: OrderStatusFilter[] = ["all", "pending", "delivered", "cancelled"];
@@ -48,17 +48,21 @@ export function OrdersScreen() {
     <Screen title="Ordenes" subtitle="Pendientes, entregadas y canceladas con reglas financieras claras.">
       <View style={{ gap: 12 }}>
         <Button label="Crear orden" onPress={() => router.push("/orders/new")} />
-        <ListItem
-          onPress={() => setStatusIndex((current) => (current + 1) % STATUSES.length)}
-          title="Filtro por estado"
-          subtitle={status}
-          trailing={<Badge label="Cambiar" />}
+        <SelectField
+          label="Filtro por estado"
+          onValueChange={(selectedStatus) => {
+            setStatusIndex(Math.max(0, STATUSES.findIndex((item) => item === selectedStatus)));
+          }}
+          options={STATUSES.map((item) => ({ label: item, value: item }))}
+          value={status}
         />
-        <ListItem
-          onPress={() => setPeriodIndex((current) => (current + 1) % PERIODS.length)}
-          title="Filtro por periodo"
-          subtitle={period}
-          trailing={<Badge label="Cambiar" />}
+        <SelectField
+          label="Filtro por periodo"
+          onValueChange={(selectedPeriod) => {
+            setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
+          }}
+          options={PERIODS.map((item) => ({ label: item, value: item }))}
+          value={period}
         />
       </View>
 

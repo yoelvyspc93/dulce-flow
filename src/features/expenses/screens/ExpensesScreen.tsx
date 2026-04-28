@@ -9,7 +9,7 @@ import {
 } from "@/features/expenses/services/expense.service";
 import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.schema";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
+import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
@@ -49,17 +49,21 @@ export function ExpensesScreen() {
     <Screen title="Gastos" subtitle="Cada gasto activo impacta el dashboard y queda auditable.">
       <View style={{ gap: 12 }}>
         <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} />
-        <ListItem
-          onPress={() => setCategoryIndex((current) => (current + 1) % CATEGORIES.length)}
-          title="Filtro por categoria"
-          subtitle={category}
-          trailing={<Badge label="Cambiar" />}
+        <SelectField
+          label="Filtro por categoria"
+          onValueChange={(selectedCategory) => {
+            setCategoryIndex(Math.max(0, CATEGORIES.findIndex((item) => item === selectedCategory)));
+          }}
+          options={CATEGORIES.map((item) => ({ label: item, value: item }))}
+          value={category}
         />
-        <ListItem
-          onPress={() => setPeriodIndex((current) => (current + 1) % PERIODS.length)}
-          title="Filtro por periodo"
-          subtitle={period}
-          trailing={<Badge label="Cambiar" />}
+        <SelectField
+          label="Filtro por periodo"
+          onValueChange={(selectedPeriod) => {
+            setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
+          }}
+          options={PERIODS.map((item) => ({ label: item, value: item }))}
+          value={period}
         />
       </View>
 

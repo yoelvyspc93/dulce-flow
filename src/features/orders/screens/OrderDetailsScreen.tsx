@@ -20,7 +20,7 @@ export function OrderDetailsScreen() {
   const orderId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [details, setDetails] = useState<OrderDetails | null>(null);
   const [activeProducts, setActiveProducts] = useState<Product[]>([]);
-  const [productIndex, setProductIndex] = useState(0);
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -31,7 +31,7 @@ export function OrderDetailsScreen() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const order = details?.order;
-  const selectedProduct = activeProducts[productIndex];
+  const selectedProduct = activeProducts.find((product) => product.id === selectedProductId);
   const isEditable = order?.status === "pending";
   const subtotal = selectedProduct ? selectedProduct.price * Number(quantity || 0) : order?.subtotal ?? 0;
   const total = subtotal - Number(discount || 0);
@@ -57,7 +57,7 @@ export function OrderDetailsScreen() {
           if (loadedDetails) {
             const firstItem = loadedDetails.items[0];
             const foundProductIndex = active.findIndex((product) => product.id === firstItem?.productId);
-            setProductIndex(foundProductIndex >= 0 ? foundProductIndex : 0);
+            setSelectedProductId(foundProductIndex >= 0 ? active[foundProductIndex].id : active[0]?.id ?? "");
             setCustomerName(loadedDetails.order.customerName ?? "");
             setCustomerPhone(loadedDetails.order.customerPhone ?? "");
             setQuantity(firstItem ? String(firstItem.quantity) : "1");
@@ -162,6 +162,14 @@ export function OrderDetailsScreen() {
     );
   }
 
+  const selectedProductLabel = selectedProduct
+    ? `${selectedProduct.name} - $${selectedProduct.price.toFixed(2)}`
+    : details.items[0]?.productName ?? "Sin producto";
+  const productOptions =
+    activeProducts.length > 0
+      ? activeProducts.map((product) => ({ label: `${product.name} - $${product.price.toFixed(2)}`, value: product.id }))
+      : [{ label: selectedProductLabel, value: "empty", disabled: true }];
+
   return (
     <Screen title="Detalle de orden" subtitle="Solo las ordenes entregadas generan ingreso real.">
       <ListItem
@@ -174,8 +182,10 @@ export function OrderDetailsScreen() {
       <TextField editable={isEditable} label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
       <SelectField
         label="Producto"
-        onPress={isEditable ? () => setProductIndex((current) => (activeProducts.length === 0 ? 0 : (current + 1) % activeProducts.length)) : undefined}
-        value={selectedProduct ? `${selectedProduct.name} - $${selectedProduct.price.toFixed(2)}` : details.items[0]?.productName ?? "Sin producto"}
+        disabled={!isEditable || activeProducts.length === 0}
+        onValueChange={setSelectedProductId}
+        options={productOptions}
+        value={selectedProduct?.id ?? "empty"}
       />
       <TextField editable={isEditable} keyboardType="decimal-pad" label="Cantidad" onChangeText={setQuantity} placeholder="1" value={quantity} />
       <TextField editable={isEditable} keyboardType="decimal-pad" label="Descuento" onChangeText={setDiscount} placeholder="0" value={discount} />

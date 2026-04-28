@@ -12,7 +12,7 @@ import { colors, spacing, typography } from "@/theme";
 
 export function NewExpenseScreen() {
   const [activeSupplies, setActiveSupplies] = useState<Supply[]>([]);
-  const [selectedSupplyIndex, setSelectedSupplyIndex] = useState(-1);
+  const [selectedSupplyId, setSelectedSupplyId] = useState("manual");
   const [manualName, setManualName] = useState("");
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [quantity, setQuantity] = useState("");
@@ -21,7 +21,7 @@ export function NewExpenseScreen() {
   const [note, setNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const selectedSupply = selectedSupplyIndex >= 0 ? activeSupplies[selectedSupplyIndex] : undefined;
+  const selectedSupply = activeSupplies.find((supply) => supply.id === selectedSupplyId);
   const category = selectedSupply?.category ?? EXPENSE_CATEGORIES[categoryIndex];
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export function NewExpenseScreen() {
       if (isMounted) {
         const active = supplies.filter((supply) => supply.isActive);
         setActiveSupplies(active);
-        setSelectedSupplyIndex(active.length > 0 ? 0 : -1);
+        setSelectedSupplyId(active[0]?.id ?? "manual");
       }
     }
 
@@ -44,7 +44,10 @@ export function NewExpenseScreen() {
     };
   }, []);
 
-  const supplyLabel = selectedSupply ? selectedSupply.name : "Gasto sin insumo";
+  const supplyOptions = [
+    ...activeSupplies.map((supply) => ({ label: supply.name, value: supply.id })),
+    { label: "Gasto sin insumo", value: "manual" },
+  ];
 
   async function handleSaveAsync() {
     setIsSaving(true);
@@ -76,23 +79,20 @@ export function NewExpenseScreen() {
     <Screen title="Nuevo gasto" subtitle="Base de formulario para la fase de gastos.">
       <SelectField
         label="Insumo"
-        onPress={() => {
-          setSelectedSupplyIndex((current) => {
-            if (activeSupplies.length === 0) {
-              return -1;
-            }
-
-            return current >= activeSupplies.length - 1 ? -1 : current + 1;
-          });
-        }}
-        value={supplyLabel}
+        onValueChange={setSelectedSupplyId}
+        options={supplyOptions}
+        value={selectedSupply?.id ?? "manual"}
       />
       {!selectedSupply ? (
         <TextField label="Nombre manual" onChangeText={setManualName} placeholder="Gasto general" value={manualName} />
       ) : null}
       <SelectField
         label="Categoria"
-        onPress={() => setCategoryIndex((current) => (current + 1) % EXPENSE_CATEGORIES.length)}
+        disabled={Boolean(selectedSupply)}
+        onValueChange={(selectedCategory) => {
+          setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === selectedCategory)));
+        }}
+        options={EXPENSE_CATEGORIES.map((item) => ({ label: item, value: item }))}
         value={category}
       />
       <TextField keyboardType="decimal-pad" label="Cantidad" onChangeText={setQuantity} placeholder="Opcional" value={quantity} />

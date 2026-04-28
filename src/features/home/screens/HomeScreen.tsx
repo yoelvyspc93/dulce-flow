@@ -9,7 +9,7 @@ import {
   type DashboardPeriodFilter,
 } from "@/features/home/services/dashboard.service";
 import { MetricCard, SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
+import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
 
 const PERIODS: DashboardPeriodFilter[] = ["today", "week", "month", "all"];
@@ -73,11 +73,13 @@ export function HomeScreen() {
         />
       </View>
 
-      <ListItem
-        onPress={() => setPeriodIndex((current) => (current + 1) % PERIODS.length)}
-        title="Periodo"
-        subtitle={PERIOD_LABELS[period]}
-        trailing={<Badge label="Cambiar" />}
+      <SelectField
+        label="Periodo"
+        onValueChange={(selectedPeriod) => {
+          setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
+        }}
+        options={PERIODS.map((item) => ({ label: PERIOD_LABELS[item], value: item }))}
+        value={period}
       />
 
       <SectionHeader
