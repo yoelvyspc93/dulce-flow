@@ -46,6 +46,7 @@
       ]
     ],
     "experiments": {
+      "baseUrl": "/dulce-flow",
       "typedRoutes": true,
       "reactCompiler": true
     }
