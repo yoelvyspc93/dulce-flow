@@ -155,17 +155,17 @@ Criterio de terminado: los gastos afectan el dashboard y las anulaciones reviert
 
 Criterio de terminado: solo las ordenes entregadas cuentan como ingreso.
 
-## Fase 7 - Dashboard
+## Fase 7 - Dashboard `[x]`
 
-- [ ] Mostrar ingresos, gastos y ganancia estimada.
-- [ ] Calcular todo desde `movements`.
-- [ ] Agregar filtros:
+- [x] Mostrar ingresos, gastos y ganancia estimada.
+- [x] Calcular todo desde `movements`.
+- [x] Agregar filtros:
   - hoy
   - semana
   - mes
   - todo
-- [ ] Mostrar ultimos movimientos.
-- [ ] Agregar accesos rapidos.
+- [x] Mostrar ultimos movimientos.
+- [x] Agregar accesos rapidos.
 
 Criterio de terminado: los totales son correctos y persisten despues de cerrar/reabrir la app.
 

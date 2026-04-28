@@ -1,11 +1,61 @@
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useState } from "react";
 import { View } from "react-native";
 
+import {
+  formatAmount,
+  loadDashboardDataAsync,
+  type DashboardData,
+  type DashboardPeriodFilter,
+} from "@/features/home/services/dashboard.service";
 import { MetricCard, SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
 
+const PERIODS: DashboardPeriodFilter[] = ["today", "week", "month", "all"];
+const PERIOD_LABELS: Record<DashboardPeriodFilter, string> = {
+  today: "Hoy",
+  week: "Esta semana",
+  month: "Este mes",
+  all: "Todo",
+};
+
 export function HomeScreen() {
   const businessSettings = useAppStore((state) => state.businessSettings);
+  const [periodIndex, setPeriodIndex] = useState(2);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const period = PERIODS[periodIndex];
+  const currency = businessSettings?.currency ?? "USD";
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      async function loadAsync() {
+        setIsLoading(true);
+        const data = await loadDashboardDataAsync(period);
+
+        if (isActive) {
+          setDashboardData(data);
+          setIsLoading(false);
+        }
+      }
+
+      void loadAsync();
+
+      return () => {
+        isActive = false;
+      };
+    }, [period])
+  );
+
+  const summary = dashboardData?.summary ?? {
+    totalIn: 0,
+    totalOut: 0,
+    netProfit: 0,
+  };
+  const latestMovements = dashboardData?.latestMovements ?? [];
 
   return (
     <Screen
@@ -14,30 +64,58 @@ export function HomeScreen() {
       action={<Badge label="MVP" />}
     >
       <View style={{ gap: 16 }}>
-        <MetricCard label="Ingresos del periodo" amount="$0.00" tone="success" />
-        <MetricCard label="Gastos del periodo" amount="$0.00" tone="danger" />
-        <MetricCard label="Ganancia estimada" amount="$0.00" />
+        <MetricCard label="Ingresos del periodo" amount={formatAmount(summary.totalIn, currency)} tone="success" />
+        <MetricCard label="Gastos del periodo" amount={formatAmount(summary.totalOut, currency)} tone="danger" />
+        <MetricCard
+          label="Ganancia estimada"
+          amount={formatAmount(summary.netProfit, currency)}
+          tone={summary.netProfit < 0 ? "danger" : "default"}
+        />
       </View>
+
+      <ListItem
+        onPress={() => setPeriodIndex((current) => (current + 1) % PERIODS.length)}
+        title="Periodo"
+        subtitle={PERIOD_LABELS[period]}
+        trailing={<Badge label="Cambiar" />}
+      />
 
       <SectionHeader
         title="Accesos rapidos"
-        subtitle="Estos botones quedaran conectados en las fases de gastos y ordenes."
+        subtitle="Registra ventas y salidas sin navegar por todo el catalogo."
       />
       <View style={{ gap: 12 }}>
-        <Button label="Nueva orden" />
-        <Button label="Registrar gasto" variant="secondary" />
+        <Button label="Nueva orden" onPress={() => router.push("/orders/new")} />
+        <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} variant="secondary" />
       </View>
 
       <SectionHeader
         title="Ultimos movimientos"
-        subtitle="La tabla movements sera la fuente de verdad del dashboard."
+        subtitle={isLoading ? "Cargando movimientos..." : "La tabla movements es la fuente financiera."}
       />
-      <EmptyState
-        eyebrow="Sin datos"
-        title="Todavia no tienes movimientos"
-        description="Cuando registres ventas o gastos, apareceran aqui con impacto financiero."
-      />
-      <ListItem title="Filtro actual" subtitle="Este mes" trailing={<Badge label="Listo" />} />
+      {latestMovements.length === 0 && !isLoading ? (
+        <EmptyState
+          eyebrow="Sin datos"
+          title="Todavia no tienes movimientos"
+          description="Cuando registres ventas o gastos, apareceran aqui con impacto financiero."
+        />
+      ) : null}
+
+      <View style={{ gap: 12 }}>
+        {latestMovements.map((movement) => (
+          <ListItem
+            key={movement.id}
+            title={movement.description}
+            subtitle={`${movement.type} - ${new Date(movement.movementDate).toLocaleDateString()}`}
+            trailing={
+              <Badge
+                label={formatAmount(movement.amount, currency)}
+                tone={movement.direction === "in" ? "success" : "danger"}
+              />
+            }
+          />
+        ))}
+      </View>
     </Screen>
   );
 }
