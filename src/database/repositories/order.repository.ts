@@ -127,6 +127,51 @@ export class OrderRepository {
     });
   }
 
+  async updateAsync(order: Order, items: OrderItem[]): Promise<void> {
+    await this.client.withTransactionAsync(async (transaction) => {
+      await transaction.runAsync(
+        `UPDATE orders
+         SET customer_name = ?, customer_phone = ?, subtotal = ?, discount = ?, total = ?,
+             status = ?, payment_status = ?, note = ?, delivered_at = ?, cancelled_at = ?, updated_at = ?
+         WHERE id = ?;`,
+        [
+          order.customerName ?? null,
+          order.customerPhone ?? null,
+          order.subtotal,
+          order.discount,
+          order.total,
+          order.status,
+          order.paymentStatus,
+          order.note ?? null,
+          order.deliveredAt ?? null,
+          order.cancelledAt ?? null,
+          order.updatedAt,
+          order.id,
+        ]
+      );
+
+      await transaction.runAsync("DELETE FROM order_items WHERE order_id = ?;", [order.id]);
+
+      for (const item of items) {
+        await transaction.runAsync(
+          `INSERT INTO order_items (
+            id, order_id, product_id, product_name, quantity, unit_price, subtotal, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            item.id,
+            item.orderId,
+            item.productId ?? null,
+            item.productName,
+            item.quantity,
+            item.unitPrice,
+            item.subtotal,
+            item.createdAt,
+          ]
+        );
+      }
+    });
+  }
+
   async updateStatusAsync(args: {
     id: string;
     status: OrderStatus;

@@ -144,14 +144,14 @@ Criterio de terminado: productos e insumos persisten y aparecen en formularios.
 
 Criterio de terminado: los gastos afectan el dashboard y las anulaciones revierten sin borrar auditoria.
 
-## Fase 6 - Ordenes Y Movimientos
+## Fase 6 - Ordenes Y Movimientos `[x]`
 
-- [ ] Crear, listar, editar y ver ordenes.
-- [ ] Calcular subtotal, descuento y total automaticamente.
-- [ ] Permitir edicion solo en ordenes pendientes.
-- [ ] Entregar orden y crear movimiento `income/in`.
-- [ ] Cancelar orden entregada y crear movimiento `reversal/out`.
-- [ ] Filtrar por estado, cliente y periodo.
+- [x] Crear, listar, editar y ver ordenes.
+- [x] Calcular subtotal, descuento y total automaticamente.
+- [x] Permitir edicion solo en ordenes pendientes.
+- [x] Entregar orden y crear movimiento `income/in`.
+- [x] Cancelar orden entregada y crear movimiento `reversal/out`.
+- [x] Filtrar por estado, cliente y periodo.
 
 Criterio de terminado: solo las ordenes entregadas cuentan como ingreso.
 
