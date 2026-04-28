@@ -2,12 +2,12 @@ import type { PropsWithChildren, ReactNode } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors, spacing, typography } from "@/theme";
 
@@ -25,6 +25,7 @@ export function Screen({
   scrollable = true,
   children,
 }: ScreenProps) {
+  const insets = useSafeAreaInsets();
   const content = (
     <View style={styles.inner}>
       <View style={styles.header}>
@@ -39,7 +40,12 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View
+      style={[
+        styles.safeArea,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
@@ -56,7 +62,7 @@ export function Screen({
           content
         )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
