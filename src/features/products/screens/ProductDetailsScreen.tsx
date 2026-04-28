@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import {
@@ -14,10 +14,13 @@ import { colors, spacing, typography } from "@/theme";
 
 export function ProductDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
+  const productId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [product, setProduct] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [description, setDescription] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -25,13 +28,29 @@ export function ProductDetailsScreen() {
     let isActive = true;
 
     async function loadProductAsync() {
-      const loadedProduct = params.id ? await getProductAsync(params.id) : null;
+      setIsLoading(true);
+      setLoadErrorMessage("");
 
-      if (isActive && loadedProduct) {
-        setProduct(loadedProduct);
-        setName(loadedProduct.name);
-        setPrice(String(loadedProduct.price));
-        setDescription(loadedProduct.description ?? "");
+      try {
+        const loadedProduct = productId ? await getProductAsync(productId) : null;
+
+        if (isActive) {
+          setProduct(loadedProduct);
+
+          if (loadedProduct) {
+            setName(loadedProduct.name);
+            setPrice(String(loadedProduct.price));
+            setDescription(loadedProduct.description ?? "");
+          }
+        }
+      } catch {
+        if (isActive) {
+          setLoadErrorMessage("No se pudo cargar el producto.");
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -40,7 +59,7 @@ export function ProductDetailsScreen() {
     return () => {
       isActive = false;
     };
-  }, [params.id]);
+  }, [productId]);
 
   async function handleSaveAsync() {
     if (!product) {
@@ -75,6 +94,26 @@ export function ProductDetailsScreen() {
 
     const updatedProduct = await setProductActiveAsync(product, !product.isActive);
     setProduct(updatedProduct);
+  }
+
+  if (isLoading) {
+    return (
+      <Screen title="Detalle de producto" subtitle="Cargando informacion del catalogo.">
+        <View style={styles.loadingState}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.loadingText}>Buscando producto...</Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (loadErrorMessage) {
+    return (
+      <Screen title="Detalle de producto" subtitle="Hubo un problema al abrir esta pantalla.">
+        <EmptyState eyebrow="Producto" title="No se pudo cargar" description={loadErrorMessage} />
+        <Button label="Volver al catalogo" onPress={() => router.replace("/products")} />
+      </Screen>
+    );
   }
 
   if (!product) {
@@ -114,5 +153,14 @@ const styles = StyleSheet.create({
     color: colors.danger,
     ...typography.caption,
     marginTop: spacing.xs,
+  },
+  loadingState: {
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.xxl,
+  },
+  loadingText: {
+    color: colors.textMuted,
+    ...typography.body,
   },
 });

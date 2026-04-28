@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import {
@@ -17,6 +17,7 @@ import { colors, spacing, typography } from "@/theme";
 
 export function OrderDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
+  const orderId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [details, setDetails] = useState<OrderDetails | null>(null);
   const [activeProducts, setActiveProducts] = useState<Product[]>([]);
   const [productIndex, setProductIndex] = useState(0);
@@ -25,6 +26,8 @@ export function OrderDetailsScreen() {
   const [quantity, setQuantity] = useState("1");
   const [discount, setDiscount] = useState("0");
   const [note, setNote] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const order = details?.order;
@@ -37,25 +40,38 @@ export function OrderDetailsScreen() {
     let isMounted = true;
 
     async function loadAsync() {
-      const [loadedDetails, products] = await Promise.all([
-        params.id ? getOrderDetailsAsync(params.id) : Promise.resolve(null),
-        listProductsAsync(),
-      ]);
-      const active = products.filter((product) => product.isActive);
+      setIsLoading(true);
+      setLoadErrorMessage("");
 
-      if (isMounted) {
-        setDetails(loadedDetails);
-        setActiveProducts(active);
+      try {
+        const [loadedDetails, products] = await Promise.all([
+          orderId ? getOrderDetailsAsync(orderId) : Promise.resolve(null),
+          listProductsAsync(),
+        ]);
+        const active = products.filter((product) => product.isActive);
 
-        if (loadedDetails) {
-          const firstItem = loadedDetails.items[0];
-          const foundProductIndex = active.findIndex((product) => product.id === firstItem?.productId);
-          setProductIndex(foundProductIndex >= 0 ? foundProductIndex : 0);
-          setCustomerName(loadedDetails.order.customerName ?? "");
-          setCustomerPhone(loadedDetails.order.customerPhone ?? "");
-          setQuantity(firstItem ? String(firstItem.quantity) : "1");
-          setDiscount(String(loadedDetails.order.discount));
-          setNote(loadedDetails.order.note ?? "");
+        if (isMounted) {
+          setDetails(loadedDetails);
+          setActiveProducts(active);
+
+          if (loadedDetails) {
+            const firstItem = loadedDetails.items[0];
+            const foundProductIndex = active.findIndex((product) => product.id === firstItem?.productId);
+            setProductIndex(foundProductIndex >= 0 ? foundProductIndex : 0);
+            setCustomerName(loadedDetails.order.customerName ?? "");
+            setCustomerPhone(loadedDetails.order.customerPhone ?? "");
+            setQuantity(firstItem ? String(firstItem.quantity) : "1");
+            setDiscount(String(loadedDetails.order.discount));
+            setNote(loadedDetails.order.note ?? "");
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setLoadErrorMessage("No se pudo cargar la orden.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
         }
       }
     }
@@ -65,7 +81,7 @@ export function OrderDetailsScreen() {
     return () => {
       isMounted = false;
     };
-  }, [params.id]);
+  }, [orderId]);
 
   async function handleSaveAsync() {
     if (!details?.order || !selectedProduct) {
@@ -115,6 +131,26 @@ export function OrderDetailsScreen() {
 
     const updatedOrder = await cancelOrderAsync(details.order);
     setDetails({ ...details, order: updatedOrder });
+  }
+
+  if (isLoading) {
+    return (
+      <Screen title="Detalle de orden" subtitle="Cargando informacion operativa y financiera.">
+        <View style={styles.loadingState}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.loadingText}>Buscando orden...</Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (loadErrorMessage) {
+    return (
+      <Screen title="Detalle de orden" subtitle="Hubo un problema al abrir esta pantalla.">
+        <EmptyState eyebrow="Orden" title="No se pudo cargar" description={loadErrorMessage} />
+        <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
+      </Screen>
+    );
   }
 
   if (!details || !order) {
@@ -175,5 +211,14 @@ const styles = StyleSheet.create({
     color: colors.danger,
     ...typography.caption,
     marginTop: spacing.xs,
+  },
+  loadingState: {
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.xxl,
+  },
+  loadingText: {
+    color: colors.textMuted,
+    ...typography.body,
   },
 });

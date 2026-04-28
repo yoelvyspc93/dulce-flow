@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import {
@@ -15,6 +15,7 @@ import { colors, spacing, typography } from "@/theme";
 
 export function ExpenseDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
+  const expenseId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [expense, setExpense] = useState<Expense | null>(null);
   const [supplyName, setSupplyName] = useState("");
   const [categoryIndex, setCategoryIndex] = useState(0);
@@ -22,6 +23,8 @@ export function ExpenseDetailsScreen() {
   const [unit, setUnit] = useState("");
   const [total, setTotal] = useState("");
   const [note, setNote] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const category = EXPENSE_CATEGORIES[categoryIndex];
@@ -30,16 +33,32 @@ export function ExpenseDetailsScreen() {
     let isMounted = true;
 
     async function loadExpenseAsync() {
-      const loadedExpense = params.id ? await getExpenseAsync(params.id) : null;
+      setIsLoading(true);
+      setLoadErrorMessage("");
 
-      if (isMounted && loadedExpense) {
-        setExpense(loadedExpense);
-        setSupplyName(loadedExpense.supplyName);
-        setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === loadedExpense.category)));
-        setQuantity(loadedExpense.quantity ? String(loadedExpense.quantity) : "");
-        setUnit(loadedExpense.unit ?? "");
-        setTotal(String(loadedExpense.total));
-        setNote(loadedExpense.note ?? "");
+      try {
+        const loadedExpense = expenseId ? await getExpenseAsync(expenseId) : null;
+
+        if (isMounted) {
+          setExpense(loadedExpense);
+
+          if (loadedExpense) {
+            setSupplyName(loadedExpense.supplyName);
+            setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === loadedExpense.category)));
+            setQuantity(loadedExpense.quantity ? String(loadedExpense.quantity) : "");
+            setUnit(loadedExpense.unit ?? "");
+            setTotal(String(loadedExpense.total));
+            setNote(loadedExpense.note ?? "");
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setLoadErrorMessage("No se pudo cargar el gasto.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -48,7 +67,7 @@ export function ExpenseDetailsScreen() {
     return () => {
       isMounted = false;
     };
-  }, [params.id]);
+  }, [expenseId]);
 
   async function handleSaveAsync() {
     if (!expense) {
@@ -87,6 +106,26 @@ export function ExpenseDetailsScreen() {
 
     const voidedExpense = await voidExpenseAsync(expense);
     setExpense(voidedExpense);
+  }
+
+  if (isLoading) {
+    return (
+      <Screen title="Detalle de gasto" subtitle="Cargando informacion financiera.">
+        <View style={styles.loadingState}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.loadingText}>Buscando gasto...</Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (loadErrorMessage) {
+    return (
+      <Screen title="Detalle de gasto" subtitle="Hubo un problema al abrir esta pantalla.">
+        <EmptyState eyebrow="Gasto" title="No se pudo cargar" description={loadErrorMessage} />
+        <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
+      </Screen>
+    );
   }
 
   if (!expense) {
@@ -165,5 +204,14 @@ const styles = StyleSheet.create({
     color: colors.danger,
     ...typography.caption,
     marginTop: spacing.xs,
+  },
+  loadingState: {
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.xxl,
+  },
+  loadingText: {
+    color: colors.textMuted,
+    ...typography.body,
   },
 });

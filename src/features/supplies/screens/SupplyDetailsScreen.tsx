@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import {
@@ -15,10 +15,13 @@ import { colors, spacing, typography } from "@/theme";
 
 export function SupplyDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
+  const supplyId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [supply, setSupply] = useState<Supply | null>(null);
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [categoryIndex, setCategoryIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const category = SUPPLY_CATEGORIES[categoryIndex];
@@ -27,13 +30,29 @@ export function SupplyDetailsScreen() {
     let isActive = true;
 
     async function loadSupplyAsync() {
-      const loadedSupply = params.id ? await getSupplyAsync(params.id) : null;
+      setIsLoading(true);
+      setLoadErrorMessage("");
 
-      if (isActive && loadedSupply) {
-        setSupply(loadedSupply);
-        setName(loadedSupply.name);
-        setUnit(loadedSupply.unit);
-        setCategoryIndex(Math.max(0, SUPPLY_CATEGORIES.findIndex((item) => item === loadedSupply.category)));
+      try {
+        const loadedSupply = supplyId ? await getSupplyAsync(supplyId) : null;
+
+        if (isActive) {
+          setSupply(loadedSupply);
+
+          if (loadedSupply) {
+            setName(loadedSupply.name);
+            setUnit(loadedSupply.unit);
+            setCategoryIndex(Math.max(0, SUPPLY_CATEGORIES.findIndex((item) => item === loadedSupply.category)));
+          }
+        }
+      } catch {
+        if (isActive) {
+          setLoadErrorMessage("No se pudo cargar el insumo.");
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -42,7 +61,7 @@ export function SupplyDetailsScreen() {
     return () => {
       isActive = false;
     };
-  }, [params.id]);
+  }, [supplyId]);
 
   async function handleSaveAsync() {
     if (!supply) {
@@ -77,6 +96,26 @@ export function SupplyDetailsScreen() {
 
     const updatedSupply = await setSupplyActiveAsync(supply, !supply.isActive);
     setSupply(updatedSupply);
+  }
+
+  if (isLoading) {
+    return (
+      <Screen title="Detalle de insumo" subtitle="Cargando informacion del catalogo.">
+        <View style={styles.loadingState}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.loadingText}>Buscando insumo...</Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (loadErrorMessage) {
+    return (
+      <Screen title="Detalle de insumo" subtitle="Hubo un problema al abrir esta pantalla.">
+        <EmptyState eyebrow="Insumo" title="No se pudo cargar" description={loadErrorMessage} />
+        <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
+      </Screen>
+    );
   }
 
   if (!supply) {
@@ -120,5 +159,14 @@ const styles = StyleSheet.create({
     color: colors.danger,
     ...typography.caption,
     marginTop: spacing.xs,
+  },
+  loadingState: {
+    alignItems: "center",
+    gap: spacing.md,
+    paddingVertical: spacing.xxl,
+  },
+  loadingText: {
+    color: colors.textMuted,
+    ...typography.body,
   },
 });
