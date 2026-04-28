@@ -4,7 +4,7 @@
     "slug": "dulce-flow",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/expo.icon/Assets/grid.png",
     "scheme": "dulceflow",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -12,31 +12,41 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#07111F",
+        "foregroundImage": "./assets/expo.icon/Assets/grid.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/expo.icon/Assets/grid.png"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "headers": {
+            "Cross-Origin-Embedder-Policy": "credentialless",
+            "Cross-Origin-Opener-Policy": "same-origin"
+          }
+        }
+      ],
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
+          "image": "./assets/expo.icon/Assets/grid.png",
+          "imageWidth": 76,
           "android": {
-            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#07111F",
+            "image": "./assets/expo.icon/Assets/grid.png",
             "imageWidth": 76
           }
         }
       ]
     ],
     "experiments": {
+      "baseUrl": "/dulce-flow",
       "typedRoutes": true,
       "reactCompiler": true
     }

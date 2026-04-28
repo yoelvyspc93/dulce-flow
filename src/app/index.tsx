@@ -1,17 +1,9 @@
-import { Text, View, StyleSheet } from "react-native";
+import { Redirect } from "expo-router";
+
+import { useAppStore } from "@/store/app.store";
 
 export default function Index() {
-  return (
-    <View style={styles.container}>
-      <Text>Edit src/app/index.tsx to edit this screen.</Text>
-    </View>
-  );
-}
+  const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+  return <Redirect href={hasCompletedOnboarding ? "/(tabs)/home" : "/onboarding"} />;
+}
