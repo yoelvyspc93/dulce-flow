@@ -1,5 +1,5 @@
 import { getDatabaseAsync } from "@/database/connection";
-import { ExpenseRepository, MovementRepository } from "@/database/repositories";
+import { ExpenseRepository, MovementRepository, SupplyRepository } from "@/database/repositories";
 import { createId } from "@/shared/utils/id";
 import type { Expense, ExpenseCategory, Movement } from "@/shared/types";
 
@@ -61,15 +61,13 @@ export async function listExpensesAsync(filters?: {
   period?: ExpensePeriodFilter;
 }): Promise<Expense[]> {
   const database = await getDatabaseAsync();
-  const expenses = await new ExpenseRepository(database).getAllAsync();
   const category = filters?.category ?? "all";
   const period = filters?.period ?? "all";
   const start = getExpensePeriodStart(period);
 
-  return expenses.filter((expense) => {
-    const matchesCategory = category === "all" || expense.category === category;
-    const matchesPeriod = start === null || new Date(expense.createdAt) >= start;
-    return matchesCategory && matchesPeriod;
+  return new ExpenseRepository(database).getFilteredAsync({
+    category,
+    startDate: start?.toISOString() ?? null,
   });
 }
 
@@ -81,13 +79,15 @@ export async function getExpenseAsync(id: string): Promise<Expense | null> {
 export async function createExpenseAsync(values: ExpenseFormValues): Promise<Expense> {
   const parsed = expenseSchema.parse(values);
   const now = new Date().toISOString();
+  const database = await getDatabaseAsync();
+  const selectedSupply = parsed.supplyId ? await new SupplyRepository(database).getByIdAsync(parsed.supplyId) : null;
   const expense: Expense = {
     id: createId("expense"),
-    supplyId: parsed.supplyId,
-    supplyName: parsed.supplyName,
-    category: parsed.category,
+    supplyId: selectedSupply?.id,
+    supplyName: selectedSupply?.name ?? parsed.supplyName,
+    category: selectedSupply?.category ?? parsed.category,
     quantity: parsed.quantity,
-    unit: parsed.unit || undefined,
+    unit: (selectedSupply?.unit ?? parsed.unit) || undefined,
     unitPrice: parsed.unitPrice,
     total: calculateExpenseTotal(parsed),
     status: "active",
@@ -95,8 +95,6 @@ export async function createExpenseAsync(values: ExpenseFormValues): Promise<Exp
     createdAt: now,
     updatedAt: now,
   };
-
-  const database = await getDatabaseAsync();
 
   await database.withTransactionAsync(async (transaction) => {
     await new ExpenseRepository(transaction).createAsync(expense);
@@ -109,20 +107,20 @@ export async function createExpenseAsync(values: ExpenseFormValues): Promise<Exp
 export async function updateExpenseAsync(expense: Expense, values: ExpenseFormValues): Promise<Expense> {
   const parsed = expenseSchema.parse(values);
   const now = new Date().toISOString();
+  const database = await getDatabaseAsync();
+  const selectedSupply = parsed.supplyId ? await new SupplyRepository(database).getByIdAsync(parsed.supplyId) : null;
   const updatedExpense: Expense = {
     ...expense,
-    supplyId: parsed.supplyId,
-    supplyName: parsed.supplyName,
-    category: parsed.category,
+    supplyId: selectedSupply?.id,
+    supplyName: selectedSupply?.name ?? parsed.supplyName,
+    category: selectedSupply?.category ?? parsed.category,
     quantity: parsed.quantity,
-    unit: parsed.unit || undefined,
+    unit: (selectedSupply?.unit ?? parsed.unit) || undefined,
     unitPrice: parsed.unitPrice,
     total: calculateExpenseTotal(parsed),
     note: parsed.note || undefined,
     updatedAt: now,
   };
-
-  const database = await getDatabaseAsync();
 
   await database.withTransactionAsync(async (transaction) => {
     const expenseRepository = new ExpenseRepository(transaction);
@@ -131,7 +129,9 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
     await expenseRepository.updateAsync(updatedExpense);
 
     const originalMovement = await movementRepository.getActiveBySourceAsync("expense", expense.id);
-    if (originalMovement && originalMovement.amount !== updatedExpense.total) {
+    if (!originalMovement) {
+      await movementRepository.createAsync(createExpenseMovement(updatedExpense, now));
+    } else if (originalMovement.amount !== updatedExpense.total) {
       await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
       await movementRepository.createAsync(createExpenseMovement(updatedExpense, now));
     }

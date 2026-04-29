@@ -7,10 +7,9 @@ type OrderRow = {
   customer_name: string | null;
   customer_phone: string | null;
   subtotal: number;
-  discount: number;
   total: number;
   status: OrderStatus;
-  payment_status: Order["paymentStatus"];
+  due_date: string;
   note: string | null;
   delivered_at: string | null;
   cancelled_at: string | null;
@@ -36,10 +35,9 @@ function mapOrderRow(row: OrderRow): Order {
     customerName: row.customer_name ?? undefined,
     customerPhone: row.customer_phone ?? undefined,
     subtotal: row.subtotal,
-    discount: row.discount,
     total: row.total,
     status: row.status,
-    paymentStatus: row.payment_status,
+    dueDate: row.due_date,
     note: row.note ?? undefined,
     deliveredAt: row.delivered_at ?? undefined,
     cancelledAt: row.cancelled_at ?? undefined,
@@ -69,6 +67,53 @@ export class OrderRepository {
     return rows.map(mapOrderRow);
   }
 
+  async getFilteredAsync(filters?: {
+    status?: OrderStatus | "all";
+    startDate?: string | null;
+    customerQuery?: string;
+    limit?: number;
+  }): Promise<Order[]> {
+    const clauses: string[] = [];
+    const params: (string | number | null)[] = [];
+
+    if (filters?.status && filters.status !== "all") {
+      clauses.push("status = ?");
+      params.push(filters.status);
+    }
+
+    if (filters?.startDate) {
+      clauses.push("created_at >= ?");
+      params.push(filters.startDate);
+    }
+
+    const query = filters?.customerQuery?.trim();
+    if (query) {
+      clauses.push("(LOWER(COALESCE(customer_name, '')) LIKE ? OR LOWER(COALESCE(customer_phone, '')) LIKE ?)");
+      const like = `%${query.toLowerCase()}%`;
+      params.push(like, like);
+    }
+
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const limit = filters?.limit ? " LIMIT ?" : "";
+    if (filters?.limit) {
+      params.push(filters.limit);
+    }
+
+    const rows = await this.client.getAllAsync<OrderRow>(
+      `SELECT * FROM orders ${where} ORDER BY created_at DESC${limit};`,
+      params
+    );
+    return rows.map(mapOrderRow);
+  }
+
+  async getPendingByDueDateAsync(limit = 5): Promise<Order[]> {
+    const rows = await this.client.getAllAsync<OrderRow>(
+      "SELECT * FROM orders WHERE status = 'pending' ORDER BY due_date ASC, created_at DESC LIMIT ?;",
+      [limit]
+    );
+    return rows.map(mapOrderRow);
+  }
+
   async getByIdAsync(id: string): Promise<Order | null> {
     const row = await this.client.getFirstAsync<OrderRow>("SELECT * FROM orders WHERE id = ? LIMIT 1;", [id]);
     return row ? mapOrderRow(row) : null;
@@ -86,19 +131,18 @@ export class OrderRepository {
     await this.client.withTransactionAsync(async (transaction) => {
       await transaction.runAsync(
         `INSERT INTO orders (
-          id, order_number, customer_name, customer_phone, subtotal, discount, total, status,
-          payment_status, note, delivered_at, cancelled_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          id, order_number, customer_name, customer_phone, subtotal, total, status,
+          due_date, note, delivered_at, cancelled_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           order.id,
           order.orderNumber,
           order.customerName ?? null,
           order.customerPhone ?? null,
           order.subtotal,
-          order.discount,
           order.total,
           order.status,
-          order.paymentStatus,
+          order.dueDate,
           order.note ?? null,
           order.deliveredAt ?? null,
           order.cancelledAt ?? null,
@@ -131,17 +175,16 @@ export class OrderRepository {
     await this.client.withTransactionAsync(async (transaction) => {
       await transaction.runAsync(
         `UPDATE orders
-         SET customer_name = ?, customer_phone = ?, subtotal = ?, discount = ?, total = ?,
-             status = ?, payment_status = ?, note = ?, delivered_at = ?, cancelled_at = ?, updated_at = ?
+         SET customer_name = ?, customer_phone = ?, subtotal = ?, total = ?,
+             status = ?, due_date = ?, note = ?, delivered_at = ?, cancelled_at = ?, updated_at = ?
          WHERE id = ?;`,
         [
           order.customerName ?? null,
           order.customerPhone ?? null,
           order.subtotal,
-          order.discount,
           order.total,
           order.status,
-          order.paymentStatus,
+          order.dueDate,
           order.note ?? null,
           order.deliveredAt ?? null,
           order.cancelledAt ?? null,
@@ -185,13 +228,5 @@ export class OrderRepository {
        WHERE id = ?;`,
       [args.status, args.updatedAt, args.deliveredAt ?? null, args.cancelledAt ?? null, args.id]
     );
-  }
-
-  async updatePaymentStatusAsync(id: string, paymentStatus: Order["paymentStatus"], updatedAt: string): Promise<void> {
-    await this.client.runAsync("UPDATE orders SET payment_status = ?, updated_at = ? WHERE id = ?;", [
-      paymentStatus,
-      updatedAt,
-      id,
-    ]);
   }
 }

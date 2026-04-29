@@ -13,7 +13,7 @@ import {
 import { listProductsAsync } from "@/features/products/services/product.service";
 import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Product } from "@/shared/types";
-import { formatOrderStatus, formatPaymentStatus } from "@/shared/utils/labels";
+import { formatOrderStatus } from "@/shared/utils/labels";
 import { colors, spacing, typography } from "@/theme";
 
 type OrderLine = {
@@ -32,6 +32,7 @@ export function OrderDetailsScreen() {
   const [activeProducts, setActiveProducts] = useState<Product[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<OrderLine[]>([]);
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +69,7 @@ export function OrderDetailsScreen() {
           if (loadedDetails) {
             setCustomerName(loadedDetails.order.customerName ?? "");
             setCustomerPhone(loadedDetails.order.customerPhone ?? "");
+            setDueDate(loadedDetails.order.dueDate.slice(0, 10));
             setItems(
               loadedDetails.items.map((item) => ({
                 id: item.id,
@@ -81,7 +83,7 @@ export function OrderDetailsScreen() {
         }
       } catch {
         if (isMounted) {
-          setLoadErrorMessage("No se pudo cargar la orden.");
+          setLoadErrorMessage("No se pudo cargar el pedido.");
         }
       } finally {
         if (isMounted) {
@@ -148,12 +150,12 @@ export function OrderDetailsScreen() {
       const updatedDetails = await updatePendingOrderAsync(details.order, {
         customerName,
         customerPhone,
+        dueDate,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
         })),
-        paymentStatus: details.order.paymentStatus,
         note,
       });
       setDetails(updatedDetails);
@@ -163,7 +165,7 @@ export function OrderDetailsScreen() {
       } else if (error instanceof Error && error.message === "PRODUCT_NOT_AVAILABLE") {
         setErrorMessage("Uno de los productos seleccionados no esta disponible.");
       } else {
-        setErrorMessage("No se pudo actualizar la orden.");
+        setErrorMessage("No se pudo actualizar el pedido.");
       }
     } finally {
       setIsSaving(false);
@@ -183,7 +185,7 @@ export function OrderDetailsScreen() {
       setDetails({ ...details, order: updatedOrder });
       setPendingAction(null);
     } catch {
-      setErrorMessage("No se pudo marcar la orden como entregada.");
+      setErrorMessage("No se pudo marcar el pedido como entregado.");
     } finally {
       setIsConfirmingAction(false);
     }
@@ -202,7 +204,7 @@ export function OrderDetailsScreen() {
       setDetails({ ...details, order: updatedOrder });
       setPendingAction(null);
     } catch {
-      setErrorMessage("No se pudo cancelar la orden.");
+      setErrorMessage("No se pudo cancelar el pedido.");
     } finally {
       setIsConfirmingAction(false);
     }
@@ -210,10 +212,10 @@ export function OrderDetailsScreen() {
 
   if (isLoading) {
     return (
-      <Screen title="Detalle de orden" backHref="/orders">
+      <Screen title="Detalle de pedido" backHref="/orders">
         <View style={styles.loadingState}>
           <ActivityIndicator color={colors.accent} />
-          <Text style={styles.loadingText}>Buscando orden...</Text>
+          <Text style={styles.loadingText}>Buscando pedido...</Text>
         </View>
       </Screen>
     );
@@ -221,18 +223,18 @@ export function OrderDetailsScreen() {
 
   if (loadErrorMessage) {
     return (
-      <Screen title="Detalle de orden" backHref="/orders">
-        <EmptyState eyebrow="Orden" title="No se pudo cargar" description={loadErrorMessage} />
-        <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
+      <Screen title="Detalle de pedido" backHref="/orders">
+        <EmptyState eyebrow="Pedido" title="No se pudo cargar" description={loadErrorMessage} />
+        <Button label="Volver a pedidos" onPress={() => router.replace("/orders")} />
       </Screen>
     );
   }
 
   if (!details || !order) {
     return (
-      <Screen title="Detalle de orden" backHref="/orders">
-        <EmptyState eyebrow="Orden" title="Orden no encontrada" description="Vuelve al listado y selecciona otra orden." />
-        <Button label="Volver a ordenes" onPress={() => router.replace("/orders")} />
+      <Screen title="Detalle de pedido" backHref="/orders">
+        <EmptyState eyebrow="Pedido" title="Pedido no encontrado" description="Vuelve al listado y selecciona otro pedido." />
+        <Button label="Volver a pedidos" onPress={() => router.replace("/orders")} />
       </Screen>
     );
   }
@@ -244,26 +246,26 @@ export function OrderDetailsScreen() {
   const confirmation =
     pendingAction === "deliver"
       ? {
-          title: "Marcar orden como entregada",
-          description: "La orden quedara entregada y el cobro se marcara como pagado.",
-          confirmLabel: "Marcar entregada",
+          title: "Marcar pedido como entregado",
+          description: "El pedido quedara entregado y se registrara el ingreso.",
+          confirmLabel: "Marcar entregado",
           onConfirm: handleDeliverAsync,
         }
       : {
-          title: "Cancelar orden",
+          title: "Cancelar pedido",
           description:
             order.status === "delivered"
-              ? "La orden quedara cancelada y se registrara un reverso del ingreso."
-              : "La orden quedara cancelada y no contara como venta completada.",
-          confirmLabel: "Cancelar orden",
+              ? "El pedido quedara cancelado y el ingreso original dejara de contar."
+              : "El pedido quedara cancelado y no contara como venta completada.",
+          confirmLabel: "Cancelar pedido",
           onConfirm: handleCancelAsync,
         };
 
   return (
-    <Screen title="Detalle de orden" backHref="/orders">
+    <Screen title="Detalle de pedido" backHref="/orders">
       <ListItem
         title="Estado"
-        subtitle="Marcar entregada completa tambien el cobro"
+        subtitle="Marcar entregado registra el ingreso"
         trailing={
           <Badge
             label={formatOrderStatus(order.status)}
@@ -271,13 +273,16 @@ export function OrderDetailsScreen() {
           />
         }
       />
-      <ListItem
-        title="Pago"
-        subtitle="Se actualiza al cerrar la orden como entregada"
-        trailing={<Badge label={formatPaymentStatus(order.paymentStatus)} tone={order.paymentStatus === "paid" ? "success" : "warning"} />}
-      />
       <TextField editable={isEditable} label="Cliente" onChangeText={setCustomerName} placeholder="Nombre" value={customerName} />
       <TextField editable={isEditable} label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
+      <TextField
+        editable={isEditable}
+        label="Fecha del pedido"
+        onChangeText={setDueDate}
+        placeholder="YYYY-MM-DD"
+        value={dueDate}
+        helperText="Dia en que debe estar listo o entregado."
+      />
       <View style={{ gap: 12 }}>
         {items.map((item, index) => (
           <View key={item.id} style={styles.itemCard}>
@@ -324,15 +329,12 @@ export function OrderDetailsScreen() {
       {order.status === "pending" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Marcar entregada" onPress={() => setPendingAction("deliver")} />
-          <Button label="Cancelar orden" onPress={() => setPendingAction("cancel")} variant="secondary" />
+          <Button label="Marcar entregado" onPress={() => setPendingAction("deliver")} />
+          <Button label="Cancelar pedido" onPress={() => setPendingAction("cancel")} variant="secondary" />
         </View>
       ) : null}
-      {order.status === "delivered" && order.paymentStatus === "pending" ? (
-        <Button label="Marcar entregada" onPress={() => setPendingAction("deliver")} />
-      ) : null}
       {order.status === "delivered" ? (
-        <Button label="Cancelar orden entregada" onPress={() => setPendingAction("cancel")} variant="secondary" />
+        <Button label="Cancelar pedido entregado" onPress={() => setPendingAction("cancel")} variant="secondary" />
       ) : null}
       <ConfirmDialog
         confirmLabel={confirmation.confirmLabel}

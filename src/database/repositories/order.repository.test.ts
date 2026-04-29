@@ -8,10 +8,9 @@ const baseOrder: Order = {
   customerName: "Maria",
   customerPhone: "555",
   subtotal: 20,
-  discount: 0,
   total: 20,
   status: "pending",
-  paymentStatus: "pending",
+  dueDate: "2026-04-29T12:00:00.000Z",
   note: "Urgente",
   createdAt: "2026-04-27T10:00:00.000Z",
   updatedAt: "2026-04-27T10:00:00.000Z",
@@ -61,7 +60,7 @@ describe("OrderRepository", () => {
         ...baseOrder,
         customerName: "Ana",
         total: 30,
-        paymentStatus: "paid",
+        dueDate: "2026-04-30T12:00:00.000Z",
         updatedAt: "2026-04-27T11:00:00.000Z",
       },
       [{ ...baseItem, id: "item_2", quantity: 3, subtotal: 30 }]
@@ -70,12 +69,12 @@ describe("OrderRepository", () => {
     await expect(repository.getByIdAsync("order_1")).resolves.toMatchObject({
       customerName: "Ana",
       total: 30,
-      paymentStatus: "paid",
+      dueDate: "2026-04-30T12:00:00.000Z",
     });
     await expect((await repository.getItemsByOrderIdAsync("order_1")).map((item) => item.id)).toEqual(["item_2"]);
   });
 
-  it("updates status and payment status", async () => {
+  it("updates status", async () => {
     const repository = new OrderRepository(createMockDatabaseClient().client);
 
     await repository.createAsync(baseOrder, [baseItem]);
@@ -85,14 +84,33 @@ describe("OrderRepository", () => {
       updatedAt: "2026-04-27T12:00:00.000Z",
       deliveredAt: "2026-04-27T12:00:00.000Z",
     });
-    await repository.updatePaymentStatusAsync("order_1", "paid", "2026-04-27T12:01:00.000Z");
-
     await expect(repository.getByIdAsync("order_1")).resolves.toMatchObject({
       status: "delivered",
-      paymentStatus: "paid",
       deliveredAt: "2026-04-27T12:00:00.000Z",
       cancelledAt: undefined,
     });
+  });
+
+  it("filters orders and lists pending orders by due date", async () => {
+    const repository = new OrderRepository(createMockDatabaseClient().client);
+
+    await repository.createAsync(baseOrder, []);
+    await repository.createAsync({
+      ...baseOrder,
+      id: "order_2",
+      orderNumber: "ORD-2",
+      customerName: "Ana",
+      status: "delivered",
+      dueDate: "2026-04-28T12:00:00.000Z",
+      createdAt: "2026-04-28T10:00:00.000Z",
+    }, []);
+
+    await expect(repository.getFilteredAsync({ status: "pending", customerQuery: "555" })).resolves.toEqual([
+      expect.objectContaining({ id: "order_1" }),
+    ]);
+    await expect(repository.getPendingByDueDateAsync()).resolves.toEqual([
+      expect.objectContaining({ id: "order_1" }),
+    ]);
   });
 
   it("contributes order item usage to product usage counts", async () => {

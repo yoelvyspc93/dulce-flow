@@ -1,5 +1,4 @@
 export type OrderStatus = "pending" | "delivered" | "cancelled";
-export type PaymentStatus = "pending" | "paid";
 export type MovementType = "income" | "expense" | "adjustment" | "reversal";
 export type MovementDirection = "in" | "out";
 export type MovementStatus = "active" | "voided" | "reversed";
@@ -52,10 +51,9 @@ export type Order = {
   customerName?: string;
   customerPhone?: string;
   subtotal: number;
-  discount: number;
   total: number;
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
+  dueDate: string;
   note?: string;
   deliveredAt?: string;
   cancelledAt?: string;

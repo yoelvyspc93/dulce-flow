@@ -1,5 +1,5 @@
 import { getDatabaseAsync } from "@/database/connection";
-import { MovementRepository } from "@/database/repositories";
+import { MovementRepository, OrderRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
 
 import { formatAmount, getDashboardDateRange, loadDashboardDataAsync } from "./dashboard.service";
@@ -44,9 +44,10 @@ describe("getDashboardDateRange", () => {
   it("loads dashboard summary and latest movements", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
-    const repository = new MovementRepository(mock.client);
+    const movementRepository = new MovementRepository(mock.client);
+    const orderRepository = new OrderRepository(mock.client);
 
-    await repository.createAsync({
+    await movementRepository.createAsync({
       id: "movement_1",
       type: "income",
       direction: "in",
@@ -59,7 +60,7 @@ describe("getDashboardDateRange", () => {
       createdAt: "2026-04-28T10:00:00.000Z",
       updatedAt: "2026-04-28T10:00:00.000Z",
     });
-    await repository.createAsync({
+    await movementRepository.createAsync({
       id: "movement_2",
       type: "expense",
       direction: "out",
@@ -72,6 +73,29 @@ describe("getDashboardDateRange", () => {
       createdAt: "2026-04-28T11:00:00.000Z",
       updatedAt: "2026-04-28T11:00:00.000Z",
     });
+    await movementRepository.createAsync({
+      id: "movement_old",
+      type: "income",
+      direction: "in",
+      sourceType: "order",
+      sourceId: "order_old",
+      amount: 100,
+      description: "Ingreso viejo",
+      status: "active",
+      movementDate: "2026-03-28T11:00:00.000Z",
+      createdAt: "2026-03-28T11:00:00.000Z",
+      updatedAt: "2026-03-28T11:00:00.000Z",
+    });
+    await orderRepository.createAsync({
+      id: "order_1",
+      orderNumber: "ORD-1",
+      subtotal: 20,
+      total: 20,
+      status: "pending",
+      dueDate: "2026-04-29T12:00:00.000Z",
+      createdAt: "2026-04-28T10:00:00.000Z",
+      updatedAt: "2026-04-28T10:00:00.000Z",
+    }, []);
 
     jest.useFakeTimers().setSystemTime(now);
     const data = await loadDashboardDataAsync("today");
@@ -79,5 +103,6 @@ describe("getDashboardDateRange", () => {
 
     expect(data.summary).toEqual({ totalIn: 20, totalOut: 5, netProfit: 15 });
     expect(data.latestMovements.map((movement) => movement.id)).toEqual(["movement_2", "movement_1"]);
+    expect(data.pendingOrders.map((order) => order.id)).toEqual(["order_1"]);
   });
 });

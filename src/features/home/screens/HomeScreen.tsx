@@ -57,6 +57,7 @@ export function HomeScreen() {
     netProfit: 0,
   };
   const latestMovements = dashboardData?.latestMovements ?? [];
+  const pendingOrders = dashboardData?.pendingOrders ?? [];
 
   return (
     <Screen title="DulceFlow">
@@ -94,8 +95,32 @@ export function HomeScreen() {
         subtitle="Registra ventas y salidas sin navegar por todo el catalogo."
       />
       <View style={{ gap: 12 }}>
-        <Button label="Nueva orden" onPress={() => router.push("/orders/new")} />
+        <Button label="Nuevo pedido" onPress={() => router.push("/orders/new")} />
         <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} variant="secondary" />
+      </View>
+
+      <SectionHeader
+        title="Pedidos pendientes"
+        subtitle={isLoading ? "Cargando pedidos..." : `${pendingOrders.length} pedidos por entregar`}
+      />
+      {pendingOrders.length === 0 && !isLoading ? (
+        <EmptyState
+          eyebrow="Sin pendientes"
+          title="No tienes pedidos pendientes"
+          description="Cuando crees pedidos, apareceran aqui ordenados por fecha."
+        />
+      ) : null}
+
+      <View style={{ gap: 12 }}>
+        {pendingOrders.map((order) => (
+          <ListItem
+            key={order.id}
+            onPress={() => router.push(`/orders/${order.id}`)}
+            title={order.customerName ?? order.orderNumber}
+            subtitle={`${new Date(order.dueDate).toLocaleDateString()} - ${formatAmount(order.total, currency)}`}
+            trailing={<Badge label="Pendiente" tone="warning" />}
+          />
+        ))}
       </View>
 
       <SectionHeader

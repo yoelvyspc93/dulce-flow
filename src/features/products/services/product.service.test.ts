@@ -143,10 +143,9 @@ describe("product recipe pricing", () => {
       id: "order_1",
       orderNumber: "ORD-1",
       subtotal: 10,
-      discount: 0,
       total: 10,
       status: "pending",
-      paymentStatus: "pending",
+      dueDate: "2026-04-29T12:00:00.000Z",
       createdAt: "2026-04-28T10:00:00.000Z",
       updatedAt: "2026-04-28T10:00:00.000Z",
     };
@@ -165,10 +164,11 @@ describe("product recipe pricing", () => {
     await orderRepository.createAsync(order, [item]);
 
     await expect(getProductUsageCountAsync("product_1")).resolves.toBe(1);
-    await expect(deleteProductPermanentlyAsync(product)).rejects.toThrow("PRODUCT_HAS_HISTORY");
+    await deleteProductPermanentlyAsync(product);
+    await expect(productRepository.getByIdAsync("product_1")).resolves.toMatchObject({ isActive: false });
   });
 
-  it("deletes products permanently when there is no history", async () => {
+  it("deactivates products instead of deleting permanently when there is no history", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const productRepository = new ProductRepository(mock.client);
@@ -184,6 +184,6 @@ describe("product recipe pricing", () => {
     await productRepository.createAsync(product);
     await deleteProductPermanentlyAsync(product);
 
-    await expect(productRepository.getByIdAsync("product_1")).resolves.toBeNull();
+    await expect(productRepository.getByIdAsync("product_1")).resolves.toMatchObject({ isActive: false });
   });
 });

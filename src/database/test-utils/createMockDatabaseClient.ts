@@ -49,10 +49,9 @@ type OrderRow = {
   customer_name: string | null;
   customer_phone: string | null;
   subtotal: number;
-  discount: number;
   total: number;
   status: string;
-  payment_status: string;
+  due_date: string;
   note: string | null;
   delivered_at: string | null;
   cancelled_at: string | null;
@@ -123,6 +122,55 @@ function nullableNumber(value: unknown): number | null {
 
 function compareDesc(left: string, right: string): number {
   return right.localeCompare(left);
+}
+
+function matchesOrderFilter(order: OrderRow, sql: string, values: SqlParams): boolean {
+  let index = 0;
+
+  if (sql.includes("status = ?")) {
+    if (order.status !== asString(values[index])) {
+      return false;
+    }
+    index += 1;
+  }
+
+  if (sql.includes("created_at >= ?")) {
+    if (order.created_at < asString(values[index])) {
+      return false;
+    }
+    index += 1;
+  }
+
+  if (sql.includes("LOWER(COALESCE(customer_name")) {
+    const query = asString(values[index]).replaceAll("%", "").toLowerCase();
+    index += 2;
+    const customerName = order.customer_name?.toLowerCase() ?? "";
+    const customerPhone = order.customer_phone?.toLowerCase() ?? "";
+    if (!customerName.includes(query) && !customerPhone.includes(query)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function matchesExpenseFilter(expense: ExpenseRow, sql: string, values: SqlParams): boolean {
+  let index = 0;
+
+  if (sql.includes("category = ?")) {
+    if (expense.category !== asString(values[index])) {
+      return false;
+    }
+    index += 1;
+  }
+
+  if (sql.includes("created_at >= ?")) {
+    if (expense.created_at < asString(values[index])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function createMockDatabaseClient() {
@@ -299,21 +347,20 @@ export function createMockDatabaseClient() {
           customer_name: nullableString(values[2]),
           customer_phone: nullableString(values[3]),
           subtotal: asNumber(values[4]),
-          discount: asNumber(values[5]),
-          total: asNumber(values[6]),
-          status: asString(values[7]),
-          payment_status: asString(values[8]),
-          note: nullableString(values[9]),
-          delivered_at: nullableString(values[10]),
-          cancelled_at: nullableString(values[11]),
-          created_at: asString(values[12]),
-          updated_at: asString(values[13]),
+          total: asNumber(values[5]),
+          status: asString(values[6]),
+          due_date: asString(values[7]),
+          note: nullableString(values[8]),
+          delivered_at: nullableString(values[9]),
+          cancelled_at: nullableString(values[10]),
+          created_at: asString(values[11]),
+          updated_at: asString(values[12]),
         });
         return result(1);
       }
 
       if (sql.startsWith("UPDATE orders") && sql.includes("SET customer_name")) {
-        const id = asString(values[11]);
+        const id = asString(values[10]);
         const existing = orders.get(id);
         if (!existing) {
           return result(0);
@@ -323,14 +370,13 @@ export function createMockDatabaseClient() {
           customer_name: nullableString(values[0]),
           customer_phone: nullableString(values[1]),
           subtotal: asNumber(values[2]),
-          discount: asNumber(values[3]),
-          total: asNumber(values[4]),
-          status: asString(values[5]),
-          payment_status: asString(values[6]),
-          note: nullableString(values[7]),
-          delivered_at: nullableString(values[8]),
-          cancelled_at: nullableString(values[9]),
-          updated_at: asString(values[10]),
+          total: asNumber(values[3]),
+          status: asString(values[4]),
+          due_date: asString(values[5]),
+          note: nullableString(values[6]),
+          delivered_at: nullableString(values[7]),
+          cancelled_at: nullableString(values[8]),
+          updated_at: asString(values[9]),
         });
         return result(1);
       }
@@ -348,16 +394,6 @@ export function createMockDatabaseClient() {
           delivered_at: nullableString(values[2]),
           cancelled_at: nullableString(values[3]),
         });
-        return result(1);
-      }
-
-      if (sql.startsWith("UPDATE orders SET payment_status")) {
-        const id = asString(values[2]);
-        const existing = orders.get(id);
-        if (!existing) {
-          return result(0);
-        }
-        orders.set(id, { ...existing, payment_status: asString(values[0]), updated_at: asString(values[1]) });
         return result(1);
       }
 
@@ -538,8 +574,30 @@ export function createMockDatabaseClient() {
         return Array.from(expenses.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
       }
 
+      if (sql.startsWith("SELECT * FROM expenses")) {
+        return Array.from(expenses.values())
+          .filter((expense) => matchesExpenseFilter(expense, sql, values))
+          .sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
       if (sql.startsWith("SELECT * FROM orders ORDER BY created_at DESC")) {
         return Array.from(orders.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM orders WHERE status = 'pending'")) {
+        const limit = Number(values[0] ?? 5);
+        return Array.from(orders.values())
+          .filter((order) => order.status === "pending")
+          .sort((left, right) => left.due_date.localeCompare(right.due_date) || compareDesc(left.created_at, right.created_at))
+          .slice(0, limit) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM orders")) {
+        const limit = sql.includes(" LIMIT ?") ? Number(values[values.length - 1] ?? 0) : 0;
+        const filtered = Array.from(orders.values())
+          .filter((order) => matchesOrderFilter(order, sql, values))
+          .sort((left, right) => compareDesc(left.created_at, right.created_at));
+        return (limit > 0 ? filtered.slice(0, limit) : filtered) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM order_items WHERE order_id")) {
@@ -580,10 +638,19 @@ export function createMockDatabaseClient() {
         return Array.from(grouped.values()) as T[];
       }
 
-      if (sql.startsWith("SELECT * FROM movements WHERE status = 'active'")) {
-        const limit = Number(values[0] ?? 10);
+      if (sql.includes("FROM movements") && sql.includes("status = 'active'") && sql.includes("ORDER BY movement_date DESC")) {
+        const hasRange = sql.includes("movement_date BETWEEN ? AND ?");
+        const limit = Number(values[hasRange ? 2 : 0] ?? 10);
         return Array.from(movements.values())
-          .filter((movement) => movement.status === "active")
+          .filter((movement) => {
+            if (movement.status !== "active") {
+              return false;
+            }
+            if (!hasRange) {
+              return true;
+            }
+            return movement.movement_date >= asString(values[0]) && movement.movement_date <= asString(values[1]);
+          })
           .sort((left, right) => {
             const byMovementDate = compareDesc(left.movement_date, right.movement_date);
             return byMovementDate || compareDesc(left.created_at, right.created_at);

@@ -41,6 +41,31 @@ export class ExpenseRepository {
     return rows.map(mapExpenseRow);
   }
 
+  async getFilteredAsync(filters?: {
+    category?: Expense["category"] | "all";
+    startDate?: string | null;
+  }): Promise<Expense[]> {
+    const clauses: string[] = [];
+    const params: string[] = [];
+
+    if (filters?.category && filters.category !== "all") {
+      clauses.push("category = ?");
+      params.push(filters.category);
+    }
+
+    if (filters?.startDate) {
+      clauses.push("created_at >= ?");
+      params.push(filters.startDate);
+    }
+
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const rows = await this.client.getAllAsync<ExpenseRow>(
+      `SELECT * FROM expenses ${where} ORDER BY created_at DESC;`,
+      params
+    );
+    return rows.map(mapExpenseRow);
+  }
+
   async getByIdAsync(id: string): Promise<Expense | null> {
     const row = await this.client.getFirstAsync<ExpenseRow>("SELECT * FROM expenses WHERE id = ? LIMIT 1;", [id]);
     return row ? mapExpenseRow(row) : null;

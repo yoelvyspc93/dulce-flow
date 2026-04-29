@@ -42,7 +42,7 @@ describe("supply service", () => {
     await expect(getSupplyAsync(supply.id)).resolves.toEqual(inactive);
   });
 
-  it("blocks permanent deletion when a supply has expense or recipe history", async () => {
+  it("deactivates supplies instead of deleting when a supply has expense or recipe history", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const supplyRepository = new SupplyRepository(mock.client);
@@ -83,10 +83,11 @@ describe("supply service", () => {
     await recipeRepository.replaceByProductIdAsync("product_1", [recipeItem]);
 
     await expect(getSupplyUsageCountAsync("supply_1")).resolves.toBe(2);
-    await expect(deleteSupplyPermanentlyAsync(supply)).rejects.toThrow("SUPPLY_HAS_HISTORY");
+    await deleteSupplyPermanentlyAsync(supply);
+    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toMatchObject({ isActive: false });
   });
 
-  it("deletes supplies permanently when there is no history", async () => {
+  it("deactivates supplies instead of deleting permanently when there is no history", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const supplyRepository = new SupplyRepository(mock.client);
@@ -102,6 +103,6 @@ describe("supply service", () => {
     await supplyRepository.createAsync(supply);
     await deleteSupplyPermanentlyAsync(supply);
 
-    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toBeNull();
+    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toMatchObject({ isActive: false });
   });
 });

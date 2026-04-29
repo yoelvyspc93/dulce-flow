@@ -73,6 +73,18 @@ export class MovementRepository {
     return rows.map(mapMovementRow);
   }
 
+  async getLatestByDateRangeAsync(startDate: string, endDate: string, limit = 10): Promise<Movement[]> {
+    const rows = await this.client.getAllAsync<MovementRow>(
+      `SELECT * FROM movements
+       WHERE status = 'active'
+         AND movement_date BETWEEN ? AND ?
+       ORDER BY movement_date DESC, created_at DESC
+       LIMIT ?;`,
+      [startDate, endDate, limit]
+    );
+    return rows.map(mapMovementRow);
+  }
+
   async getActiveBySourceAsync(sourceType: Movement["sourceType"], sourceId: string): Promise<Movement | null> {
     const row = await this.client.getFirstAsync<MovementRow>(
       `SELECT * FROM movements

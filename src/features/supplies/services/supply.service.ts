@@ -70,13 +70,5 @@ export async function getSupplyUsageCountAsync(supplyId: string): Promise<number
 }
 
 export async function deleteSupplyPermanentlyAsync(supply: Supply): Promise<void> {
-  const database = await getDatabaseAsync();
-  const repository = new SupplyRepository(database);
-  const usageCount = await repository.getUsageCountAsync(supply.id);
-
-  if (usageCount > 0) {
-    throw new Error("SUPPLY_HAS_HISTORY");
-  }
-
-  await repository.deleteAsync(supply.id);
+  await setSupplyActiveAsync(supply, false);
 }

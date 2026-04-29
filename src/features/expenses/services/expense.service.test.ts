@@ -1,5 +1,5 @@
 import { getDatabaseAsync } from "@/database/connection";
-import { ExpenseRepository, MovementRepository } from "@/database/repositories";
+import { ExpenseRepository, MovementRepository, SupplyRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
 import type { Expense } from "@/shared/types";
 
@@ -100,6 +100,15 @@ describe("expense financial rules", () => {
   it("creates an expense and matching movement in one operation", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+    await new SupplyRepository(mock.client).createAsync({
+      id: "supply_1",
+      name: "Azucar catalogo",
+      unit: "lb",
+      category: "ingredients",
+      isActive: true,
+      createdAt: "2026-04-28T10:00:00.000Z",
+      updatedAt: "2026-04-28T10:00:00.000Z",
+    });
     jest.useFakeTimers().setSystemTime(new Date("2026-04-28T15:00:00.000Z"));
 
     const expense = await createExpenseAsync({
@@ -115,6 +124,8 @@ describe("expense financial rules", () => {
 
     jest.useRealTimers();
     await expect(new ExpenseRepository(mock.client).getByIdAsync(expense.id)).resolves.toMatchObject({
+      supplyName: "Azucar catalogo",
+      unit: "lb",
       total: 8,
       note: undefined,
     });
@@ -165,6 +176,25 @@ describe("expense financial rules", () => {
 
     jest.useRealTimers();
     expect((await movementRepository.getLatestAsync()).map((movement) => movement.amount)).toEqual([15]);
+  });
+
+  it("creates a movement when an edited expense has no active movement", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+    const expenseRepository = new ExpenseRepository(mock.client);
+    const movementRepository = new MovementRepository(mock.client);
+
+    await expenseRepository.createAsync(baseExpense);
+
+    await updateExpenseAsync(baseExpense, {
+      supplyName: "Azucar",
+      category: "ingredients",
+      total: 12,
+    });
+
+    await expect(movementRepository.getActiveBySourceAsync("expense", "expense_1")).resolves.toMatchObject({
+      amount: 12,
+    });
   });
 
   it("voids an expense and its movement when deleted", async () => {

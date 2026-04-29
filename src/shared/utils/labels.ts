@@ -1,4 +1,4 @@
-import type { ExpenseCategory, OrderStatus, PaymentStatus } from "@/shared/types";
+import type { ExpenseCategory, OrderStatus } from "@/shared/types";
 
 type OrderStatusFilter = OrderStatus | "all";
 type ExpenseCategoryFilter = ExpenseCategory | "all";
@@ -9,11 +9,6 @@ export const orderStatusLabels: Record<OrderStatusFilter, string> = {
   pending: "Pendiente",
   delivered: "Entregada",
   cancelled: "Cancelada",
-};
-
-export const paymentStatusLabels: Record<PaymentStatus, string> = {
-  pending: "Pendiente",
-  paid: "Pagada",
 };
 
 export const expenseCategoryLabels: Record<ExpenseCategoryFilter, string> = {
@@ -35,10 +30,6 @@ export const periodLabels: Record<PeriodFilter, string> = {
 
 export function formatOrderStatus(status: OrderStatusFilter): string {
   return orderStatusLabels[status];
-}
-
-export function formatPaymentStatus(status: PaymentStatus): string {
-  return paymentStatusLabels[status];
 }
 
 export function formatExpenseCategory(category: ExpenseCategoryFilter): string {

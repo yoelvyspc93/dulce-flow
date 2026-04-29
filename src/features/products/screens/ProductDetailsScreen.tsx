@@ -167,7 +167,7 @@ export function ProductDetailsScreen() {
       router.replace("/products");
     } catch (error) {
       if (error instanceof Error && error.message === "PRODUCT_HAS_HISTORY") {
-        setErrorMessage("Este producto tiene ordenes asociadas. Puedes desactivarlo para ocultarlo de nuevas ventas.");
+      setErrorMessage("Este producto tiene pedidos asociados. Puedes desactivarlo para ocultarlo de nuevas ventas.");
       } else {
         setErrorMessage("No se pudo eliminar el producto.");
       }
@@ -325,7 +325,7 @@ export function ProductDetailsScreen() {
         {usageCount === 0 ? (
           <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
         ) : (
-          <Text style={styles.helperText}>Este producto tiene historial. Para conservar las ordenes, solo se puede desactivar.</Text>
+          <Text style={styles.helperText}>Este producto tiene historial. Para conservar los pedidos, solo se puede desactivar.</Text>
         )}
       </View>
       <ConfirmDialog

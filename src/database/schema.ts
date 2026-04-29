@@ -1,5 +1,5 @@
 export const DATABASE_NAME = "dulceflow.db";
-export const DATABASE_VERSION = 3;
+export const DATABASE_VERSION = 4;
 
 export const CREATE_PRODUCTS_TABLE = `
   CREATE TABLE IF NOT EXISTS products (
@@ -50,10 +50,9 @@ export const CREATE_ORDERS_TABLE = `
     customer_name TEXT,
     customer_phone TEXT,
     subtotal REAL NOT NULL DEFAULT 0,
-    discount REAL NOT NULL DEFAULT 0,
     total REAL NOT NULL DEFAULT 0,
     status TEXT NOT NULL CHECK(status IN ('pending', 'delivered', 'cancelled')),
-    payment_status TEXT NOT NULL CHECK(payment_status IN ('pending', 'paid')),
+    due_date TEXT NOT NULL,
     note TEXT,
     delivered_at TEXT,
     cancelled_at TEXT,
@@ -123,6 +122,7 @@ export const CREATE_SETTINGS_TABLE = `
 export const CREATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);",
   "CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);",
+  "CREATE INDEX IF NOT EXISTS idx_orders_due_date ON orders(due_date);",
   "CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at);",
   "CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);",
   "CREATE INDEX IF NOT EXISTS idx_recipe_product ON product_recipe_items(product_id);",

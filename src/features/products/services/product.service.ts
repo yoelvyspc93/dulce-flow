@@ -163,13 +163,5 @@ export async function getProductUsageCountAsync(productId: string): Promise<numb
 }
 
 export async function deleteProductPermanentlyAsync(product: Product): Promise<void> {
-  const database = await getDatabaseAsync();
-  const repository = new ProductRepository(database);
-  const usageCount = await repository.getUsageCountAsync(product.id);
-
-  if (usageCount > 0) {
-    throw new Error("PRODUCT_HAS_HISTORY");
-  }
-
-  await repository.deleteAsync(product.id);
+  await setProductActiveAsync(product, false);
 }

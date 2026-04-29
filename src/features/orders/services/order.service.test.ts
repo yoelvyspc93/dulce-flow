@@ -1,15 +1,14 @@
 import { getDatabaseAsync } from "@/database/connection";
 import { MovementRepository, OrderRepository, ProductRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
-import type { Movement, Order } from "@/shared/types";
+import type { Order } from "@/shared/types";
 
 import {
   cancelOrderAsync,
   calculateOrderTotals,
-  createDeliveredPaidOrder,
+  createDeliveredOrder,
   createIncomeMovement,
   createOrderAsync,
-  createOrderReversalMovement,
   deliverOrderAsync,
   getOrderDetailsAsync,
   getOrderPeriodStart,
@@ -27,10 +26,9 @@ const baseOrder: Order = {
   id: "order_1",
   orderNumber: "ORD-1",
   subtotal: 20,
-  discount: 0,
   total: 20,
   status: "delivered",
-  paymentStatus: "pending",
+  dueDate: "2026-04-29T12:00:00.000Z",
   createdAt: "2026-04-28T10:00:00.000Z",
   updatedAt: "2026-04-28T10:00:00.000Z",
 };
@@ -64,39 +62,11 @@ describe("order financial rules", () => {
     });
   });
 
-  it("marks delivered orders as paid in a single completion state", () => {
-    expect(createDeliveredPaidOrder(baseOrder, "2026-04-28T11:00:00.000Z")).toMatchObject({
+  it("marks orders as delivered in a single completion state", () => {
+    expect(createDeliveredOrder(baseOrder, "2026-04-28T11:00:00.000Z")).toMatchObject({
       status: "delivered",
-      paymentStatus: "paid",
       deliveredAt: "2026-04-28T11:00:00.000Z",
       updatedAt: "2026-04-28T11:00:00.000Z",
-    });
-  });
-
-  it("creates an outgoing reversal for cancelled paid orders", () => {
-    const originalMovement: Movement = {
-      id: "movement_1",
-      type: "income",
-      direction: "in",
-      sourceType: "order",
-      sourceId: "order_1",
-      amount: 20,
-      description: "Ingreso",
-      status: "active",
-      movementDate: "2026-04-28T11:00:00.000Z",
-      createdAt: "2026-04-28T11:00:00.000Z",
-      updatedAt: "2026-04-28T11:00:00.000Z",
-    };
-
-    const movement = createOrderReversalMovement(baseOrder, originalMovement, "2026-04-28T12:00:00.000Z");
-
-    expect(movement).toMatchObject({
-      type: "reversal",
-      direction: "out",
-      sourceType: "order",
-      sourceId: "order_1",
-      amount: 20,
-      reversedMovementId: "movement_1",
     });
   });
 
@@ -180,7 +150,7 @@ describe("order financial rules", () => {
     const details = await createOrderAsync({
       customerName: " Maria ",
       customerPhone: " 555 ",
-      paymentStatus: "pending",
+      dueDate: "2026-04-29",
       items: [{ productId: "product_1", quantity: 2, unitPrice: 10 }],
       note: "",
     });
@@ -201,7 +171,7 @@ describe("order financial rules", () => {
     });
     await expect(
       createOrderAsync({
-        paymentStatus: "pending",
+        dueDate: "2026-04-29",
         items: [{ productId: "product_1", quantity: 1, unitPrice: 10 }],
       })
     ).rejects.toThrow("PRODUCT_NOT_AVAILABLE");
@@ -226,14 +196,14 @@ describe("order financial rules", () => {
     await orderRepository.createAsync(pendingOrder, []);
 
     const details = await updatePendingOrderAsync(pendingOrder, {
-      paymentStatus: "paid",
+      dueDate: "2026-04-30",
       items: [{ productId: "product_1", quantity: 3, unitPrice: 10 }],
     });
 
-    expect(details.order).toMatchObject({ paymentStatus: "paid", total: 30 });
+    expect(details.order).toMatchObject({ dueDate: "2026-04-30T12:00:00.000Z", total: 30 });
     expect(details.items).toEqual([expect.objectContaining({ quantity: 3, subtotal: 30 })]);
     await expect(updatePendingOrderAsync({ ...baseOrder, status: "delivered" }, {
-      paymentStatus: "paid",
+      dueDate: "2026-04-30",
       items: [{ productId: "product_1", quantity: 1, unitPrice: 10 }],
     })).rejects.toThrow("ORDER_NOT_EDITABLE");
   });
@@ -244,15 +214,16 @@ describe("order financial rules", () => {
     const orderRepository = new OrderRepository(mock.client);
     const movementRepository = new MovementRepository(mock.client);
 
-    await orderRepository.createAsync(baseOrder, []);
+    const pendingOrder: Order = { ...baseOrder, status: "pending" };
+
+    await orderRepository.createAsync(pendingOrder, []);
     jest.useFakeTimers().setSystemTime(new Date("2026-04-28T15:00:00.000Z"));
-    const delivered = await deliverOrderAsync(baseOrder);
+    const delivered = await deliverOrderAsync(pendingOrder);
     await deliverOrderAsync(delivered);
     jest.useRealTimers();
 
     await expect(orderRepository.getByIdAsync("order_1")).resolves.toMatchObject({
       status: "delivered",
-      paymentStatus: "paid",
       deliveredAt: "2026-04-28T15:00:00.000Z",
     });
     expect(await movementRepository.getLatestAsync()).toHaveLength(1);
@@ -261,7 +232,7 @@ describe("order financial rules", () => {
     );
   });
 
-  it("cancels orders idempotently and reverses an active income movement", async () => {
+  it("cancels orders idempotently and voids an active income movement", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const orderRepository = new OrderRepository(mock.client);
@@ -280,8 +251,6 @@ describe("order financial rules", () => {
       status: "cancelled",
       cancelledAt: "2026-04-28T15:00:00.000Z",
     });
-    await expect(movementRepository.getLatestAsync()).resolves.toEqual([
-      expect.objectContaining({ type: "reversal", reversedMovementId: income.id }),
-    ]);
+    await expect(movementRepository.getLatestAsync()).resolves.toEqual([]);
   });
 });
