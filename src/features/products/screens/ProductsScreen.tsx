@@ -46,7 +46,7 @@ export function ProductsScreen() {
         <EmptyState
           eyebrow="Sin productos"
           title="No tienes productos activos"
-          description="Crea productos desde Ajustes para poder registrar pedidos."
+          description="Crea productos para venderlos despues dentro de tus pedidos."
         />
       ) : null}
 

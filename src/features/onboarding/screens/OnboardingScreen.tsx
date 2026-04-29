@@ -78,7 +78,7 @@ export function OnboardingScreen() {
 
       <SectionHeader
         title="Negocio"
-        subtitle="Esta configuracion se guarda en SQLite y define el estado inicial de la app."
+        subtitle="Tus datos se guardan en este dispositivo. Puedes cambiar nombre, moneda y avatar despues desde Ajustes > Configuracion inicial."
       />
       <TextField
         label="Nombre del negocio"
@@ -94,15 +94,10 @@ export function OnboardingScreen() {
         options={CURRENCIES.map((item) => ({ label: item, value: item }))}
         value={currency}
       />
-      <Text style={styles.helperText}>Toca el selector para elegir entre USD, CUP y EUR.</Text>
+      <Text style={styles.helperText}>Toca el selector para elegir entre USD, CUP y EUR. La moneda se usa en estadisticas, pedidos y gastos.</Text>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       <View style={{ gap: 12, marginTop: 8 }}>
         <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar y continuar"} onPress={handleSaveAsync} />
-        <Button
-          label={hasCompletedOnboarding ? "Volver a ajustes" : "Guardar y crear productos despues"}
-          onPress={hasCompletedOnboarding ? () => router.replace("/(tabs)/settings") : handleSaveAsync}
-          variant="secondary"
-        />
       </View>
     </Screen>
   );
@@ -119,6 +114,7 @@ const styles = StyleSheet.create({
   },
   avatarGrid: {
     flexDirection: "row",
+    justifyContent: "space-between",
     flexWrap: "wrap",
     gap: spacing.md,
   },

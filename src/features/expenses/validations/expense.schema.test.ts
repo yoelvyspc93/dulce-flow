@@ -34,4 +34,16 @@ describe("expenseSchema", () => {
       })
     ).toThrow();
   });
+
+  it("returns friendly messages for invalid numeric values", () => {
+    expect(() =>
+      expenseSchema.parse({
+        supplyId: "supply_1",
+        supplyName: "Azucar",
+        quantity: Number.NaN,
+        unit: "kg",
+        unitPrice: 5,
+      })
+    ).toThrow("La cantidad debe ser un numero valido.");
+  });
 });

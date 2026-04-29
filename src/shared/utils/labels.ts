@@ -12,9 +12,9 @@ export const orderStatusLabels: Record<OrderStatusFilter, string> = {
 
 export const periodLabels: Record<PeriodFilter, string> = {
   today: "Hoy",
-  week: "Semana",
-  month: "Mes",
-  all: "Todo",
+  week: "Esta semana",
+  month: "Este mes",
+  all: "Todo el historial",
 };
 
 export function formatOrderStatus(status: OrderStatusFilter): string {

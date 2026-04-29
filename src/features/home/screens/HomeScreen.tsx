@@ -18,7 +18,7 @@ const PERIOD_LABELS: Record<DashboardPeriodFilter, string> = {
   today: "Hoy",
   week: "Esta semana",
   month: "Este mes",
-  all: "Todo",
+  all: "Todo el historial",
 };
 
 export function HomeScreen() {
@@ -88,11 +88,12 @@ export function HomeScreen() {
         }}
         options={PERIODS.map((item) => ({ label: PERIOD_LABELS[item], value: item }))}
         value={period}
+        helperText="Cambia el rango usado para ingresos, gastos y ganancia."
       />
 
       <SectionHeader
         title="Accesos rapidos"
-        subtitle="Registra ventas y salidas sin navegar por todo el catalogo."
+        subtitle="Abren los mismos formularios que encuentras en Pedidos y Gastos."
       />
       <View style={{ gap: 12 }}>
         <Button label="Nuevo pedido" onPress={() => router.push("/orders/new")} />

@@ -8,6 +8,7 @@ import {
   deleteProductPermanentlyAsync,
   getProductAsync,
   getProductUsageCountAsync,
+  listProductsAsync,
   setProductActiveAsync,
   updateProductAsync,
 } from "./product.service";
@@ -40,6 +41,37 @@ describe("product service", () => {
     await expect(new ProductRepository(mock.client).getByIdAsync(product.id)).resolves.toMatchObject({
       isActive: false,
     });
+  });
+
+  it("blocks duplicated product names across active and inactive products", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+
+    const product = await createProductAsync({ name: " Cake ", price: 10, description: "" });
+    await expect(createProductAsync({ name: "cake", price: 12, description: "" })).rejects.toThrow(
+      "PRODUCT_NAME_DUPLICATED"
+    );
+
+    const inactive = await setProductActiveAsync(product, false);
+    await expect(createProductAsync({ name: "CAKE", price: 12, description: "" })).rejects.toThrow(
+      "PRODUCT_NAME_DUPLICATED"
+    );
+    await expect(updateProductAsync(inactive, { name: " Cake ", price: 11, description: "" })).resolves.toMatchObject({
+      name: "Cake",
+      price: 11,
+    });
+  });
+
+  it("blocks updates to another product name", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+
+    await createProductAsync({ name: "Cake", price: 10, description: "" });
+    const brownie = await createProductAsync({ name: "Brownie", price: 12, description: "" });
+
+    await expect(updateProductAsync(brownie, { name: " cake ", price: 12, description: "" })).rejects.toThrow(
+      "PRODUCT_NAME_DUPLICATED"
+    );
   });
 
   it("loads a product and returns null for missing products", async () => {
@@ -99,11 +131,11 @@ describe("product service", () => {
     await orderRepository.createAsync(order, [item]);
 
     await expect(getProductUsageCountAsync("product_1")).resolves.toBe(1);
-    await deleteProductPermanentlyAsync(product);
-    await expect(productRepository.getByIdAsync("product_1")).resolves.toMatchObject({ isActive: false });
+    await expect(deleteProductPermanentlyAsync(product)).rejects.toThrow("PRODUCT_HAS_HISTORY");
+    await expect(productRepository.getByIdAsync("product_1")).resolves.toMatchObject({ isActive: true });
   });
 
-  it("deactivates products instead of deleting permanently when there is no history", async () => {
+  it("deletes products permanently when there is no history", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const productRepository = new ProductRepository(mock.client);
@@ -119,6 +151,7 @@ describe("product service", () => {
     await productRepository.createAsync(product);
     await deleteProductPermanentlyAsync(product);
 
-    await expect(productRepository.getByIdAsync("product_1")).resolves.toMatchObject({ isActive: false });
+    await expect(productRepository.getByIdAsync("product_1")).resolves.toBeNull();
+    await expect(listProductsAsync()).resolves.toEqual([]);
   });
 });

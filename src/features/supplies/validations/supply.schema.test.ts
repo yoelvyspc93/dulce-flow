@@ -22,4 +22,10 @@ describe("supplySchema", () => {
   it("rejects units outside the fixed list", () => {
     expect(() => supplySchema.parse({ name: "Harina", unit: "saco" })).toThrow();
   });
+
+  it("returns a friendly message for invalid default prices", () => {
+    expect(() => supplySchema.parse({ name: "Harina", unit: "kg", defaultPrice: Number.NaN })).toThrow(
+      "El precio establecido debe ser un numero valido."
+    );
+  });
 });

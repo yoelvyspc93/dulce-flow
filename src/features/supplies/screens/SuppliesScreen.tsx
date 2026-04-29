@@ -46,7 +46,7 @@ export function SuppliesScreen() {
         <EmptyState
           eyebrow="Sin insumos"
           title="No tienes insumos activos"
-          description="Crea insumos desde Ajustes para registrar tus gastos mas rapido."
+          description="Crea insumos para registrar compras y gastos mas rapido."
         />
       ) : null}
 

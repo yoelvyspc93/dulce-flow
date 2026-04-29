@@ -13,6 +13,14 @@ import { formatPeriod } from "@/shared/utils/labels";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
 
+function formatExpenseSubtitle(expense: Expense): string {
+  const note = expense.note?.trim();
+  const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
+  const baseSubtitle = `$${expense.total.toFixed(2)} - ${expense.quantity} ${expense.unit}`;
+
+  return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
+}
+
 export function ExpensesScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [periodIndex, setPeriodIndex] = useState(2);
@@ -52,6 +60,7 @@ export function ExpensesScreen() {
           }}
           options={PERIODS.map((item) => ({ label: formatPeriod(item), value: item }))}
           value={period}
+          helperText="Define que gastos entran en este listado."
         />
       </View>
 
@@ -73,7 +82,7 @@ export function ExpensesScreen() {
             key={expense.id}
             onPress={() => router.push(`/expenses/${expense.id}`)}
             title={expense.supplyName}
-            subtitle={`$${expense.total.toFixed(2)} - ${expense.quantity} ${expense.unit}`}
+            subtitle={formatExpenseSubtitle(expense)}
             trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
           />
         ))}

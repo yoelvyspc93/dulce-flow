@@ -16,13 +16,13 @@ export function SettingsScreen() {
       <ListItem
         onPress={() => router.push("/products")}
         title="Productos"
-        subtitle="Gestion del catalogo"
+        subtitle="Catalogo de articulos que vendes en pedidos"
         trailing={<ChevronRight size={24} strokeWidth={2.4} color={colors.text} />}
       />
       <ListItem
         onPress={() => router.push("/supplies")}
         title="Insumos"
-        subtitle="Gestion del catalogo de gastos"
+        subtitle="Materiales o compras que usas para registrar gastos"
         trailing={<ChevronRight size={24} strokeWidth={2.4} color={colors.text} />}
       />
       <ListItem
