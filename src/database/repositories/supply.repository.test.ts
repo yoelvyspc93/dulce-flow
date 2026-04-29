@@ -1,6 +1,6 @@
-import { ExpenseRepository, ProductRecipeRepository, SupplyRepository } from "@/database/repositories";
+import { ExpenseRepository, SupplyRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
-import type { Expense, ProductRecipeItem, Supply } from "@/shared/types";
+import type { Expense, Supply } from "@/shared/types";
 
 const baseSupply: Supply = {
   id: "supply_1",
@@ -55,11 +55,10 @@ describe("SupplyRepository", () => {
     await expect(repository.getByIdAsync("supply_1")).resolves.toBeNull();
   });
 
-  it("counts usage in expenses and recipe items", async () => {
+  it("counts usage in expenses", async () => {
     const mock = createMockDatabaseClient();
     const supplyRepository = new SupplyRepository(mock.client);
     const expenseRepository = new ExpenseRepository(mock.client);
-    const recipeRepository = new ProductRecipeRepository(mock.client);
 
     const expense: Expense = {
       id: "expense_1",
@@ -73,21 +72,8 @@ describe("SupplyRepository", () => {
       createdAt: "2026-04-27T10:00:00.000Z",
       updatedAt: "2026-04-27T10:00:00.000Z",
     };
-    const recipe: ProductRecipeItem = {
-      id: "recipe_1",
-      productId: "product_1",
-      supplyId: "supply_1",
-      supplyName: "Azucar",
-      quantity: 1,
-      unit: "kg",
-      unitPrice: 4,
-      subtotal: 4,
-      createdAt: "2026-04-27T10:00:00.000Z",
-    };
-
     await expenseRepository.createAsync(expense);
-    await recipeRepository.replaceByProductIdAsync("product_1", [recipe]);
 
-    await expect(supplyRepository.getUsageCountAsync("supply_1")).resolves.toBe(2);
+    await expect(supplyRepository.getUsageCountAsync("supply_1")).resolves.toBe(1);
   });
 });

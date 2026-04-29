@@ -68,18 +68,6 @@ type OrderItemRow = {
   created_at: string;
 };
 
-type ProductRecipeItemRow = {
-  id: string;
-  product_id: string;
-  supply_id: string | null;
-  supply_name: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  subtotal: number;
-  created_at: string;
-};
-
 type MovementRow = {
   id: string;
   type: string;
@@ -165,7 +153,6 @@ export function createMockDatabaseClient() {
   const expenses = new Map<string, ExpenseRow>();
   const orders = new Map<string, OrderRow>();
   const orderItems = new Map<string, OrderItemRow>();
-  const productRecipeItems = new Map<string, ProductRecipeItemRow>();
   const movements = new Map<string, MovementRow>();
   let movementSummaryRows: MovementSummaryRow[] | null = null;
   let userVersion = 0;
@@ -401,30 +388,6 @@ export function createMockDatabaseClient() {
         return result(ids.length);
       }
 
-      if (sql.startsWith("DELETE FROM product_recipe_items")) {
-        const productId = asString(values[0]);
-        const ids = Array.from(productRecipeItems.values())
-          .filter((item) => item.product_id === productId)
-          .map((item) => item.id);
-        ids.forEach((id) => productRecipeItems.delete(id));
-        return result(ids.length);
-      }
-
-      if (sql.startsWith("INSERT INTO product_recipe_items")) {
-        productRecipeItems.set(asString(values[0]), {
-          id: asString(values[0]),
-          product_id: asString(values[1]),
-          supply_id: nullableString(values[2]),
-          supply_name: asString(values[3]),
-          quantity: asNumber(values[4]),
-          unit: asString(values[5]),
-          unit_price: asNumber(values[6]),
-          subtotal: asNumber(values[7]),
-          created_at: asString(values[8]),
-        });
-        return result(1);
-      }
-
       if (sql.startsWith("INSERT INTO movements")) {
         movementSummaryRows = null;
         movements.set(asString(values[0]), {
@@ -495,13 +458,6 @@ export function createMockDatabaseClient() {
       if (sql.startsWith("SELECT COUNT(*) as count FROM supplies")) {
         return {
           count: Array.from(supplies.values()).filter((supply) => supply.default_price === null || supply.default_price <= 0).length,
-        } as T;
-      }
-
-      if (sql.startsWith("SELECT COUNT(*) as count FROM product_recipe_items")) {
-        const supplyId = asString(values[0]);
-        return {
-          count: Array.from(productRecipeItems.values()).filter((item) => item.supply_id === supplyId).length,
         } as T;
       }
 
@@ -595,13 +551,6 @@ export function createMockDatabaseClient() {
         const orderId = asString(values[0]);
         return Array.from(orderItems.values())
           .filter((item) => item.order_id === orderId)
-          .sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
-      }
-
-      if (sql.startsWith("SELECT * FROM product_recipe_items WHERE product_id")) {
-        const productId = asString(values[0]);
-        return Array.from(productRecipeItems.values())
-          .filter((item) => item.product_id === productId)
           .sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
       }
 

@@ -1,19 +1,15 @@
 import { getDatabaseAsync } from "@/database/connection";
-import { OrderRepository, ProductRecipeRepository, ProductRepository } from "@/database/repositories";
+import { OrderRepository, ProductRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
 import type { Order, OrderItem, Product } from "@/shared/types";
 
 import {
-  calculateRecipeCost,
   createProductAsync,
-  createProductWithRecipeAsync,
   deleteProductPermanentlyAsync,
-  getProductDetailsAsync,
+  getProductAsync,
   getProductUsageCountAsync,
   setProductActiveAsync,
-  suggestSalePrice,
   updateProductAsync,
-  updateProductWithRecipeAsync,
 } from "./product.service";
 
 jest.mock("@/database/connection", () => ({
@@ -22,28 +18,10 @@ jest.mock("@/database/connection", () => ({
 
 const mockedGetDatabaseAsync = jest.mocked(getDatabaseAsync);
 
-describe("product recipe pricing", () => {
+describe("product service", () => {
   beforeEach(() => {
     jest.useRealTimers();
     mockedGetDatabaseAsync.mockReset();
-  });
-
-  it("calculates recipe cost from ingredients", () => {
-    expect(
-      calculateRecipeCost([
-        { quantity: 2, unitPrice: 3 },
-        { quantity: 0.5, unitPrice: 10 },
-      ])
-    ).toBe(11);
-  });
-
-  it("suggests sale price from cost and margin", () => {
-    expect(suggestSalePrice(10, 30)).toBe(13);
-  });
-
-  it("returns zero suggested price for non-positive costs and rounds cents", () => {
-    expect(suggestSalePrice(0, 30)).toBe(0);
-    expect(suggestSalePrice(10.005, 30)).toBe(13.01);
   });
 
   it("creates, updates and activates products", async () => {
@@ -64,38 +42,10 @@ describe("product recipe pricing", () => {
     });
   });
 
-  it("creates and updates products with recipes", async () => {
-    const mock = createMockDatabaseClient();
-    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
-    jest.useFakeTimers().setSystemTime(new Date("2026-04-28T15:00:00.000Z"));
-
-    const details = await createProductWithRecipeAsync({
-      name: "Cake",
-      price: 20,
-      recipeItems: [{ supplyId: "supply_1", supplyName: "Harina", quantity: 2, unit: "kg", unitPrice: 3 }],
-    });
-    const updated = await updateProductWithRecipeAsync(details.product, {
-      name: "Cake XL",
-      price: 25,
-      recipeItems: [{ supplyName: "Azucar", quantity: 1, unit: "kg", unitPrice: 4 }],
-    });
-
-    jest.useRealTimers();
-    expect(details.recipeItems).toEqual([expect.objectContaining({ supplyName: "Harina", subtotal: 6 })]);
-    expect(updated).toMatchObject({
-      product: { name: "Cake XL", price: 25 },
-      recipeItems: [expect.objectContaining({ supplyId: undefined, supplyName: "Azucar", subtotal: 4 })],
-    });
-    await expect(new ProductRecipeRepository(mock.client).getByProductIdAsync(details.product.id)).resolves.toEqual(
-      updated.recipeItems
-    );
-  });
-
-  it("loads product details and returns null for missing products", async () => {
+  it("loads a product and returns null for missing products", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const productRepository = new ProductRepository(mock.client);
-    const recipeRepository = new ProductRecipeRepository(mock.client);
 
     const product: Product = {
       id: "product_1",
@@ -106,24 +56,9 @@ describe("product recipe pricing", () => {
       updatedAt: "2026-04-28T10:00:00.000Z",
     };
     await productRepository.createAsync(product);
-    await recipeRepository.replaceByProductIdAsync("product_1", [
-      {
-        id: "recipe_1",
-        productId: "product_1",
-        supplyName: "Harina",
-        quantity: 2,
-        unit: "kg",
-        unitPrice: 3,
-        subtotal: 6,
-        createdAt: "2026-04-28T10:00:00.000Z",
-      },
-    ]);
 
-    await expect(getProductDetailsAsync("missing")).resolves.toBeNull();
-    await expect(getProductDetailsAsync("product_1")).resolves.toMatchObject({
-      product: { id: "product_1" },
-      recipeItems: [{ id: "recipe_1" }],
-    });
+    await expect(getProductAsync("missing")).resolves.toBeNull();
+    await expect(getProductAsync("product_1")).resolves.toMatchObject({ id: "product_1" });
   });
 
   it("blocks permanent deletion when a product has order history", async () => {

@@ -167,6 +167,14 @@ const MIGRATIONS: Migration[] = [
       "CREATE INDEX IF NOT EXISTS idx_recipe_supply ON product_recipe_items(supply_id);",
     ],
   },
+  {
+    version: 6,
+    statements: [
+      "DROP INDEX IF EXISTS idx_recipe_product;",
+      "DROP INDEX IF EXISTS idx_recipe_supply;",
+      "DROP TABLE IF EXISTS product_recipe_items;",
+    ],
+  },
 ];
 
 async function assertCanApplyMigrationAsync(client: DatabaseClient, version: number): Promise<void> {

@@ -15,18 +15,6 @@ export type Product = {
   updatedAt: string;
 };
 
-export type ProductRecipeItem = {
-  id: string;
-  productId: string;
-  supplyId?: string;
-  supplyName: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  subtotal: number;
-  createdAt: string;
-};
-
 export type Supply = {
   id: string;
   name: string;
