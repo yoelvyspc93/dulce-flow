@@ -87,11 +87,6 @@ export class SupplyRepository {
       "SELECT COUNT(*) as count FROM expenses WHERE supply_id = ?;",
       [id]
     );
-    const recipeRow = await this.client.getFirstAsync<{ count: number }>(
-      "SELECT COUNT(*) as count FROM product_recipe_items WHERE supply_id = ?;",
-      [id]
-    );
-
-    return (expenseRow?.count ?? 0) + (recipeRow?.count ?? 0);
+    return expenseRow?.count ?? 0;
   }
 }

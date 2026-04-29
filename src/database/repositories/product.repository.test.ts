@@ -1,6 +1,6 @@
-import { ProductRecipeRepository, ProductRepository } from "@/database/repositories";
+import { ProductRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
-import type { Product, ProductRecipeItem } from "@/shared/types";
+import type { Product } from "@/shared/types";
 
 const baseProduct: Product = {
   id: "product_1",
@@ -11,18 +11,6 @@ const baseProduct: Product = {
   isActive: true,
   createdAt: "2026-04-27T10:00:00.000Z",
   updatedAt: "2026-04-27T10:00:00.000Z",
-};
-
-const recipeItem: ProductRecipeItem = {
-  id: "recipe_1",
-  productId: "product_1",
-  supplyId: "supply_1",
-  supplyName: "Harina",
-  quantity: 2,
-  unit: "kg",
-  unitPrice: 3,
-  subtotal: 6,
-  createdAt: "2026-04-27T10:01:00.000Z",
 };
 
 describe("ProductRepository", () => {
@@ -82,35 +70,5 @@ describe("ProductRepository", () => {
 
     await repository.deleteAsync("product_1");
     await expect(repository.getByIdAsync("product_1")).resolves.toBeNull();
-  });
-});
-
-describe("ProductRecipeRepository", () => {
-  it("replaces recipe items and maps optional supply ids", async () => {
-    const mock = createMockDatabaseClient();
-    const repository = new ProductRecipeRepository(mock.client);
-
-    await repository.replaceByProductIdAsync("product_1", [recipeItem]);
-    await expect(repository.getByProductIdAsync("product_1")).resolves.toEqual([recipeItem]);
-
-    await repository.replaceByProductIdAsync("product_1", [
-      {
-        ...recipeItem,
-        id: "recipe_2",
-        supplyId: undefined,
-        supplyName: "Decoracion",
-        createdAt: "2026-04-27T10:02:00.000Z",
-      },
-    ]);
-
-    await expect(repository.getByProductIdAsync("product_1")).resolves.toEqual([
-      {
-        ...recipeItem,
-        id: "recipe_2",
-        supplyId: undefined,
-        supplyName: "Decoracion",
-        createdAt: "2026-04-27T10:02:00.000Z",
-      },
-    ]);
   });
 });

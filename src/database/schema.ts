@@ -1,5 +1,5 @@
 export const DATABASE_NAME = "dulceflow.db";
-export const DATABASE_VERSION = 5;
+export const DATABASE_VERSION = 6;
 
 export const CREATE_PRODUCTS_TABLE = `
   CREATE TABLE IF NOT EXISTS products (
@@ -23,22 +23,6 @@ export const CREATE_SUPPLIES_TABLE = `
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
-  );
-`;
-
-export const CREATE_PRODUCT_RECIPE_ITEMS_TABLE = `
-  CREATE TABLE IF NOT EXISTS product_recipe_items (
-    id TEXT PRIMARY KEY NOT NULL,
-    product_id TEXT NOT NULL,
-    supply_id TEXT,
-    supply_name TEXT NOT NULL,
-    quantity REAL NOT NULL CHECK(quantity > 0),
-    unit TEXT NOT NULL,
-    unit_price REAL NOT NULL CHECK(unit_price > 0),
-    subtotal REAL NOT NULL CHECK(subtotal > 0),
-    created_at TEXT NOT NULL,
-    FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY(supply_id) REFERENCES supplies(id) ON DELETE SET NULL
   );
 `;
 
@@ -122,8 +106,6 @@ export const CREATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);",
   "CREATE INDEX IF NOT EXISTS idx_orders_due_date ON orders(due_date);",
   "CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at);",
-  "CREATE INDEX IF NOT EXISTS idx_recipe_product ON product_recipe_items(product_id);",
-  "CREATE INDEX IF NOT EXISTS idx_recipe_supply ON product_recipe_items(supply_id);",
   "CREATE INDEX IF NOT EXISTS idx_movements_type ON movements(type);",
   "CREATE INDEX IF NOT EXISTS idx_movements_status ON movements(status);",
   "CREATE INDEX IF NOT EXISTS idx_movements_date ON movements(movement_date);",
@@ -134,7 +116,6 @@ export const SCHEMA_STATEMENTS = [
   "PRAGMA foreign_keys = ON;",
   CREATE_PRODUCTS_TABLE,
   CREATE_SUPPLIES_TABLE,
-  CREATE_PRODUCT_RECIPE_ITEMS_TABLE,
   CREATE_ORDERS_TABLE,
   CREATE_ORDER_ITEMS_TABLE,
   CREATE_EXPENSES_TABLE,

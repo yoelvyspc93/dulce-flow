@@ -7,7 +7,7 @@ describe("migrateDatabaseAsync", () => {
 
     await migrateDatabaseAsync(mock.client);
 
-    expect(mock.getUserVersion()).toBe(5);
+    expect(mock.getUserVersion()).toBe(6);
     expect(mock.executedStatements.some((statement) => statement.includes("CREATE TABLE IF NOT EXISTS settings"))).toBe(
       true
     );
@@ -15,7 +15,7 @@ describe("migrateDatabaseAsync", () => {
       true
     );
     expect(mock.executedStatements.some((statement) => statement.includes("CREATE TABLE IF NOT EXISTS product_recipe_items"))).toBe(
-      true
+      false
     );
   });
 
@@ -25,7 +25,7 @@ describe("migrateDatabaseAsync", () => {
 
     await migrateDatabaseAsync(mock.client);
 
-    expect(mock.getUserVersion()).toBe(5);
+    expect(mock.getUserVersion()).toBe(6);
     expect(mock.executedStatements.some((statement) => statement.includes("ALTER TABLE expenses ADD COLUMN unit_price"))).toBe(true);
     expect(mock.executedStatements.some((statement) => statement.includes("CREATE TABLE IF NOT EXISTS product_recipe_items"))).toBe(true);
     expect(mock.executedStatements.some((statement) => statement.includes("ALTER TABLE orders RENAME TO orders_old"))).toBe(true);
@@ -35,6 +35,7 @@ describe("migrateDatabaseAsync", () => {
     expect(mock.executedStatements.some((statement) => statement.includes("supply_id TEXT NOT NULL"))).toBe(true);
     expect(mock.executedStatements.some((statement) => statement.includes("default_price REAL NOT NULL"))).toBe(true);
     expect(mock.executedStatements.some((statement) => statement.includes("ALTER TABLE product_recipe_items RENAME"))).toBe(true);
+    expect(mock.executedStatements.some((statement) => statement.includes("DROP TABLE IF EXISTS product_recipe_items"))).toBe(true);
   });
 
   it("blocks v5 migration when expenses without supplies exist", async () => {
