@@ -47,7 +47,7 @@ describe("SettingsRepository", () => {
       phone: "+53 555 1234",
       address: undefined,
     });
-    expect(mock.getUserVersion()).toBe(5);
+    expect(mock.getUserVersion()).toBe(6);
   });
 
   it("reads minimal business settings and returns null when required fields are missing", async () => {
