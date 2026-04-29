@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { ZodError } from "zod";
 
 import { createProductAsync } from "@/features/products/services/product.service";
