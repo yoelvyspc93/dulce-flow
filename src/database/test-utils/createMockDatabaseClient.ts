@@ -21,7 +21,6 @@ type SupplyRow = {
   id: string;
   name: string;
   unit: string;
-  category: string | null;
   default_price: number | null;
   is_active: number;
   created_at: string;
@@ -30,12 +29,11 @@ type SupplyRow = {
 
 type ExpenseRow = {
   id: string;
-  supply_id: string | null;
+  supply_id: string;
   supply_name: string;
-  category: string;
-  quantity: number | null;
-  unit: string | null;
-  unit_price: number | null;
+  quantity: number;
+  unit: string;
+  unit_price: number;
   total: number;
   status: string;
   note: string | null;
@@ -116,10 +114,6 @@ function nullableString(value: unknown): string | null {
   return value === null || value === undefined ? null : String(value);
 }
 
-function nullableNumber(value: unknown): number | null {
-  return value === null || value === undefined ? null : Number(value);
-}
-
 function compareDesc(left: string, right: string): number {
   return right.localeCompare(left);
 }
@@ -155,17 +149,8 @@ function matchesOrderFilter(order: OrderRow, sql: string, values: SqlParams): bo
 }
 
 function matchesExpenseFilter(expense: ExpenseRow, sql: string, values: SqlParams): boolean {
-  let index = 0;
-
-  if (sql.includes("category = ?")) {
-    if (expense.category !== asString(values[index])) {
-      return false;
-    }
-    index += 1;
-  }
-
   if (sql.includes("created_at >= ?")) {
-    if (expense.created_at < asString(values[index])) {
+    if (expense.created_at < asString(values[0])) {
       return false;
     }
   }
@@ -255,17 +240,16 @@ export function createMockDatabaseClient() {
           id: asString(values[0]),
           name: asString(values[1]),
           unit: asString(values[2]),
-          category: nullableString(values[3]),
-          default_price: nullableNumber(values[4]),
-          is_active: asNumber(values[5]),
-          created_at: asString(values[6]),
-          updated_at: asString(values[7]),
+          default_price: asNumber(values[3]),
+          is_active: asNumber(values[4]),
+          created_at: asString(values[5]),
+          updated_at: asString(values[6]),
         });
         return result(1);
       }
 
       if (sql.startsWith("UPDATE supplies")) {
-        const id = asString(values[6]);
+        const id = asString(values[5]);
         const existing = supplies.get(id);
         if (!existing) {
           return result(0);
@@ -274,10 +258,9 @@ export function createMockDatabaseClient() {
           ...existing,
           name: asString(values[0]),
           unit: asString(values[1]),
-          category: nullableString(values[2]),
-          default_price: nullableNumber(values[3]),
-          is_active: asNumber(values[4]),
-          updated_at: asString(values[5]),
+          default_price: asNumber(values[2]),
+          is_active: asNumber(values[3]),
+          updated_at: asString(values[4]),
         });
         return result(1);
       }
@@ -289,39 +272,37 @@ export function createMockDatabaseClient() {
       if (sql.startsWith("INSERT INTO expenses")) {
         expenses.set(asString(values[0]), {
           id: asString(values[0]),
-          supply_id: nullableString(values[1]),
+          supply_id: asString(values[1]),
           supply_name: asString(values[2]),
-          category: asString(values[3]),
-          quantity: nullableNumber(values[4]),
-          unit: nullableString(values[5]),
-          unit_price: nullableNumber(values[6]),
-          total: asNumber(values[7]),
-          status: asString(values[8]),
-          note: nullableString(values[9]),
-          created_at: asString(values[10]),
-          updated_at: asString(values[11]),
+          quantity: asNumber(values[3]),
+          unit: asString(values[4]),
+          unit_price: asNumber(values[5]),
+          total: asNumber(values[6]),
+          status: asString(values[7]),
+          note: nullableString(values[8]),
+          created_at: asString(values[9]),
+          updated_at: asString(values[10]),
         });
         return result(1);
       }
 
       if (sql.startsWith("UPDATE expenses") && sql.includes("SET supply_id")) {
-        const id = asString(values[10]);
+        const id = asString(values[9]);
         const existing = expenses.get(id);
         if (!existing) {
           return result(0);
         }
         expenses.set(id, {
           ...existing,
-          supply_id: nullableString(values[0]),
+          supply_id: asString(values[0]),
           supply_name: asString(values[1]),
-          category: asString(values[2]),
-          quantity: nullableNumber(values[3]),
-          unit: nullableString(values[4]),
-          unit_price: nullableNumber(values[5]),
-          total: asNumber(values[6]),
-          status: asString(values[7]),
-          note: nullableString(values[8]),
-          updated_at: asString(values[9]),
+          quantity: asNumber(values[2]),
+          unit: asString(values[3]),
+          unit_price: asNumber(values[4]),
+          total: asNumber(values[5]),
+          status: asString(values[6]),
+          note: nullableString(values[7]),
+          updated_at: asString(values[8]),
         });
         return result(1);
       }
@@ -503,8 +484,18 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("SELECT COUNT(*) as count FROM expenses")) {
+        if (sql.includes("supply_id IS NULL")) {
+          return { count: Array.from(expenses.values()).filter((expense) => !expense.supply_id).length } as T;
+        }
+
         const supplyId = asString(values[0]);
         return { count: Array.from(expenses.values()).filter((expense) => expense.supply_id === supplyId).length } as T;
+      }
+
+      if (sql.startsWith("SELECT COUNT(*) as count FROM supplies")) {
+        return {
+          count: Array.from(supplies.values()).filter((supply) => supply.default_price === null || supply.default_price <= 0).length,
+        } as T;
       }
 
       if (sql.startsWith("SELECT COUNT(*) as count FROM product_recipe_items")) {
@@ -674,6 +665,32 @@ export function createMockDatabaseClient() {
     },
     setUserVersion: (version: number) => {
       userVersion = version;
+    },
+    seedLegacyExpenseWithoutSupply: () => {
+      expenses.set("legacy_expense_1", {
+        id: "legacy_expense_1",
+        supply_id: "",
+        supply_name: "Legacy",
+        quantity: 1,
+        unit: "unidad",
+        unit_price: 1,
+        total: 1,
+        status: "active",
+        note: null,
+        created_at: "2026-04-28T10:00:00.000Z",
+        updated_at: "2026-04-28T10:00:00.000Z",
+      });
+    },
+    seedLegacySupplyWithoutDefaultPrice: () => {
+      supplies.set("legacy_supply_1", {
+        id: "legacy_supply_1",
+        name: "Legacy",
+        unit: "unidad",
+        default_price: null,
+        is_active: 1,
+        created_at: "2026-04-28T10:00:00.000Z",
+        updated_at: "2026-04-28T10:00:00.000Z",
+      });
     },
   };
 }

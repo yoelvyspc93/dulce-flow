@@ -6,7 +6,6 @@ const baseSupply: Supply = {
   id: "supply_1",
   name: "Azucar",
   unit: "kg",
-  category: "ingredients",
   defaultPrice: 4,
   isActive: true,
   createdAt: "2026-04-27T10:00:00.000Z",
@@ -14,7 +13,7 @@ const baseSupply: Supply = {
 };
 
 describe("SupplyRepository", () => {
-  it("creates, lists and reads supplies with sqlite booleans and optional fields", async () => {
+  it("creates, lists and reads supplies with sqlite booleans", async () => {
     const repository = new SupplyRepository(createMockDatabaseClient().client);
 
     await repository.createAsync(baseSupply);
@@ -22,15 +21,13 @@ describe("SupplyRepository", () => {
       ...baseSupply,
       id: "supply_2",
       name: "Harina",
-      category: undefined,
-      defaultPrice: undefined,
+      defaultPrice: 5,
       isActive: false,
       createdAt: "2026-04-28T10:00:00.000Z",
     });
 
     await expect(repository.getByIdAsync("supply_2")).resolves.toMatchObject({
-      category: undefined,
-      defaultPrice: undefined,
+      defaultPrice: 5,
       isActive: false,
     });
     await expect((await repository.getAllAsync()).map((supply) => supply.id)).toEqual(["supply_2", "supply_1"]);
@@ -44,15 +41,13 @@ describe("SupplyRepository", () => {
     await repository.updateAsync({
       ...baseSupply,
       name: "Azucar blanca",
-      category: undefined,
-      defaultPrice: undefined,
+      defaultPrice: 6,
       isActive: false,
     });
 
     await expect(repository.getByIdAsync("supply_1")).resolves.toMatchObject({
       name: "Azucar blanca",
-      category: undefined,
-      defaultPrice: undefined,
+      defaultPrice: 6,
       isActive: false,
     });
 
@@ -70,7 +65,9 @@ describe("SupplyRepository", () => {
       id: "expense_1",
       supplyId: "supply_1",
       supplyName: "Azucar",
-      category: "ingredients",
+      quantity: 1,
+      unit: "kg",
+      unitPrice: 6,
       total: 6,
       status: "active",
       createdAt: "2026-04-27T10:00:00.000Z",

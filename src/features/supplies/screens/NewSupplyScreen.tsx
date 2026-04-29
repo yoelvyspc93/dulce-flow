@@ -23,7 +23,7 @@ export function NewSupplyScreen() {
       await createSupplyAsync({
         name,
         unit,
-        defaultPrice: defaultPrice ? Number(defaultPrice) : undefined,
+        defaultPrice: Number(defaultPrice),
       });
       router.replace("/supplies");
     } catch (error) {

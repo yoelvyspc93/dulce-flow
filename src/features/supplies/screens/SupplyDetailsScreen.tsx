@@ -83,7 +83,7 @@ export function SupplyDetailsScreen() {
       const updatedSupply = await updateSupplyAsync(supply, {
         name,
         unit,
-        defaultPrice: defaultPrice ? Number(defaultPrice) : undefined,
+        defaultPrice: Number(defaultPrice),
       });
       setSupply(updatedSupply);
     } catch (error) {

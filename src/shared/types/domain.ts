@@ -3,13 +3,6 @@ export type MovementType = "income" | "expense" | "adjustment" | "reversal";
 export type MovementDirection = "in" | "out";
 export type MovementStatus = "active" | "voided" | "reversed";
 export type ExpenseStatus = "active" | "voided";
-export type ExpenseCategory =
-  | "ingredients"
-  | "packaging"
-  | "decoration"
-  | "transport"
-  | "services"
-  | "other";
 
 export type Product = {
   id: string;
@@ -38,8 +31,7 @@ export type Supply = {
   id: string;
   name: string;
   unit: string;
-  category?: ExpenseCategory;
-  defaultPrice?: number;
+  defaultPrice: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -74,12 +66,11 @@ export type OrderItem = {
 
 export type Expense = {
   id: string;
-  supplyId?: string;
+  supplyId: string;
   supplyName: string;
-  category: ExpenseCategory;
-  quantity?: number;
-  unit?: string;
-  unitPrice?: number;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
   total: number;
   status: ExpenseStatus;
   note?: string;

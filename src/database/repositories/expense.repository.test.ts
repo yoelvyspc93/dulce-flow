@@ -6,7 +6,6 @@ const baseExpense: Expense = {
   id: "expense_1",
   supplyId: "supply_1",
   supplyName: "Azucar",
-  category: "ingredients",
   quantity: 2,
   unit: "kg",
   unitPrice: 3,
@@ -18,23 +17,19 @@ const baseExpense: Expense = {
 };
 
 describe("ExpenseRepository", () => {
-  it("creates, lists and reads expenses with optional fields", async () => {
+  it("creates, lists and reads expenses", async () => {
     const repository = new ExpenseRepository(createMockDatabaseClient().client);
-    const minimalExpense: Expense = {
+    const secondExpense: Expense = {
       ...baseExpense,
       id: "expense_2",
-      supplyId: undefined,
-      quantity: undefined,
-      unit: undefined,
-      unitPrice: undefined,
       note: undefined,
       createdAt: "2026-04-28T10:00:00.000Z",
     };
 
     await repository.createAsync(baseExpense);
-    await repository.createAsync(minimalExpense);
+    await repository.createAsync(secondExpense);
 
-    await expect(repository.getByIdAsync("expense_2")).resolves.toEqual(minimalExpense);
+    await expect(repository.getByIdAsync("expense_2")).resolves.toEqual(secondExpense);
     await expect(repository.getByIdAsync("missing")).resolves.toBeNull();
     await expect((await repository.getAllAsync()).map((expense) => expense.id)).toEqual(["expense_2", "expense_1"]);
   });
@@ -52,14 +47,12 @@ describe("ExpenseRepository", () => {
     await repository.updateAsync({
       ...baseExpense,
       supplyName: "Harina",
-      category: "packaging",
       total: 9,
       note: undefined,
       updatedAt: "2026-04-27T12:00:00.000Z",
     });
     await expect(repository.getByIdAsync("expense_1")).resolves.toMatchObject({
       supplyName: "Harina",
-      category: "packaging",
       total: 9,
       note: undefined,
     });

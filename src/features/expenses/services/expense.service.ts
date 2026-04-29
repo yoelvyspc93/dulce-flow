@@ -1,12 +1,11 @@
 import { getDatabaseAsync } from "@/database/connection";
 import { ExpenseRepository, MovementRepository, SupplyRepository } from "@/database/repositories";
 import { createId } from "@/shared/utils/id";
-import type { Expense, ExpenseCategory, Movement } from "@/shared/types";
+import type { Expense, Movement } from "@/shared/types";
 
 import { expenseSchema, type ExpenseFormValues } from "../validations/expense.schema";
 
 export type ExpensePeriodFilter = "today" | "week" | "month" | "all";
-export type ExpenseCategoryFilter = ExpenseCategory | "all";
 
 function startOfToday(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -48,25 +47,18 @@ export function createExpenseMovement(expense: Expense, now: string): Movement {
   };
 }
 
-export function calculateExpenseTotal(values: Pick<ExpenseFormValues, "quantity" | "unitPrice" | "total">): number {
-  if (values.quantity !== undefined && values.unitPrice !== undefined) {
-    return values.quantity * values.unitPrice;
-  }
-
-  return values.total;
+export function calculateExpenseTotal(values: Pick<ExpenseFormValues, "quantity" | "unitPrice">): number {
+  return Math.round((values.quantity * values.unitPrice + 1e-9) * 100) / 100;
 }
 
 export async function listExpensesAsync(filters?: {
-  category?: ExpenseCategoryFilter;
   period?: ExpensePeriodFilter;
 }): Promise<Expense[]> {
   const database = await getDatabaseAsync();
-  const category = filters?.category ?? "all";
   const period = filters?.period ?? "all";
   const start = getExpensePeriodStart(period);
 
   return new ExpenseRepository(database).getFilteredAsync({
-    category,
     startDate: start?.toISOString() ?? null,
   });
 }
@@ -80,14 +72,18 @@ export async function createExpenseAsync(values: ExpenseFormValues): Promise<Exp
   const parsed = expenseSchema.parse(values);
   const now = new Date().toISOString();
   const database = await getDatabaseAsync();
-  const selectedSupply = parsed.supplyId ? await new SupplyRepository(database).getByIdAsync(parsed.supplyId) : null;
+  const selectedSupply = await new SupplyRepository(database).getByIdAsync(parsed.supplyId);
+
+  if (!selectedSupply) {
+    throw new Error("SUPPLY_NOT_FOUND");
+  }
+
   const expense: Expense = {
     id: createId("expense"),
-    supplyId: selectedSupply?.id,
-    supplyName: selectedSupply?.name ?? parsed.supplyName,
-    category: selectedSupply?.category ?? parsed.category,
+    supplyId: selectedSupply.id,
+    supplyName: selectedSupply.name,
     quantity: parsed.quantity,
-    unit: (selectedSupply?.unit ?? parsed.unit) || undefined,
+    unit: parsed.unit,
     unitPrice: parsed.unitPrice,
     total: calculateExpenseTotal(parsed),
     status: "active",
@@ -108,14 +104,18 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
   const parsed = expenseSchema.parse(values);
   const now = new Date().toISOString();
   const database = await getDatabaseAsync();
-  const selectedSupply = parsed.supplyId ? await new SupplyRepository(database).getByIdAsync(parsed.supplyId) : null;
+  const selectedSupply = await new SupplyRepository(database).getByIdAsync(expense.supplyId);
+
+  if (!selectedSupply) {
+    throw new Error("SUPPLY_NOT_FOUND");
+  }
+
   const updatedExpense: Expense = {
     ...expense,
-    supplyId: selectedSupply?.id,
-    supplyName: selectedSupply?.name ?? parsed.supplyName,
-    category: selectedSupply?.category ?? parsed.category,
+    supplyId: selectedSupply.id,
+    supplyName: selectedSupply.name,
     quantity: parsed.quantity,
-    unit: (selectedSupply?.unit ?? parsed.unit) || undefined,
+    unit: parsed.unit,
     unitPrice: parsed.unitPrice,
     total: calculateExpenseTotal(parsed),
     note: parsed.note || undefined,

@@ -356,7 +356,7 @@ CREATE TABLE IF NOT EXISTS supplies (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
   unit TEXT NOT NULL,
-  category TEXT,
+  default_price REAL NOT NULL CHECK(default_price > 0),
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -405,19 +405,18 @@ CREATE TABLE IF NOT EXISTS order_items (
 ```sql
 CREATE TABLE IF NOT EXISTS expenses (
   id TEXT PRIMARY KEY NOT NULL,
-  supply_id TEXT,
+  supply_id TEXT NOT NULL,
   supply_name TEXT NOT NULL,
-  category TEXT NOT NULL CHECK(category IN ('ingredients', 'packaging', 'decoration', 'transport', 'services', 'other')),
-  quantity REAL,
-  unit TEXT,
-  unit_price REAL CHECK(unit_price IS NULL OR unit_price > 0),
+  quantity REAL NOT NULL CHECK(quantity > 0),
+  unit TEXT NOT NULL,
+  unit_price REAL NOT NULL CHECK(unit_price > 0),
   total REAL NOT NULL CHECK(total > 0),
   status TEXT NOT NULL CHECK(status IN ('active', 'voided')) DEFAULT 'active',
   note TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
 
-  FOREIGN KEY (supply_id) REFERENCES supplies(id) ON DELETE SET NULL
+  FOREIGN KEY (supply_id) REFERENCES supplies(id) ON DELETE RESTRICT
 );
 ```
 
@@ -572,7 +571,7 @@ LIMIT 10;
 
 ## 13.1 Migraciones SQLite
 
-`DATABASE_VERSION` actual es `4`.
+`DATABASE_VERSION` actual es `5`.
 
 Las migraciones corren dentro de una transaccion con `withTransactionAsync`. No hay downgrade automatico ni rollback manual documentado para versiones anteriores; si una migracion falla, la transaccion debe evitar aplicar cambios parciales. Antes de una migracion destructiva en produccion se debe crear un backup de la base de datos local.
 
@@ -753,9 +752,11 @@ El descuento no puede ser mayor que el subtotal.
 ### Gasto
 
 ```txt
-Nombre o insumo requerido.
-Total mayor que 0.
-Cantidad opcional, pero si existe debe ser mayor que 0.
+Insumo requerido.
+Cantidad mayor que 0.
+Unidad requerida.
+Precio unitario mayor que 0.
+Total calculado como cantidad por precio unitario.
 ```
 
 ## 20. Manejo de fechas

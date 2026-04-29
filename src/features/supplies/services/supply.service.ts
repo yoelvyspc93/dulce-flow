@@ -40,7 +40,6 @@ export async function updateSupplyAsync(supply: Supply, values: SupplyFormValues
     ...supply,
     name: parsed.name,
     unit: parsed.unit,
-    category: undefined,
     defaultPrice: parsed.defaultPrice,
     updatedAt: new Date().toISOString(),
   };

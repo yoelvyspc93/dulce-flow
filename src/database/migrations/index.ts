@@ -89,7 +89,105 @@ const MIGRATIONS: Migration[] = [
       "CREATE INDEX IF NOT EXISTS idx_orders_due_date ON orders(due_date);",
     ],
   },
+  {
+    version: 5,
+    statements: [
+      "DROP INDEX IF EXISTS idx_expenses_category;",
+      "ALTER TABLE expenses RENAME TO expenses_old;",
+      "ALTER TABLE product_recipe_items RENAME TO product_recipe_items_old;",
+      "ALTER TABLE supplies RENAME TO supplies_old;",
+      `CREATE TABLE supplies (
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        unit TEXT NOT NULL,
+        default_price REAL NOT NULL CHECK(default_price > 0),
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );`,
+      `INSERT INTO supplies (
+        id, name, unit, default_price, is_active, created_at, updated_at
+      )
+      SELECT id, name, unit, default_price, is_active, created_at, updated_at
+      FROM supplies_old;`,
+      `CREATE TABLE expenses (
+        id TEXT PRIMARY KEY NOT NULL,
+        supply_id TEXT NOT NULL,
+        supply_name TEXT NOT NULL,
+        quantity REAL NOT NULL CHECK(quantity > 0),
+        unit TEXT NOT NULL,
+        unit_price REAL NOT NULL CHECK(unit_price > 0),
+        total REAL NOT NULL CHECK(total > 0),
+        status TEXT NOT NULL CHECK(status IN ('active', 'voided')) DEFAULT 'active',
+        note TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY(supply_id) REFERENCES supplies(id) ON DELETE RESTRICT
+      );`,
+      `INSERT INTO expenses (
+        id, supply_id, supply_name, quantity, unit, unit_price, total, status, note, created_at, updated_at
+      )
+      SELECT
+        expenses_old.id,
+        expenses_old.supply_id,
+        expenses_old.supply_name,
+        COALESCE(expenses_old.quantity, 1),
+        COALESCE(expenses_old.unit, supplies.unit),
+        COALESCE(expenses_old.unit_price, supplies.default_price),
+        expenses_old.total,
+        expenses_old.status,
+        expenses_old.note,
+        expenses_old.created_at,
+        expenses_old.updated_at
+      FROM expenses_old
+      INNER JOIN supplies_old supplies ON supplies.id = expenses_old.supply_id;`,
+      `CREATE TABLE product_recipe_items (
+        id TEXT PRIMARY KEY NOT NULL,
+        product_id TEXT NOT NULL,
+        supply_id TEXT,
+        supply_name TEXT NOT NULL,
+        quantity REAL NOT NULL CHECK(quantity > 0),
+        unit TEXT NOT NULL,
+        unit_price REAL NOT NULL CHECK(unit_price > 0),
+        subtotal REAL NOT NULL CHECK(subtotal > 0),
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY(supply_id) REFERENCES supplies(id) ON DELETE SET NULL
+      );`,
+      `INSERT INTO product_recipe_items (
+        id, product_id, supply_id, supply_name, quantity, unit, unit_price, subtotal, created_at
+      )
+      SELECT id, product_id, supply_id, supply_name, quantity, unit, unit_price, subtotal, created_at
+      FROM product_recipe_items_old;`,
+      "DROP TABLE expenses_old;",
+      "DROP TABLE product_recipe_items_old;",
+      "DROP TABLE supplies_old;",
+      "CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at);",
+      "CREATE INDEX IF NOT EXISTS idx_recipe_product ON product_recipe_items(product_id);",
+      "CREATE INDEX IF NOT EXISTS idx_recipe_supply ON product_recipe_items(supply_id);",
+    ],
+  },
 ];
+
+async function assertCanApplyMigrationAsync(client: DatabaseClient, version: number): Promise<void> {
+  if (version !== 5) {
+    return;
+  }
+
+  const expensesWithoutSupply = await client.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM expenses WHERE supply_id IS NULL;"
+  );
+  if ((expensesWithoutSupply?.count ?? 0) > 0) {
+    throw new Error("EXPENSES_WITHOUT_SUPPLY");
+  }
+
+  const suppliesWithoutDefaultPrice = await client.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) as count FROM supplies WHERE default_price IS NULL OR default_price <= 0;"
+  );
+  if ((suppliesWithoutDefaultPrice?.count ?? 0) > 0) {
+    throw new Error("SUPPLIES_WITHOUT_DEFAULT_PRICE");
+  }
+}
 
 export async function migrateDatabaseAsync(client: DatabaseClient): Promise<void> {
   const row = await client.getFirstAsync<{ user_version: number }>("PRAGMA user_version;");
@@ -114,6 +212,8 @@ export async function migrateDatabaseAsync(client: DatabaseClient): Promise<void
 
   await client.withTransactionAsync(async (transaction) => {
     for (const migration of pendingMigrations) {
+      await assertCanApplyMigrationAsync(transaction, migration.version);
+
       for (const statement of migration.statements) {
         await transaction.execAsync(statement);
       }

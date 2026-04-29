@@ -1,5 +1,5 @@
 export const DATABASE_NAME = "dulceflow.db";
-export const DATABASE_VERSION = 4;
+export const DATABASE_VERSION = 5;
 
 export const CREATE_PRODUCTS_TABLE = `
   CREATE TABLE IF NOT EXISTS products (
@@ -19,8 +19,7 @@ export const CREATE_SUPPLIES_TABLE = `
     id TEXT PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     unit TEXT NOT NULL,
-    category TEXT,
-    default_price REAL CHECK(default_price IS NULL OR default_price > 0),
+    default_price REAL NOT NULL CHECK(default_price > 0),
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -78,12 +77,11 @@ export const CREATE_ORDER_ITEMS_TABLE = `
 export const CREATE_EXPENSES_TABLE = `
   CREATE TABLE IF NOT EXISTS expenses (
     id TEXT PRIMARY KEY NOT NULL,
-    supply_id TEXT,
+    supply_id TEXT NOT NULL,
     supply_name TEXT NOT NULL,
-    category TEXT NOT NULL CHECK(category IN ('ingredients', 'packaging', 'decoration', 'transport', 'services', 'other')),
-    quantity REAL,
-    unit TEXT,
-    unit_price REAL CHECK(unit_price IS NULL OR unit_price > 0),
+    quantity REAL NOT NULL CHECK(quantity > 0),
+    unit TEXT NOT NULL,
+    unit_price REAL NOT NULL CHECK(unit_price > 0),
     total REAL NOT NULL CHECK(total > 0),
     status TEXT NOT NULL CHECK(status IN ('active', 'voided')) DEFAULT 'active',
     note TEXT,
@@ -124,7 +122,6 @@ export const CREATE_INDEXES = [
   "CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);",
   "CREATE INDEX IF NOT EXISTS idx_orders_due_date ON orders(due_date);",
   "CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at);",
-  "CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);",
   "CREATE INDEX IF NOT EXISTS idx_recipe_product ON product_recipe_items(product_id);",
   "CREATE INDEX IF NOT EXISTS idx_recipe_supply ON product_recipe_items(supply_id);",
   "CREATE INDEX IF NOT EXISTS idx_movements_type ON movements(type);",

@@ -31,12 +31,12 @@ describe("supply service", () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-04-28T15:00:00.000Z"));
 
     const supply = await createSupplyAsync({ name: " Azucar ", unit: "kg", defaultPrice: 4 });
-    const updated = await updateSupplyAsync(supply, { name: "Harina", unit: "lb", defaultPrice: undefined });
+    const updated = await updateSupplyAsync(supply, { name: "Harina", unit: "lb", defaultPrice: 5 });
     const inactive = await setSupplyActiveAsync(updated, false);
 
     jest.useRealTimers();
     expect(supply).toMatchObject({ name: "Azucar", unit: "kg", defaultPrice: 4, isActive: true });
-    expect(updated).toMatchObject({ name: "Harina", unit: "lb", category: undefined, defaultPrice: undefined });
+    expect(updated).toMatchObject({ name: "Harina", unit: "lb", defaultPrice: 5 });
     expect(inactive).toMatchObject({ isActive: false });
     await expect(listSuppliesAsync()).resolves.toEqual([inactive]);
     await expect(getSupplyAsync(supply.id)).resolves.toEqual(inactive);
@@ -52,6 +52,7 @@ describe("supply service", () => {
       id: "supply_1",
       name: "Azucar",
       unit: "kg",
+      defaultPrice: 4,
       isActive: true,
       createdAt: "2026-04-28T10:00:00.000Z",
       updatedAt: "2026-04-28T10:00:00.000Z",
@@ -60,7 +61,9 @@ describe("supply service", () => {
       id: "expense_1",
       supplyId: "supply_1",
       supplyName: "Azucar",
-      category: "ingredients",
+      quantity: 1,
+      unit: "kg",
+      unitPrice: 10,
       total: 10,
       status: "active",
       createdAt: "2026-04-28T10:00:00.000Z",
@@ -95,6 +98,7 @@ describe("supply service", () => {
       id: "supply_1",
       name: "Azucar",
       unit: "kg",
+      defaultPrice: 4,
       isActive: true,
       createdAt: "2026-04-28T10:00:00.000Z",
       updatedAt: "2026-04-28T10:00:00.000Z",

@@ -21,13 +21,28 @@ const mockedGetDatabaseAsync = jest.mocked(getDatabaseAsync);
 
 const baseExpense: Expense = {
   id: "expense_1",
+  supplyId: "supply_1",
   supplyName: "Azucar",
-  category: "ingredients",
+  quantity: 1,
+  unit: "kg",
+  unitPrice: 12,
   total: 12,
   status: "active",
   createdAt: "2026-04-28T10:00:00.000Z",
   updatedAt: "2026-04-28T10:00:00.000Z",
 };
+
+async function seedBaseSupplyAsync(mock: ReturnType<typeof createMockDatabaseClient>) {
+  await new SupplyRepository(mock.client).createAsync({
+    id: "supply_1",
+    name: "Azucar",
+    unit: "kg",
+    defaultPrice: 12,
+    isActive: true,
+    createdAt: "2026-04-28T10:00:00.000Z",
+    updatedAt: "2026-04-28T10:00:00.000Z",
+  });
+}
 
 describe("expense financial rules", () => {
   beforeEach(() => {
@@ -51,16 +66,14 @@ describe("expense financial rules", () => {
   it("calculates total from quantity and unit price", () => {
     expect(
       calculateExpenseTotal({
-        quantity: 3,
-        unitPrice: 4,
-        total: 1,
-      })
+      quantity: 3,
+      unitPrice: 4,
+    })
     ).toBe(12);
   });
 
-  it("falls back to manual total when quantity or unit price are missing", () => {
-    expect(calculateExpenseTotal({ total: 9 })).toBe(9);
-    expect(calculateExpenseTotal({ quantity: 3, total: 9 })).toBe(9);
+  it("rounds calculated totals to two decimals", () => {
+    expect(calculateExpenseTotal({ quantity: 3, unitPrice: 3.335 })).toBe(10.01);
   });
 
   it("returns a start date for week filters", () => {
@@ -77,7 +90,7 @@ describe("expense financial rules", () => {
     expect(getExpensePeriodStart("all", now)).toBeNull();
   });
 
-  it("filters expenses by category and period", async () => {
+  it("filters expenses by period", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const repository = new ExpenseRepository(mock.client);
@@ -86,12 +99,11 @@ describe("expense financial rules", () => {
     await repository.createAsync({
       ...baseExpense,
       id: "expense_2",
-      category: "packaging",
       createdAt: "2026-04-01T10:00:00.000Z",
     });
 
     jest.useFakeTimers().setSystemTime(new Date("2026-04-28T15:00:00.000Z"));
-    const expenses = await listExpensesAsync({ category: "ingredients", period: "week" });
+    const expenses = await listExpensesAsync({ period: "week" });
     jest.useRealTimers();
 
     expect(expenses.map((expense) => expense.id)).toEqual(["expense_1"]);
@@ -104,7 +116,7 @@ describe("expense financial rules", () => {
       id: "supply_1",
       name: "Azucar catalogo",
       unit: "lb",
-      category: "ingredients",
+      defaultPrice: 4,
       isActive: true,
       createdAt: "2026-04-28T10:00:00.000Z",
       updatedAt: "2026-04-28T10:00:00.000Z",
@@ -114,11 +126,9 @@ describe("expense financial rules", () => {
     const expense = await createExpenseAsync({
       supplyId: "supply_1",
       supplyName: "Azucar",
-      category: "ingredients",
-      quantity: 2,
-      unit: "kg",
+      quantity: 1,
+      unit: "lb",
       unitPrice: 4,
-      total: 1,
       note: "",
     });
 
@@ -126,11 +136,13 @@ describe("expense financial rules", () => {
     await expect(new ExpenseRepository(mock.client).getByIdAsync(expense.id)).resolves.toMatchObject({
       supplyName: "Azucar catalogo",
       unit: "lb",
-      total: 8,
+      quantity: 1,
+      unitPrice: 4,
+      total: 4,
       note: undefined,
     });
     await expect(new MovementRepository(mock.client).getActiveBySourceAsync("expense", expense.id)).resolves.toMatchObject({
-      amount: 8,
+      amount: 4,
       direction: "out",
     });
   });
@@ -141,14 +153,17 @@ describe("expense financial rules", () => {
     const expenseRepository = new ExpenseRepository(mock.client);
     const movementRepository = new MovementRepository(mock.client);
 
+    await seedBaseSupplyAsync(mock);
     await expenseRepository.createAsync(baseExpense);
     await movementRepository.createAsync(createExpenseMovement(baseExpense, "2026-04-28T11:00:00.000Z"));
     jest.useFakeTimers().setSystemTime(new Date("2026-04-29T15:00:00.000Z"));
 
     await updateExpenseAsync(baseExpense, {
+      supplyId: "supply_1",
       supplyName: "Azucar refinada",
-      category: "ingredients",
-      total: 12,
+      quantity: 1,
+      unit: "kg",
+      unitPrice: 12,
     });
 
     jest.useRealTimers();
@@ -164,14 +179,17 @@ describe("expense financial rules", () => {
     const expenseRepository = new ExpenseRepository(mock.client);
     const movementRepository = new MovementRepository(mock.client);
 
+    await seedBaseSupplyAsync(mock);
     await expenseRepository.createAsync(baseExpense);
     await movementRepository.createAsync(createExpenseMovement(baseExpense, "2026-04-28T11:00:00.000Z"));
     jest.useFakeTimers().setSystemTime(new Date("2026-04-29T15:00:00.000Z"));
 
     await updateExpenseAsync(baseExpense, {
+      supplyId: "supply_1",
       supplyName: "Azucar",
-      category: "ingredients",
-      total: 15,
+      quantity: 1,
+      unit: "kg",
+      unitPrice: 15,
     });
 
     jest.useRealTimers();
@@ -184,12 +202,15 @@ describe("expense financial rules", () => {
     const expenseRepository = new ExpenseRepository(mock.client);
     const movementRepository = new MovementRepository(mock.client);
 
+    await seedBaseSupplyAsync(mock);
     await expenseRepository.createAsync(baseExpense);
 
     await updateExpenseAsync(baseExpense, {
+      supplyId: "supply_1",
       supplyName: "Azucar",
-      category: "ingredients",
-      total: 12,
+      quantity: 1,
+      unit: "kg",
+      unitPrice: 12,
     });
 
     await expect(movementRepository.getActiveBySourceAsync("expense", "expense_1")).resolves.toMatchObject({
