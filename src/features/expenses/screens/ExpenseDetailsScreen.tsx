@@ -9,7 +9,7 @@ import {
   updateExpenseAsync,
 } from "@/features/expenses/services/expense.service";
 import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.schema";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
+import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
 import { formatExpenseCategory } from "@/shared/utils/labels";
 import { colors, spacing, typography } from "@/theme";
@@ -29,6 +29,8 @@ export function ExpenseDetailsScreen() {
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const category = EXPENSE_CATEGORIES[categoryIndex];
   const calculatedTotal =
     quantity && unitPrice ? Number(quantity || 0) * Number(unitPrice || 0) : Number(total || 0);
@@ -118,8 +120,18 @@ export function ExpenseDetailsScreen() {
       return;
     }
 
-    await deleteExpenseAsync(expense);
-    router.replace("/expenses");
+    setIsDeleting(true);
+    setErrorMessage("");
+
+    try {
+      await deleteExpenseAsync(expense);
+      setIsDeleteDialogVisible(false);
+      router.replace("/expenses");
+    } catch {
+      setErrorMessage("No se pudo anular el gasto.");
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   if (isLoading) {
@@ -221,9 +233,18 @@ export function ExpenseDetailsScreen() {
       {expense.status === "active" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Anular gasto" onPress={handleDeleteAsync} variant="secondary" />
+          <Button label="Anular gasto" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
         </View>
       ) : null}
+      <ConfirmDialog
+        confirmLabel="Anular gasto"
+        description="El gasto saldra del listado activo y dejara de descontarse del resumen financiero."
+        isLoading={isDeleting}
+        onCancel={() => setIsDeleteDialogVisible(false)}
+        onConfirm={handleDeleteAsync}
+        title="Anular gasto"
+        visible={isDeleteDialogVisible}
+      />
     </Screen>
   );
 }

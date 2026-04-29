@@ -11,7 +11,7 @@ import {
   type OrderDetails,
 } from "@/features/orders/services/order.service";
 import { listProductsAsync } from "@/features/products/services/product.service";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
+import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Product } from "@/shared/types";
 import { formatOrderStatus, formatPaymentStatus } from "@/shared/utils/labels";
 import { colors, spacing, typography } from "@/theme";
@@ -22,6 +22,8 @@ type OrderLine = {
   quantity: string;
   unitPrice: string;
 };
+
+type PendingOrderAction = "deliver" | "cancel" | null;
 
 export function OrderDetailsScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -36,6 +38,8 @@ export function OrderDetailsScreen() {
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingAction, setPendingAction] = useState<PendingOrderAction>(null);
+  const [isConfirmingAction, setIsConfirmingAction] = useState(false);
   const order = details?.order;
   const isEditable = order?.status === "pending";
   const subtotal =
@@ -171,8 +175,18 @@ export function OrderDetailsScreen() {
       return;
     }
 
-    const updatedOrder = await deliverOrderAsync(details.order);
-    setDetails({ ...details, order: updatedOrder });
+    setIsConfirmingAction(true);
+    setErrorMessage("");
+
+    try {
+      const updatedOrder = await deliverOrderAsync(details.order);
+      setDetails({ ...details, order: updatedOrder });
+      setPendingAction(null);
+    } catch {
+      setErrorMessage("No se pudo marcar la orden como entregada.");
+    } finally {
+      setIsConfirmingAction(false);
+    }
   }
 
   async function handleCancelAsync() {
@@ -180,8 +194,18 @@ export function OrderDetailsScreen() {
       return;
     }
 
-    const updatedOrder = await cancelOrderAsync(details.order);
-    setDetails({ ...details, order: updatedOrder });
+    setIsConfirmingAction(true);
+    setErrorMessage("");
+
+    try {
+      const updatedOrder = await cancelOrderAsync(details.order);
+      setDetails({ ...details, order: updatedOrder });
+      setPendingAction(null);
+    } catch {
+      setErrorMessage("No se pudo cancelar la orden.");
+    } finally {
+      setIsConfirmingAction(false);
+    }
   }
 
   if (isLoading) {
@@ -217,6 +241,23 @@ export function OrderDetailsScreen() {
     activeProducts.length > 0
       ? activeProducts.map((product) => ({ label: product.name, value: product.id }))
       : [{ label: "Sin productos activos", value: "empty", disabled: true }];
+  const confirmation =
+    pendingAction === "deliver"
+      ? {
+          title: "Marcar orden como entregada",
+          description: "La orden quedara entregada y el cobro se marcara como pagado.",
+          confirmLabel: "Marcar entregada",
+          onConfirm: handleDeliverAsync,
+        }
+      : {
+          title: "Cancelar orden",
+          description:
+            order.status === "delivered"
+              ? "La orden quedara cancelada y se registrara un reverso del ingreso."
+              : "La orden quedara cancelada y no contara como venta completada.",
+          confirmLabel: "Cancelar orden",
+          onConfirm: handleCancelAsync,
+        };
 
   return (
     <Screen title="Detalle de orden" backHref="/orders">
@@ -283,16 +324,25 @@ export function OrderDetailsScreen() {
       {order.status === "pending" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Marcar entregada" onPress={handleDeliverAsync} />
-          <Button label="Cancelar orden" onPress={handleCancelAsync} variant="secondary" />
+          <Button label="Marcar entregada" onPress={() => setPendingAction("deliver")} />
+          <Button label="Cancelar orden" onPress={() => setPendingAction("cancel")} variant="secondary" />
         </View>
       ) : null}
       {order.status === "delivered" && order.paymentStatus === "pending" ? (
-        <Button label="Marcar entregada" onPress={handleDeliverAsync} />
+        <Button label="Marcar entregada" onPress={() => setPendingAction("deliver")} />
       ) : null}
       {order.status === "delivered" ? (
-        <Button label="Cancelar orden entregada" onPress={handleCancelAsync} variant="secondary" />
+        <Button label="Cancelar orden entregada" onPress={() => setPendingAction("cancel")} variant="secondary" />
       ) : null}
+      <ConfirmDialog
+        confirmLabel={confirmation.confirmLabel}
+        description={confirmation.description}
+        isLoading={isConfirmingAction}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={confirmation.onConfirm}
+        title={confirmation.title}
+        visible={pendingAction !== null}
+      />
     </Screen>
   );
 }

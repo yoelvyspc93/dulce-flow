@@ -11,7 +11,7 @@ import {
   updateSupplyAsync,
 } from "@/features/supplies/services/supply.service";
 import { SUPPLY_UNITS } from "@/features/supplies/validations/supply.schema";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
+import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
 import { colors, spacing, typography } from "@/theme";
 
@@ -27,6 +27,8 @@ export function SupplyDetailsScreen() {
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -109,10 +111,12 @@ export function SupplyDetailsScreen() {
       return;
     }
 
+    setIsDeleting(true);
     setErrorMessage("");
 
     try {
       await deleteSupplyPermanentlyAsync(supply);
+      setIsDeleteDialogVisible(false);
       router.replace("/supplies");
     } catch (error) {
       if (error instanceof Error && error.message === "SUPPLY_HAS_HISTORY") {
@@ -120,6 +124,8 @@ export function SupplyDetailsScreen() {
       } else {
         setErrorMessage("No se pudo eliminar el insumo.");
       }
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -182,11 +188,20 @@ export function SupplyDetailsScreen() {
           variant="secondary"
         />
         {usageCount === 0 ? (
-          <Button label="Eliminar permanentemente" onPress={handleDeleteAsync} variant="secondary" />
+          <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
         ) : (
           <Text style={styles.helperText}>Este insumo tiene historial. Para conservar gastos y recetas, solo se puede desactivar.</Text>
         )}
       </View>
+      <ConfirmDialog
+        confirmLabel="Eliminar"
+        description="El insumo se eliminara permanentemente y no se podra recuperar."
+        isLoading={isDeleting}
+        onCancel={() => setIsDeleteDialogVisible(false)}
+        onConfirm={handleDeleteAsync}
+        title="Eliminar insumo"
+        visible={isDeleteDialogVisible}
+      />
     </Screen>
   );
 }

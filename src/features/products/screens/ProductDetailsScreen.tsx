@@ -14,7 +14,7 @@ import {
   type ProductDetails,
 } from "@/features/products/services/product.service";
 import { listSuppliesAsync } from "@/features/supplies/services/supply.service";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
+import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
 import { colors, spacing, typography } from "@/theme";
 
@@ -42,6 +42,8 @@ export function ProductDetailsScreen() {
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const product = details?.product ?? null;
   const recipeCost = calculateRecipeCost(
@@ -156,10 +158,12 @@ export function ProductDetailsScreen() {
       return;
     }
 
+    setIsDeleting(true);
     setErrorMessage("");
 
     try {
       await deleteProductPermanentlyAsync(product);
+      setIsDeleteDialogVisible(false);
       router.replace("/products");
     } catch (error) {
       if (error instanceof Error && error.message === "PRODUCT_HAS_HISTORY") {
@@ -167,6 +171,8 @@ export function ProductDetailsScreen() {
       } else {
         setErrorMessage("No se pudo eliminar el producto.");
       }
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -317,11 +323,20 @@ export function ProductDetailsScreen() {
           variant="secondary"
         />
         {usageCount === 0 ? (
-          <Button label="Eliminar permanentemente" onPress={handleDeleteAsync} variant="secondary" />
+          <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
         ) : (
           <Text style={styles.helperText}>Este producto tiene historial. Para conservar las ordenes, solo se puede desactivar.</Text>
         )}
       </View>
+      <ConfirmDialog
+        confirmLabel="Eliminar"
+        description="El producto se eliminara permanentemente y no se podra recuperar."
+        isLoading={isDeleting}
+        onCancel={() => setIsDeleteDialogVisible(false)}
+        onConfirm={handleDeleteAsync}
+        title="Eliminar producto"
+        visible={isDeleteDialogVisible}
+      />
     </Screen>
   );
 }

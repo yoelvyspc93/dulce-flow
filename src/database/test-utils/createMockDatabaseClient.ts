@@ -6,8 +6,16 @@ type SettingRow = {
   updated_at: string;
 };
 
+type MovementSummaryRow = {
+  direction: "in" | "out";
+  type: "income" | "expense" | "adjustment" | "reversal";
+  source_type: "order" | "expense" | "manual";
+  total: number;
+};
+
 export function createMockDatabaseClient() {
   const settings = new Map<string, SettingRow>();
+  let movementSummaryRows: MovementSummaryRow[] = [];
   let userVersion = 0;
   const executedStatements: string[] = [];
 
@@ -56,6 +64,10 @@ export function createMockDatabaseClient() {
       const sql = source.trim();
       executedStatements.push(sql);
 
+      if (sql.includes("FROM movements") && sql.includes("GROUP BY direction, type, source_type")) {
+        return movementSummaryRows as T[];
+      }
+
       if (sql.startsWith("SELECT * FROM settings WHERE key IN")) {
         return (params ?? [])
           .map((key) => settings.get(String(key)))
@@ -73,6 +85,9 @@ export function createMockDatabaseClient() {
     client,
     executedStatements,
     getUserVersion: () => userVersion,
+    setMovementSummaryRows: (rows: MovementSummaryRow[]) => {
+      movementSummaryRows = rows;
+    },
     setUserVersion: (version: number) => {
       userVersion = version;
     },
