@@ -273,7 +273,14 @@ export function OrderDetailsScreen() {
           />
         }
       />
-      <TextField editable={isEditable} label="Cliente" onChangeText={setCustomerName} placeholder="Nombre" value={customerName} />
+      <TextField
+        editable={isEditable}
+        label="Cliente"
+        onChangeText={setCustomerName}
+        placeholder="Nombre"
+        value={customerName}
+        helperText="Obligatorio para poder identificar y dar seguimiento al pedido."
+      />
       <TextField editable={isEditable} label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
       <TextField
         editable={isEditable}

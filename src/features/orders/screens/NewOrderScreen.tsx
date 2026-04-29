@@ -132,7 +132,13 @@ export function NewOrderScreen() {
 
   return (
     <Screen title="Nuevo pedido" backHref="/orders">
-      <TextField label="Cliente" onChangeText={setCustomerName} placeholder="Nombre del cliente" value={customerName} />
+      <TextField
+        label="Cliente"
+        onChangeText={setCustomerName}
+        placeholder="Nombre del cliente"
+        value={customerName}
+        helperText="Obligatorio para poder identificar y dar seguimiento al pedido."
+      />
       <TextField label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
       <TextField
         label="Fecha del pedido"

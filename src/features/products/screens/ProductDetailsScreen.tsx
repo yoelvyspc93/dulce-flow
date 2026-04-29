@@ -88,6 +88,8 @@ export function ProductDetailsScreen() {
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(error.issues[0]?.message ?? "Datos invalidos.");
+      } else if (error instanceof Error && error.message === "PRODUCT_NAME_DUPLICATED") {
+        setErrorMessage("Ya existe un producto con ese nombre.");
       } else {
         setErrorMessage("No se pudo actualizar el producto.");
       }

@@ -89,6 +89,8 @@ export function SupplyDetailsScreen() {
     } catch (error) {
       if (error instanceof ZodError) {
         setErrorMessage(error.issues[0]?.message ?? "Datos invalidos.");
+      } else if (error instanceof Error && error.message === "SUPPLY_NAME_DUPLICATED") {
+        setErrorMessage("Ya existe un insumo con ese nombre.");
       } else {
         setErrorMessage("No se pudo actualizar el insumo.");
       }

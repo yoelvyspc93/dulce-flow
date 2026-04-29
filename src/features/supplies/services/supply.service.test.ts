@@ -42,7 +42,38 @@ describe("supply service", () => {
     await expect(getSupplyAsync(supply.id)).resolves.toEqual(inactive);
   });
 
-  it("deactivates supplies instead of deleting when a supply has expense history", async () => {
+  it("blocks duplicated supply names across active and inactive supplies", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+
+    const supply = await createSupplyAsync({ name: " Azucar ", unit: "kg", defaultPrice: 4 });
+    await expect(createSupplyAsync({ name: "azucar", unit: "kg", defaultPrice: 5 })).rejects.toThrow(
+      "SUPPLY_NAME_DUPLICATED"
+    );
+
+    const inactive = await setSupplyActiveAsync(supply, false);
+    await expect(createSupplyAsync({ name: "AZUCAR", unit: "kg", defaultPrice: 5 })).rejects.toThrow(
+      "SUPPLY_NAME_DUPLICATED"
+    );
+    await expect(updateSupplyAsync(inactive, { name: " Azucar ", unit: "kg", defaultPrice: 6 })).resolves.toMatchObject({
+      name: "Azucar",
+      defaultPrice: 6,
+    });
+  });
+
+  it("blocks updates to another supply name", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+
+    await createSupplyAsync({ name: "Azucar", unit: "kg", defaultPrice: 4 });
+    const harina = await createSupplyAsync({ name: "Harina", unit: "kg", defaultPrice: 5 });
+
+    await expect(updateSupplyAsync(harina, { name: " azucar ", unit: "kg", defaultPrice: 5 })).rejects.toThrow(
+      "SUPPLY_NAME_DUPLICATED"
+    );
+  });
+
+  it("blocks permanent deletion when a supply has expense history", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const supplyRepository = new SupplyRepository(mock.client);
@@ -72,11 +103,11 @@ describe("supply service", () => {
     await expenseRepository.createAsync(expense);
 
     await expect(getSupplyUsageCountAsync("supply_1")).resolves.toBe(1);
-    await deleteSupplyPermanentlyAsync(supply);
-    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toMatchObject({ isActive: false });
+    await expect(deleteSupplyPermanentlyAsync(supply)).rejects.toThrow("SUPPLY_HAS_HISTORY");
+    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toMatchObject({ isActive: true });
   });
 
-  it("deactivates supplies instead of deleting permanently when there is no history", async () => {
+  it("deletes supplies permanently when there is no history", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const supplyRepository = new SupplyRepository(mock.client);
@@ -93,6 +124,7 @@ describe("supply service", () => {
     await supplyRepository.createAsync(supply);
     await deleteSupplyPermanentlyAsync(supply);
 
-    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toMatchObject({ isActive: false });
+    await expect(supplyRepository.getByIdAsync("supply_1")).resolves.toBeNull();
+    await expect(listSuppliesAsync()).resolves.toEqual([]);
   });
 });

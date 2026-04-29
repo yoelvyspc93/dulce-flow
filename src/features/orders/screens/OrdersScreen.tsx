@@ -15,6 +15,15 @@ import { formatOrderStatus, formatPeriod } from "@/shared/utils/labels";
 const STATUSES: OrderStatusFilter[] = ["all", "pending", "delivered", "cancelled"];
 const PERIODS: OrderPeriodFilter[] = ["today", "week", "month", "all"];
 
+function formatOrderSubtitle(order: Order): string {
+  const note = order.note?.trim();
+  const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
+  const customerName = order.customerName ?? "Cliente no registrado";
+  const baseSubtitle = `${customerName} - ${new Date(order.dueDate).toLocaleDateString()} - $${order.total.toFixed(2)}`;
+
+  return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
+}
+
 export function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusIndex, setStatusIndex] = useState(0);
@@ -64,6 +73,7 @@ export function OrdersScreen() {
           }}
           options={PERIODS.map((item) => ({ label: formatPeriod(item), value: item }))}
           value={period}
+          helperText="Define que pedidos entran en este listado."
         />
       </View>
 
@@ -85,7 +95,7 @@ export function OrdersScreen() {
             key={order.id}
             onPress={() => router.push(`/orders/${order.id}`)}
             title={order.orderNumber}
-            subtitle={`${order.customerName ?? "Sin cliente"} - ${new Date(order.dueDate).toLocaleDateString()} - $${order.total.toFixed(2)}`}
+            subtitle={formatOrderSubtitle(order)}
             trailing={
               <Badge
                 label={formatOrderStatus(order.status)}

@@ -171,6 +171,7 @@ describe("order financial rules", () => {
     });
     await expect(
       createOrderAsync({
+        customerName: "Maria",
         dueDate: "2026-04-29",
         items: [{ productId: "product_1", quantity: 1, unitPrice: 10 }],
       })
@@ -196,6 +197,7 @@ describe("order financial rules", () => {
     await orderRepository.createAsync(pendingOrder, []);
 
     const details = await updatePendingOrderAsync(pendingOrder, {
+      customerName: "Maria",
       dueDate: "2026-04-30",
       items: [{ productId: "product_1", quantity: 3, unitPrice: 10 }],
     });
@@ -203,6 +205,7 @@ describe("order financial rules", () => {
     expect(details.order).toMatchObject({ dueDate: "2026-04-30T12:00:00.000Z", total: 30 });
     expect(details.items).toEqual([expect.objectContaining({ quantity: 3, subtotal: 30 })]);
     await expect(updatePendingOrderAsync({ ...baseOrder, status: "delivered" }, {
+      customerName: "Maria",
       dueDate: "2026-04-30",
       items: [{ productId: "product_1", quantity: 1, unitPrice: 10 }],
     })).rejects.toThrow("ORDER_NOT_EDITABLE");
