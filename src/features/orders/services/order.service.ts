@@ -49,6 +49,19 @@ export function calculateOrderTotals(items: { unitPrice: number; quantity: numbe
   };
 }
 
+function toIsoDueDate(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return new Date().toISOString();
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}T12:00:00.000Z`).toISOString();
+  }
+
+  return new Date(trimmed).toISOString();
+}
+
 export function createIncomeMovement(order: Order, now: string): Movement {
   return {
     id: createId("movement"),
@@ -57,7 +70,7 @@ export function createIncomeMovement(order: Order, now: string): Movement {
     sourceType: "order",
     sourceId: order.id,
     amount: order.total,
-    description: `Ingreso por orden ${order.orderNumber}`,
+    description: `Ingreso por pedido ${order.orderNumber}`,
     status: "active",
     movementDate: now,
     createdAt: now,
@@ -65,28 +78,10 @@ export function createIncomeMovement(order: Order, now: string): Movement {
   };
 }
 
-export function createOrderReversalMovement(order: Order, originalMovement: Movement, now: string): Movement {
-  return {
-    id: createId("movement"),
-    type: "reversal",
-    direction: "out",
-    sourceType: "order",
-    sourceId: order.id,
-    amount: originalMovement.amount,
-    description: `Reverso por cancelacion de orden ${order.orderNumber}`,
-    status: "active",
-    movementDate: now,
-    createdAt: now,
-    updatedAt: now,
-    reversedMovementId: originalMovement.id,
-  };
-}
-
-export function createDeliveredPaidOrder(order: Order, now: string): Order {
+export function createDeliveredOrder(order: Order, now: string): Order {
   return {
     ...order,
     status: "delivered",
-    paymentStatus: "paid",
     deliveredAt: order.deliveredAt ?? now,
     updatedAt: now,
   };
@@ -109,22 +104,20 @@ export async function listOrdersAsync(filters?: {
   customerQuery?: string;
 }): Promise<Order[]> {
   const database = await getDatabaseAsync();
-  const orders = await new OrderRepository(database).getAllAsync();
   const status = filters?.status ?? "all";
   const period = filters?.period ?? "all";
-  const customerQuery = filters?.customerQuery?.trim().toLowerCase() ?? "";
   const start = getOrderPeriodStart(period);
 
-  return orders.filter((order) => {
-    const matchesStatus = status === "all" || order.status === status;
-    const matchesPeriod = start === null || new Date(order.createdAt) >= start;
-    const matchesCustomer =
-      !customerQuery ||
-      (order.customerName?.toLowerCase().includes(customerQuery) ?? false) ||
-      (order.customerPhone?.toLowerCase().includes(customerQuery) ?? false);
-
-    return matchesStatus && matchesPeriod && matchesCustomer;
+  return new OrderRepository(database).getFilteredAsync({
+    status,
+    startDate: start?.toISOString() ?? null,
+    customerQuery: filters?.customerQuery,
   });
+}
+
+export async function listPendingOrdersAsync(limit = 5): Promise<Order[]> {
+  const database = await getDatabaseAsync();
+  return new OrderRepository(database).getPendingByDueDateAsync(limit);
 }
 
 export async function getOrderDetailsAsync(id: string): Promise<OrderDetails | null> {
@@ -161,10 +154,9 @@ export async function createOrderAsync(values: OrderFormValues): Promise<OrderDe
     customerName: parsed.customerName || undefined,
     customerPhone: parsed.customerPhone || undefined,
     subtotal,
-    discount: 0,
     total,
     status: "pending",
-    paymentStatus: parsed.paymentStatus,
+    dueDate: toIsoDueDate(parsed.dueDate),
     note: parsed.note || undefined,
     createdAt: now,
     updatedAt: now,
@@ -219,9 +211,8 @@ export async function updatePendingOrderAsync(order: Order, values: OrderFormVal
     customerName: parsed.customerName || undefined,
     customerPhone: parsed.customerPhone || undefined,
     subtotal,
-    discount: 0,
     total,
-    paymentStatus: parsed.paymentStatus,
+    dueDate: toIsoDueDate(parsed.dueDate),
     note: parsed.note || undefined,
     updatedAt: now,
   };
@@ -254,7 +245,7 @@ export async function updatePendingOrderAsync(order: Order, values: OrderFormVal
 }
 
 export async function deliverOrderAsync(order: Order): Promise<Order> {
-  if (order.status === "delivered" && order.paymentStatus === "paid") {
+  if (order.status === "delivered") {
     return order;
   }
 
@@ -263,7 +254,7 @@ export async function deliverOrderAsync(order: Order): Promise<Order> {
   }
 
   const now = new Date().toISOString();
-  const updatedOrder = createDeliveredPaidOrder(order, now);
+  const updatedOrder = createDeliveredOrder(order, now);
 
   const database = await getDatabaseAsync();
 
@@ -278,7 +269,6 @@ export async function deliverOrderAsync(order: Order): Promise<Order> {
       deliveredAt: updatedOrder.deliveredAt,
       cancelledAt: undefined,
     });
-    await orderRepository.updatePaymentStatusAsync(order.id, "paid", now);
     await createIncomeMovementIfMissingAsync(movementRepository, updatedOrder, now);
   });
 
@@ -294,7 +284,6 @@ export async function cancelOrderAsync(order: Order): Promise<Order> {
   const updatedOrder: Order = {
     ...order,
     status: "cancelled",
-    paymentStatus: order.paymentStatus,
     cancelledAt: now,
     updatedAt: now,
   };
@@ -316,8 +305,7 @@ export async function cancelOrderAsync(order: Order): Promise<Order> {
     const originalMovement = await movementRepository.getActiveBySourceAsync("order", order.id);
 
     if (originalMovement) {
-      await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
-      await movementRepository.createAsync(createOrderReversalMovement(order, originalMovement, now));
+      await movementRepository.updateStatusAsync(originalMovement.id, "voided", now);
     }
   });
 

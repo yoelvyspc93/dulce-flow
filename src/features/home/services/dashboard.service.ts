@@ -1,12 +1,13 @@
 import { getDatabaseAsync } from "@/database/connection";
-import { MovementRepository, type DashboardSummary } from "@/database/repositories";
-import type { Movement } from "@/shared/types";
+import { MovementRepository, OrderRepository, type DashboardSummary } from "@/database/repositories";
+import type { Movement, Order } from "@/shared/types";
 
 export type DashboardPeriodFilter = "today" | "week" | "month" | "all";
 
 export type DashboardData = {
   summary: DashboardSummary;
   latestMovements: Movement[];
+  pendingOrders: Order[];
   range: {
     startDate: string;
     endDate: string;
@@ -54,17 +55,20 @@ export function getDashboardDateRange(period: DashboardPeriodFilter, now = new D
 
 export async function loadDashboardDataAsync(period: DashboardPeriodFilter): Promise<DashboardData> {
   const database = await getDatabaseAsync();
-  const repository = new MovementRepository(database);
+  const movementRepository = new MovementRepository(database);
+  const orderRepository = new OrderRepository(database);
   const range = getDashboardDateRange(period);
 
-  const [summary, latestMovements] = await Promise.all([
-    repository.getSummaryByDateRangeAsync(range.startDate, range.endDate),
-    repository.getLatestAsync(10),
+  const [summary, latestMovements, pendingOrders] = await Promise.all([
+    movementRepository.getSummaryByDateRangeAsync(range.startDate, range.endDate),
+    movementRepository.getLatestByDateRangeAsync(range.startDate, range.endDate, 10),
+    orderRepository.getPendingByDueDateAsync(5),
   ]);
 
   return {
     summary,
     latestMovements,
+    pendingOrders,
     range,
   };
 }

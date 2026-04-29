@@ -4,25 +4,20 @@ import { View } from "react-native";
 
 import {
   listExpensesAsync,
-  type ExpenseCategoryFilter,
   type ExpensePeriodFilter,
 } from "@/features/expenses/services/expense.service";
-import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.schema";
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
-import { formatExpenseCategory, formatPeriod } from "@/shared/utils/labels";
+import { formatPeriod } from "@/shared/utils/labels";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
-const CATEGORIES: ExpenseCategoryFilter[] = ["all", ...EXPENSE_CATEGORIES];
 
 export function ExpensesScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [periodIndex, setPeriodIndex] = useState(2);
-  const [categoryIndex, setCategoryIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const period = PERIODS[periodIndex];
-  const category = CATEGORIES[categoryIndex];
 
   useFocusEffect(
     useCallback(() => {
@@ -30,7 +25,7 @@ export function ExpensesScreen() {
 
       async function loadExpensesAsync() {
         setIsLoading(true);
-        const loadedExpenses = await listExpensesAsync({ period, category });
+        const loadedExpenses = await listExpensesAsync({ period });
 
         if (isActive) {
           setExpenses(loadedExpenses);
@@ -43,21 +38,13 @@ export function ExpensesScreen() {
       return () => {
         isActive = false;
       };
-    }, [category, period])
+    }, [period])
   );
 
   return (
     <Screen title="Gastos">
       <View style={{ gap: 12 }}>
         <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} />
-        <SelectField
-          label="Filtro por categoria"
-          onValueChange={(selectedCategory) => {
-            setCategoryIndex(Math.max(0, CATEGORIES.findIndex((item) => item === selectedCategory)));
-          }}
-          options={CATEGORIES.map((item) => ({ label: formatExpenseCategory(item), value: item }))}
-          value={category}
-        />
         <SelectField
           label="Filtro por periodo"
           onValueChange={(selectedPeriod) => {
@@ -86,7 +73,7 @@ export function ExpensesScreen() {
             key={expense.id}
             onPress={() => router.push(`/expenses/${expense.id}`)}
             title={expense.supplyName}
-            subtitle={`$${expense.total.toFixed(2)} - ${formatExpenseCategory(expense.category)}`}
+            subtitle={`$${expense.total.toFixed(2)} - ${expense.quantity} ${expense.unit}`}
             trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
           />
         ))}

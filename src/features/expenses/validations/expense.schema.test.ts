@@ -4,22 +4,34 @@ describe("expenseSchema", () => {
   it("accepts a valid expense", () => {
     expect(
       expenseSchema.parse({
+        supplyId: "supply_1",
         supplyName: "Azucar",
-        category: "ingredients",
         quantity: "2",
         unit: "kg",
-        total: "10",
+        unitPrice: "5",
       })
     ).toEqual({
+      supplyId: "supply_1",
       supplyName: "Azucar",
-      category: "ingredients",
       quantity: 2,
       unit: "kg",
-      total: 10,
+      unitPrice: 5,
     });
   });
 
-  it("rejects missing supply name and invalid total", () => {
-    expect(() => expenseSchema.parse({ supplyName: "", category: "ingredients", total: 0 })).toThrow();
+  it("rejects missing supply and invalid numbers", () => {
+    expect(() => expenseSchema.parse({ supplyName: "", quantity: 0, unit: "kg", unitPrice: 0 })).toThrow();
+  });
+
+  it("rejects invalid unit", () => {
+    expect(() =>
+      expenseSchema.parse({
+        supplyId: "supply_1",
+        supplyName: "Azucar",
+        quantity: 1,
+        unit: "invalid",
+        unitPrice: 5,
+      })
+    ).toThrow();
   });
 });

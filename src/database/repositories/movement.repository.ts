@@ -73,6 +73,18 @@ export class MovementRepository {
     return rows.map(mapMovementRow);
   }
 
+  async getLatestByDateRangeAsync(startDate: string, endDate: string, limit = 10): Promise<Movement[]> {
+    const rows = await this.client.getAllAsync<MovementRow>(
+      `SELECT * FROM movements
+       WHERE status = 'active'
+         AND movement_date BETWEEN ? AND ?
+       ORDER BY movement_date DESC, created_at DESC
+       LIMIT ?;`,
+      [startDate, endDate, limit]
+    );
+    return rows.map(mapMovementRow);
+  }
+
   async getActiveBySourceAsync(sourceType: Movement["sourceType"], sourceId: string): Promise<Movement | null> {
     const row = await this.client.getFirstAsync<MovementRow>(
       `SELECT * FROM movements
@@ -90,17 +102,26 @@ export class MovementRepository {
   }
 
   async getSummaryByDateRangeAsync(startDate: string, endDate: string): Promise<DashboardSummary> {
-    const rows = await this.client.getAllAsync<{ direction: MovementDirection; total: number }>(
-      `SELECT direction, COALESCE(SUM(amount), 0) AS total
+    const rows = await this.client.getAllAsync<{
+      direction: MovementDirection;
+      type: Movement["type"];
+      source_type: Movement["sourceType"];
+      total: number;
+    }>(
+      `SELECT direction, type, source_type, COALESCE(SUM(amount), 0) AS total
        FROM movements
        WHERE status = 'active'
          AND movement_date BETWEEN ? AND ?
-       GROUP BY direction;`,
+       GROUP BY direction, type, source_type;`,
       [startDate, endDate]
     );
 
-    const totalIn = rows.find((row) => row.direction === "in")?.total ?? 0;
-    const totalOut = rows.find((row) => row.direction === "out")?.total ?? 0;
+    const totalIn = rows
+      .filter((row) => row.direction === "in")
+      .reduce((sum, row) => sum + row.total, 0);
+    const totalOut = rows
+      .filter((row) => row.direction === "out" && (row.type === "expense" || row.source_type === "expense"))
+      .reduce((sum, row) => sum + row.total, 0);
 
     return {
       totalIn,

@@ -46,9 +46,9 @@ export function OrdersScreen() {
   );
 
   return (
-    <Screen title="Ordenes">
+    <Screen title="Pedidos">
       <View style={{ gap: 12 }}>
-        <Button label="Crear orden" onPress={() => router.push("/orders/new")} />
+        <Button label="Crear pedido" onPress={() => router.push("/orders/new")} />
         <SelectField
           label="Filtro por estado"
           onValueChange={(selectedStatus) => {
@@ -68,14 +68,14 @@ export function OrdersScreen() {
       </View>
 
       <SectionHeader
-        title="Ordenes registradas"
-        subtitle={isLoading ? "Cargando ordenes..." : `${orders.length} ordenes encontradas`}
+        title="Pedidos registrados"
+        subtitle={isLoading ? "Cargando pedidos..." : `${orders.length} pedidos encontrados`}
       />
       {orders.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin ordenes"
-          title="Todavia no tienes ordenes"
-          description="Crea tu primera orden para empezar a registrar ventas y entregas."
+          eyebrow="Sin pedidos"
+          title="Todavia no tienes pedidos"
+          description="Crea tu primer pedido para empezar a registrar ventas y entregas."
         />
       ) : null}
 
@@ -85,7 +85,7 @@ export function OrdersScreen() {
             key={order.id}
             onPress={() => router.push(`/orders/${order.id}`)}
             title={order.orderNumber}
-            subtitle={`${order.customerName ?? "Sin cliente"} - $${order.total.toFixed(2)}`}
+            subtitle={`${order.customerName ?? "Sin cliente"} - ${new Date(order.dueDate).toLocaleDateString()} - $${order.total.toFixed(2)}`}
             trailing={
               <Badge
                 label={formatOrderStatus(order.status)}

@@ -7,8 +7,7 @@ type SupplyRow = {
   id: string;
   name: string;
   unit: string;
-  category: string | null;
-  default_price: number | null;
+  default_price: number;
   is_active: number;
   created_at: string;
   updated_at: string;
@@ -19,8 +18,7 @@ function mapSupplyRow(row: SupplyRow): Supply {
     id: row.id,
     name: row.name,
     unit: row.unit,
-    category: (row.category as Supply["category"]) ?? undefined,
-    defaultPrice: row.default_price ?? undefined,
+    defaultPrice: row.default_price,
     isActive: fromSqliteBoolean(row.is_active),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -50,14 +48,13 @@ export class SupplyRepository {
   async createAsync(supply: Supply): Promise<void> {
     await this.client.runAsync(
       `INSERT INTO supplies (
-        id, name, unit, category, default_price, is_active, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        id, name, unit, default_price, is_active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
       [
         supply.id,
         supply.name,
         supply.unit,
-        supply.category ?? null,
-        supply.defaultPrice ?? null,
+        supply.defaultPrice,
         toSqliteBoolean(supply.isActive),
         supply.createdAt,
         supply.updatedAt,
@@ -68,13 +65,12 @@ export class SupplyRepository {
   async updateAsync(supply: Supply): Promise<void> {
     await this.client.runAsync(
       `UPDATE supplies
-       SET name = ?, unit = ?, category = ?, default_price = ?, is_active = ?, updated_at = ?
+       SET name = ?, unit = ?, default_price = ?, is_active = ?, updated_at = ?
        WHERE id = ?;`,
       [
         supply.name,
         supply.unit,
-        supply.category ?? null,
-        supply.defaultPrice ?? null,
+        supply.defaultPrice,
         toSqliteBoolean(supply.isActive),
         supply.updatedAt,
         supply.id,

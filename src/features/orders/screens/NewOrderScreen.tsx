@@ -16,10 +16,15 @@ type OrderLine = {
   unitPrice: string;
 };
 
+function toDateInputValue(date = new Date()): string {
+  return date.toISOString().slice(0, 10);
+}
+
 export function NewOrderScreen() {
   const [activeProducts, setActiveProducts] = useState<Product[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [dueDate, setDueDate] = useState(toDateInputValue());
   const [items, setItems] = useState<OrderLine[]>([]);
   const [note, setNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -92,7 +97,7 @@ export function NewOrderScreen() {
 
   async function handleSaveAsync() {
     if (items.length === 0) {
-      setErrorMessage("Debes crear un producto activo antes de registrar ordenes.");
+      setErrorMessage("Debes crear un producto activo antes de registrar pedidos.");
       return;
     }
 
@@ -103,12 +108,12 @@ export function NewOrderScreen() {
       const created = await createOrderAsync({
         customerName,
         customerPhone,
+        dueDate,
         items: items.map((item) => ({
           productId: item.productId,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
         })),
-        paymentStatus: "pending",
         note,
       });
       router.replace(`/orders/${created.order.id}`);
@@ -118,7 +123,7 @@ export function NewOrderScreen() {
       } else if (error instanceof Error && error.message === "PRODUCT_NOT_AVAILABLE") {
         setErrorMessage("Uno de los productos seleccionados no esta disponible.");
       } else {
-        setErrorMessage("No se pudo guardar la orden.");
+        setErrorMessage("No se pudo guardar el pedido.");
       }
     } finally {
       setIsSaving(false);
@@ -126,9 +131,16 @@ export function NewOrderScreen() {
   }
 
   return (
-    <Screen title="Nueva orden" backHref="/orders">
+    <Screen title="Nuevo pedido" backHref="/orders">
       <TextField label="Cliente" onChangeText={setCustomerName} placeholder="Nombre del cliente" value={customerName} />
       <TextField label="Telefono" onChangeText={setCustomerPhone} placeholder="Telefono" value={customerPhone} />
+      <TextField
+        label="Fecha del pedido"
+        onChangeText={setDueDate}
+        placeholder="YYYY-MM-DD"
+        value={dueDate}
+        helperText="Dia en que debe estar listo o entregado."
+      />
       <View style={{ gap: 12 }}>
         {items.map((item, index) => (
           <View key={item.id} style={styles.itemCard}>
@@ -170,7 +182,7 @@ export function NewOrderScreen() {
       </View>
       <TextField label="Nota" onChangeText={setNote} placeholder="Detalles de entrega o decoracion" value={note} multiline />
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-      <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar orden"} onPress={handleSaveAsync} />
+      <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar pedido"} onPress={handleSaveAsync} />
     </Screen>
   );
 }

@@ -1,12 +1,11 @@
 import { getDatabaseAsync } from "@/database/connection";
-import { ExpenseRepository, MovementRepository } from "@/database/repositories";
+import { ExpenseRepository, MovementRepository, SupplyRepository } from "@/database/repositories";
 import { createId } from "@/shared/utils/id";
-import type { Expense, ExpenseCategory, Movement } from "@/shared/types";
+import type { Expense, Movement } from "@/shared/types";
 
 import { expenseSchema, type ExpenseFormValues } from "../validations/expense.schema";
 
 export type ExpensePeriodFilter = "today" | "week" | "month" | "all";
-export type ExpenseCategoryFilter = ExpenseCategory | "all";
 
 function startOfToday(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -48,28 +47,19 @@ export function createExpenseMovement(expense: Expense, now: string): Movement {
   };
 }
 
-export function calculateExpenseTotal(values: Pick<ExpenseFormValues, "quantity" | "unitPrice" | "total">): number {
-  if (values.quantity !== undefined && values.unitPrice !== undefined) {
-    return values.quantity * values.unitPrice;
-  }
-
-  return values.total;
+export function calculateExpenseTotal(values: Pick<ExpenseFormValues, "quantity" | "unitPrice">): number {
+  return Math.round((values.quantity * values.unitPrice + 1e-9) * 100) / 100;
 }
 
 export async function listExpensesAsync(filters?: {
-  category?: ExpenseCategoryFilter;
   period?: ExpensePeriodFilter;
 }): Promise<Expense[]> {
   const database = await getDatabaseAsync();
-  const expenses = await new ExpenseRepository(database).getAllAsync();
-  const category = filters?.category ?? "all";
   const period = filters?.period ?? "all";
   const start = getExpensePeriodStart(period);
 
-  return expenses.filter((expense) => {
-    const matchesCategory = category === "all" || expense.category === category;
-    const matchesPeriod = start === null || new Date(expense.createdAt) >= start;
-    return matchesCategory && matchesPeriod;
+  return new ExpenseRepository(database).getFilteredAsync({
+    startDate: start?.toISOString() ?? null,
   });
 }
 
@@ -81,13 +71,19 @@ export async function getExpenseAsync(id: string): Promise<Expense | null> {
 export async function createExpenseAsync(values: ExpenseFormValues): Promise<Expense> {
   const parsed = expenseSchema.parse(values);
   const now = new Date().toISOString();
+  const database = await getDatabaseAsync();
+  const selectedSupply = await new SupplyRepository(database).getByIdAsync(parsed.supplyId);
+
+  if (!selectedSupply) {
+    throw new Error("SUPPLY_NOT_FOUND");
+  }
+
   const expense: Expense = {
     id: createId("expense"),
-    supplyId: parsed.supplyId,
-    supplyName: parsed.supplyName,
-    category: parsed.category,
+    supplyId: selectedSupply.id,
+    supplyName: selectedSupply.name,
     quantity: parsed.quantity,
-    unit: parsed.unit || undefined,
+    unit: parsed.unit,
     unitPrice: parsed.unitPrice,
     total: calculateExpenseTotal(parsed),
     status: "active",
@@ -95,8 +91,6 @@ export async function createExpenseAsync(values: ExpenseFormValues): Promise<Exp
     createdAt: now,
     updatedAt: now,
   };
-
-  const database = await getDatabaseAsync();
 
   await database.withTransactionAsync(async (transaction) => {
     await new ExpenseRepository(transaction).createAsync(expense);
@@ -109,20 +103,24 @@ export async function createExpenseAsync(values: ExpenseFormValues): Promise<Exp
 export async function updateExpenseAsync(expense: Expense, values: ExpenseFormValues): Promise<Expense> {
   const parsed = expenseSchema.parse(values);
   const now = new Date().toISOString();
+  const database = await getDatabaseAsync();
+  const selectedSupply = await new SupplyRepository(database).getByIdAsync(expense.supplyId);
+
+  if (!selectedSupply) {
+    throw new Error("SUPPLY_NOT_FOUND");
+  }
+
   const updatedExpense: Expense = {
     ...expense,
-    supplyId: parsed.supplyId,
-    supplyName: parsed.supplyName,
-    category: parsed.category,
+    supplyId: selectedSupply.id,
+    supplyName: selectedSupply.name,
     quantity: parsed.quantity,
-    unit: parsed.unit || undefined,
+    unit: parsed.unit,
     unitPrice: parsed.unitPrice,
     total: calculateExpenseTotal(parsed),
     note: parsed.note || undefined,
     updatedAt: now,
   };
-
-  const database = await getDatabaseAsync();
 
   await database.withTransactionAsync(async (transaction) => {
     const expenseRepository = new ExpenseRepository(transaction);
@@ -131,7 +129,9 @@ export async function updateExpenseAsync(expense: Expense, values: ExpenseFormVa
     await expenseRepository.updateAsync(updatedExpense);
 
     const originalMovement = await movementRepository.getActiveBySourceAsync("expense", expense.id);
-    if (originalMovement && originalMovement.amount !== updatedExpense.total) {
+    if (!originalMovement) {
+      await movementRepository.createAsync(createExpenseMovement(updatedExpense, now));
+    } else if (originalMovement.amount !== updatedExpense.total) {
       await movementRepository.updateStatusAsync(originalMovement.id, "reversed", now);
       await movementRepository.createAsync(createExpenseMovement(updatedExpense, now));
     }

@@ -1,33 +1,26 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
 
 import { createExpenseAsync } from "@/features/expenses/services/expense.service";
-import { EXPENSE_CATEGORIES } from "@/features/expenses/validations/expense.schema";
 import { listSuppliesAsync } from "@/features/supplies/services/supply.service";
-import { Button, Screen, SelectField, TextField } from "@/shared/ui";
+import { SUPPLY_UNITS } from "@/features/supplies/validations/supply.schema";
+import { Button, Screen, SelectField, SurfaceCard, TextField } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
-import { formatExpenseCategory } from "@/shared/utils/labels";
 import { colors, spacing, typography } from "@/theme";
 
 export function NewExpenseScreen() {
   const [activeSupplies, setActiveSupplies] = useState<Supply[]>([]);
-  const [selectedSupplyId, setSelectedSupplyId] = useState("manual");
-  const [manualName, setManualName] = useState("");
-  const [categoryIndex, setCategoryIndex] = useState(0);
-  const [quantity, setQuantity] = useState("");
-  const [unit, setUnit] = useState("");
+  const [selectedSupplyId, setSelectedSupplyId] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState<(typeof SUPPLY_UNITS)[number]>("unidad");
   const [unitPrice, setUnitPrice] = useState("");
-  const [total, setTotal] = useState("");
   const [note, setNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const selectedSupply = activeSupplies.find((supply) => supply.id === selectedSupplyId);
-  const category = EXPENSE_CATEGORIES[categoryIndex];
-  const calculatedTotal =
-    quantity && unitPrice ? Number(quantity || 0) * Number(unitPrice || 0) : Number(total || 0);
-  const canAutoCalculateTotal = Boolean(quantity && unitPrice);
+  const calculatedTotal = Number(quantity || 0) * Number(unitPrice || 0);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,7 +31,7 @@ export function NewExpenseScreen() {
       if (isMounted) {
         const active = supplies.filter((supply) => supply.isActive);
         setActiveSupplies(active);
-        setSelectedSupplyId(active[0]?.id ?? "manual");
+        setSelectedSupplyId(active[0]?.id ?? "");
       }
     }
 
@@ -54,22 +47,12 @@ export function NewExpenseScreen() {
       return;
     }
 
-    setUnit(selectedSupply.unit);
-    if (selectedSupply.defaultPrice) {
-      setUnitPrice(String(selectedSupply.defaultPrice));
-    }
+    setUnit(SUPPLY_UNITS.includes(selectedSupply.unit as (typeof SUPPLY_UNITS)[number]) ? (selectedSupply.unit as (typeof SUPPLY_UNITS)[number]) : "unidad");
+    setUnitPrice(String(selectedSupply.defaultPrice));
   }, [selectedSupply]);
 
-  useEffect(() => {
-    if (canAutoCalculateTotal && Number.isFinite(calculatedTotal)) {
-      setTotal(String(Number(calculatedTotal.toFixed(2))));
-    }
-  }, [calculatedTotal, canAutoCalculateTotal]);
-
-  const supplyOptions = [
-    ...activeSupplies.map((supply) => ({ label: supply.name, value: supply.id })),
-    { label: "Gasto sin insumo", value: "manual" },
-  ];
+  const supplyOptions = activeSupplies.map((supply) => ({ label: supply.name, value: supply.id }));
+  const total = Number.isFinite(calculatedTotal) ? Number(calculatedTotal.toFixed(2)) : 0;
 
   async function handleSaveAsync() {
     setIsSaving(true);
@@ -77,13 +60,11 @@ export function NewExpenseScreen() {
 
     try {
       await createExpenseAsync({
-        supplyId: selectedSupply?.id,
-        supplyName: selectedSupply?.name ?? manualName,
-        category,
-        quantity: quantity ? Number(quantity) : undefined,
-        unit: selectedSupply?.unit ?? unit,
-        unitPrice: unitPrice ? Number(unitPrice) : undefined,
-        total: Number(total),
+        supplyId: selectedSupplyId,
+        supplyName: selectedSupply?.name ?? "",
+        quantity: Number(quantity),
+        unit,
+        unitPrice: Number(unitPrice),
         note,
       });
       router.replace("/expenses");
@@ -104,48 +85,40 @@ export function NewExpenseScreen() {
         label="Insumo"
         onValueChange={setSelectedSupplyId}
         options={supplyOptions}
-        value={selectedSupply?.id ?? "manual"}
-      />
-      {!selectedSupply ? (
-        <TextField label="Nombre manual" onChangeText={setManualName} placeholder="Gasto general" value={manualName} />
-      ) : null}
-      <SelectField
-        label="Categoria"
-        onValueChange={(selectedCategory) => {
-          setCategoryIndex(Math.max(0, EXPENSE_CATEGORIES.findIndex((item) => item === selectedCategory)));
-        }}
-        options={EXPENSE_CATEGORIES.map((item) => ({ label: formatExpenseCategory(item), value: item }))}
-        value={category}
+        value={selectedSupply?.id ?? ""}
+        helperText={activeSupplies.length === 0 ? "Crea un insumo activo antes de registrar gastos." : undefined}
       />
       <TextField
         keyboardType="decimal-pad"
         label="Cantidad"
         onChangeText={setQuantity}
-        placeholder="Opcional"
+        placeholder="1"
         value={quantity}
-        helperText="Cantidad comprada del insumo o gasto."
+        helperText="Cantidad comprada del insumo."
       />
-      <TextField label="Unidad" onChangeText={setUnit} placeholder="kg, unidad, caja..." value={unit} />
+      <SelectField
+        label="Unidad"
+        onValueChange={(selectedUnit) => setUnit(selectedUnit as (typeof SUPPLY_UNITS)[number])}
+        options={SUPPLY_UNITS.map((item) => ({ label: item, value: item }))}
+        value={unit}
+      />
       <TextField
         keyboardType="decimal-pad"
         label="Precio unitario"
         onChangeText={setUnitPrice}
         placeholder="$0.00"
         value={unitPrice}
-        helperText="Si hay cantidad y precio unitario, el total se calcula automaticamente."
-      />
-      <TextField
-        editable={!canAutoCalculateTotal}
-        keyboardType="decimal-pad"
-        label="Total"
-        onChangeText={setTotal}
-        placeholder="$0.00"
-        value={total}
-        helperText={canAutoCalculateTotal ? "Calculado como cantidad por precio unitario." : "Escribelo si no registras cantidad o precio unitario."}
+        helperText="Se carga desde el precio establecido del insumo."
       />
       <TextField label="Nota" onChangeText={setNote} placeholder="Detalle opcional" value={note} multiline />
+      <SurfaceCard tone="accent">
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+        </View>
+      </SurfaceCard>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-      <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar gasto"} onPress={handleSaveAsync} />
+      <Button disabled={isSaving || activeSupplies.length === 0} label={isSaving ? "Guardando..." : "Guardar gasto"} onPress={handleSaveAsync} />
     </Screen>
   );
 }
@@ -155,5 +128,20 @@ const styles = StyleSheet.create({
     color: colors.danger,
     ...typography.caption,
     marginTop: spacing.xs,
+  },
+  totalRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.lg,
+  },
+  totalLabel: {
+    color: colors.textMuted,
+    textTransform: "uppercase",
+    ...typography.caption,
+  },
+  totalValue: {
+    color: colors.text,
+    ...typography.section,
   },
 });

@@ -356,7 +356,7 @@ CREATE TABLE IF NOT EXISTS supplies (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
   unit TEXT NOT NULL,
-  category TEXT,
+  default_price REAL NOT NULL CHECK(default_price > 0),
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL
@@ -368,14 +368,13 @@ CREATE TABLE IF NOT EXISTS supplies (
 ```sql
 CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY NOT NULL,
-  order_number TEXT NOT NULL,
+  order_number TEXT NOT NULL UNIQUE,
   customer_name TEXT,
   customer_phone TEXT,
   subtotal REAL NOT NULL DEFAULT 0,
-  discount REAL NOT NULL DEFAULT 0,
   total REAL NOT NULL DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'pending',
-  payment_status TEXT NOT NULL DEFAULT 'pending',
+  status TEXT NOT NULL CHECK(status IN ('pending', 'delivered', 'cancelled')),
+  due_date TEXT NOT NULL,
   note TEXT,
   delivered_at TEXT,
   cancelled_at TEXT,
@@ -406,17 +405,18 @@ CREATE TABLE IF NOT EXISTS order_items (
 ```sql
 CREATE TABLE IF NOT EXISTS expenses (
   id TEXT PRIMARY KEY NOT NULL,
-  supply_id TEXT,
+  supply_id TEXT NOT NULL,
   supply_name TEXT NOT NULL,
-  category TEXT,
-  quantity REAL,
-  unit TEXT,
-  total REAL NOT NULL,
+  quantity REAL NOT NULL CHECK(quantity > 0),
+  unit TEXT NOT NULL,
+  unit_price REAL NOT NULL CHECK(unit_price > 0),
+  total REAL NOT NULL CHECK(total > 0),
+  status TEXT NOT NULL CHECK(status IN ('active', 'voided')) DEFAULT 'active',
   note TEXT,
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
 
-  FOREIGN KEY (supply_id) REFERENCES supplies(id) ON DELETE SET NULL
+  FOREIGN KEY (supply_id) REFERENCES supplies(id) ON DELETE RESTRICT
 );
 ```
 
@@ -425,23 +425,18 @@ CREATE TABLE IF NOT EXISTS expenses (
 ```sql
 CREATE TABLE IF NOT EXISTS movements (
   id TEXT PRIMARY KEY NOT NULL,
-
-  type TEXT NOT NULL,
-  source_type TEXT NOT NULL,
-  source_id TEXT NOT NULL,
-
-  title TEXT NOT NULL,
-  description TEXT,
-
-  amount REAL NOT NULL,
-  currency TEXT NOT NULL,
-
-  occurred_at TEXT NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('income', 'expense', 'adjustment', 'reversal')),
+  direction TEXT NOT NULL CHECK(direction IN ('in', 'out')),
+  source_type TEXT NOT NULL CHECK(source_type IN ('order', 'expense', 'manual')),
+  source_id TEXT,
+  amount REAL NOT NULL CHECK(amount > 0),
+  description TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('active', 'voided', 'reversed')) DEFAULT 'active',
+  movement_date TEXT NOT NULL,
   created_at TEXT NOT NULL,
-
-  is_reversed INTEGER NOT NULL DEFAULT 0,
-  reversed_at TEXT,
-  reversal_reason TEXT
+  updated_at TEXT NOT NULL,
+  reversed_movement_id TEXT,
+  FOREIGN KEY(reversed_movement_id) REFERENCES movements(id)
 );
 ```
 
@@ -464,6 +459,9 @@ ON orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at
 ON orders(created_at);
 
+CREATE INDEX IF NOT EXISTS idx_orders_due_date
+ON orders(due_date);
+
 CREATE INDEX IF NOT EXISTS idx_expenses_created_at
 ON expenses(created_at);
 
@@ -473,11 +471,11 @@ ON movements(type);
 CREATE INDEX IF NOT EXISTS idx_movements_source
 ON movements(source_type, source_id);
 
-CREATE INDEX IF NOT EXISTS idx_movements_occurred_at
-ON movements(occurred_at);
+CREATE INDEX IF NOT EXISTS idx_movements_date
+ON movements(movement_date);
 
-CREATE INDEX IF NOT EXISTS idx_movements_audit
-ON movements(is_reversed, occurred_at);
+CREATE INDEX IF NOT EXISTS idx_movements_status
+ON movements(status);
 ```
 
 ## 12. Reglas de auditoría
@@ -491,32 +489,30 @@ Incorrecto:
 DELETE FROM movements WHERE id = ?
 
 Correcto:
-Marcar movement como reversado.
+Marcar movement como `voided` o `reversed`.
 ```
 
 ### Regla 2
 
-Si una orden entregada vuelve a pendiente o se cancela, su ingreso debe reversarse.
+Si un pedido entregado se cancela, su ingreso debe dejar de contar sin crear una salida nueva.
 
 ```txt
-movement.is_reversed = 1
-movement.reversed_at = now
-movement.reversal_reason = 'Order status changed from delivered to cancelled'
+movement.status = 'voided'
 ```
 
 ### Regla 3
 
-Si un gasto fue creado por error, se puede eliminar el gasto visible, pero el movimiento debe quedar reversado.
+Si un gasto fue creado por error, el gasto visible queda `voided` y su movimiento queda `voided`.
 
 ### Regla 4
 
-Si se edita una orden entregada, no se debe modificar el movement original.
+Los pedidos entregados no se editan. Los pedidos pendientes se editan antes de entregarse.
 
 Debe hacerse:
 
 ```txt
-1. Reversar el movimiento anterior.
-2. Crear un nuevo movimiento con el monto actualizado.
+1. Editar el pedido pendiente.
+2. Entregar el pedido para crear el ingreso.
 ```
 
 ### Regla 5
@@ -531,8 +527,8 @@ Los totales del dashboard salen de `movements`, no directamente de `orders` ni `
 SELECT COALESCE(SUM(amount), 0) AS total_income
 FROM movements
 WHERE type = 'income'
-  AND is_reversed = 0
-  AND occurred_at BETWEEN ? AND ?;
+  AND status = 'active'
+  AND movement_date BETWEEN ? AND ?;
 ```
 
 ### Gastos
@@ -541,8 +537,8 @@ WHERE type = 'income'
 SELECT COALESCE(SUM(amount), 0) AS total_expenses
 FROM movements
 WHERE type = 'expense'
-  AND is_reversed = 0
-  AND occurred_at BETWEEN ? AND ?;
+  AND status = 'active'
+  AND movement_date BETWEEN ? AND ?;
 ```
 
 ### Ganancia
@@ -558,8 +554,8 @@ SELECT
     END
   ), 0) AS profit
 FROM movements
-WHERE is_reversed = 0
-  AND occurred_at BETWEEN ? AND ?;
+WHERE status = 'active'
+  AND movement_date BETWEEN ? AND ?;
 ```
 
 ### Últimos movimientos
@@ -567,10 +563,17 @@ WHERE is_reversed = 0
 ```sql
 SELECT *
 FROM movements
-WHERE is_reversed = 0
-ORDER BY occurred_at DESC
+WHERE status = 'active'
+  AND movement_date BETWEEN ? AND ?
+ORDER BY movement_date DESC, created_at DESC
 LIMIT 10;
 ```
+
+## 13.1 Migraciones SQLite
+
+`DATABASE_VERSION` actual es `5`.
+
+Las migraciones corren dentro de una transaccion con `withTransactionAsync`. No hay downgrade automatico ni rollback manual documentado para versiones anteriores; si una migracion falla, la transaccion debe evitar aplicar cambios parciales. Antes de una migracion destructiva en produccion se debe crear un backup de la base de datos local.
 
 ## 14. Repositories
 
@@ -749,9 +752,11 @@ El descuento no puede ser mayor que el subtotal.
 ### Gasto
 
 ```txt
-Nombre o insumo requerido.
-Total mayor que 0.
-Cantidad opcional, pero si existe debe ser mayor que 0.
+Insumo requerido.
+Cantidad mayor que 0.
+Unidad requerida.
+Precio unitario mayor que 0.
+Total calculado como cantidad por precio unitario.
 ```
 
 ## 20. Manejo de fechas
