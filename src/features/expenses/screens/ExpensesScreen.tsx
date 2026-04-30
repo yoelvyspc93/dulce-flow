@@ -7,7 +7,7 @@ import {
   type ExpensePeriodFilter,
 } from "@/features/expenses/services/expense.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
+import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
 import { formatPeriod } from "@/shared/utils/labels";
 import { formatMoney } from "@/shared/utils/money";
@@ -54,14 +54,15 @@ export function ExpensesScreen() {
     <Screen title="Gastos">
       <View style={{ gap: 12 }}>
         <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} />
-        <SelectField
-          label="Filtro por periodo"
+        <SegmentedControl
+          accessibilityLabel="Filtro por periodo"
+          menuAccessibilityLabel="Mostrar todos los periodos"
           onValueChange={(selectedPeriod) => {
             setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
           }}
           options={PERIODS.map((item) => ({ label: formatPeriod(item), value: item }))}
+          visibleOptionCount={3}
           value={period}
-          helperText="Define que gastos entran en este listado."
         />
       </View>
 

@@ -4,17 +4,15 @@ import { View } from "react-native";
 
 import {
   listOrdersAsync,
-  type OrderPeriodFilter,
   type OrderStatusFilter,
 } from "@/features/orders/services/order.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
+import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Order } from "@/shared/types";
-import { formatOrderStatus, formatPeriod } from "@/shared/utils/labels";
+import { formatOrderStatus } from "@/shared/utils/labels";
 import { formatMoney } from "@/shared/utils/money";
 
 const STATUSES: OrderStatusFilter[] = ["all", "pending", "delivered", "cancelled"];
-const PERIODS: OrderPeriodFilter[] = ["today", "week", "month", "all"];
 
 function formatOrderSubtitle(order: Order): string {
   const note = order.note?.trim();
@@ -28,10 +26,8 @@ function formatOrderSubtitle(order: Order): string {
 export function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusIndex, setStatusIndex] = useState(0);
-  const [periodIndex, setPeriodIndex] = useState(2);
   const [isLoading, setIsLoading] = useState(true);
   const status = STATUSES[statusIndex];
-  const period = PERIODS[periodIndex];
 
   useFocusEffect(
     useCallback(() => {
@@ -39,7 +35,7 @@ export function OrdersScreen() {
 
       async function loadOrdersAsync() {
         setIsLoading(true);
-        const loadedOrders = await listOrdersAsync({ status, period });
+        const loadedOrders = await listOrdersAsync({ status });
 
         if (isActive) {
           setOrders(loadedOrders);
@@ -52,29 +48,22 @@ export function OrdersScreen() {
       return () => {
         isActive = false;
       };
-    }, [period, status])
+    }, [status])
   );
 
   return (
     <Screen title="Pedidos">
       <View style={{ gap: 12 }}>
         <Button label="Crear pedido" onPress={() => router.push("/orders/new")} />
-        <SelectField
-          label="Filtro por estado"
+        <SegmentedControl
+          accessibilityLabel="Filtro por estado"
+          menuAccessibilityLabel="Mostrar todos los estados"
           onValueChange={(selectedStatus) => {
             setStatusIndex(Math.max(0, STATUSES.findIndex((item) => item === selectedStatus)));
           }}
           options={STATUSES.map((item) => ({ label: formatOrderStatus(item), value: item }))}
+          visibleOptionCount={3}
           value={status}
-        />
-        <SelectField
-          label="Filtro por periodo"
-          onValueChange={(selectedPeriod) => {
-            setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
-          }}
-          options={PERIODS.map((item) => ({ label: formatPeriod(item), value: item }))}
-          value={period}
-          helperText="Define que pedidos entran en este listado."
         />
       </View>
 

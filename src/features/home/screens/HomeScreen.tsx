@@ -85,7 +85,6 @@ export function HomeScreen() {
             setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
           }}
           options={PERIODS.map((item) => ({ label: PERIOD_LABELS[item], value: item }))}
-          visibleOptionCount={3}
           value={period}
         />
 
