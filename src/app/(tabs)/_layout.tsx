@@ -2,7 +2,7 @@ import { Redirect, Tabs } from "expo-router";
 import { ClipboardList, House, ReceiptText, Settings } from "lucide-react-native";
 
 import { useAppStore } from "@/store/app.store";
-import { colors, radius, spacing, typography } from "@/theme";
+import { colors, fontFamily, radius, spacing, typography } from "@/theme";
 
 export default function TabsLayout() {
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
@@ -25,6 +25,7 @@ export default function TabsLayout() {
           paddingBottom: spacing.xs,
         },
         tabBarLabelStyle: {
+          fontFamily: fontFamily.bold,
           fontSize: typography.caption.fontSize,
           fontWeight: "700",
         },

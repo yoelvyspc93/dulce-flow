@@ -1,3 +1,10 @@
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+  useFonts,
+} from "@expo-google-fonts/poppins";
 import { Stack } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
@@ -12,6 +19,12 @@ import { colors, spacing, typography } from "@/theme";
 const shouldSeedDemoDatabase = __DEV__ && process.env.EXPO_PUBLIC_SEED_DEMO_DATABASE === "1";
 
 export default function RootLayout() {
+  const [areFontsLoaded, fontLoadError] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
   const hasStartedBootstrap = useRef(false);
   const [retryKey, setRetryKey] = useState(0);
   const bootstrapStatus = useAppStore((state) => state.bootstrapStatus);
@@ -59,6 +72,18 @@ export default function RootLayout() {
       isMounted = false;
     };
   }, [retryKey, setBootstrapError, setBootstrapLoading, setBootstrapReady]);
+
+  if (!areFontsLoaded && !fontLoadError) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <View style={styles.loadingScreen}>
+          <ActivityIndicator color={colors.accent} />
+          <Text style={styles.loadingText}>Preparando DulceFlow...</Text>
+        </View>
+      </SafeAreaProvider>
+    );
+  }
 
   if (bootstrapStatus === "idle" || bootstrapStatus === "loading") {
     return (
