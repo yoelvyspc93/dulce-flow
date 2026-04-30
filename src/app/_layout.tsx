@@ -9,6 +9,8 @@ import { Button } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
 import { colors, spacing, typography } from "@/theme";
 
+const shouldSeedDemoDatabase = __DEV__ && process.env.EXPO_PUBLIC_SEED_DEMO_DATABASE === "1";
+
 export default function RootLayout() {
   const hasStartedBootstrap = useRef(false);
   const [retryKey, setRetryKey] = useState(0);
@@ -29,6 +31,11 @@ export default function RootLayout() {
       setBootstrapLoading();
 
       try {
+        if (shouldSeedDemoDatabase) {
+          const { seedDemoDatabaseAsync } = await import("@/database/seed/demoSeed");
+          await seedDemoDatabaseAsync();
+        }
+
         const settings = await Promise.race([
           loadAppSettingsAsync(),
           new Promise<null>((resolve) => {
