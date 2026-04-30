@@ -1,4 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ImageBackground, StyleSheet, Text, View } from "react-native";
 
@@ -14,6 +15,8 @@ import { useAppStore } from "@/store/app.store";
 import { colors, radius, spacing, typography } from "@/theme";
 
 const HOME_DECORATIVE_IMAGE = require("../../../../assets/home-decorative.png");
+const INCOME_COLOR = "#82C66F";
+const EXPENSE_COLOR = "#FF5E61";
 
 const PERIODS: DashboardPeriodFilter[] = ["today", "week", "month", "all"];
 const PERIOD_LABELS: Record<DashboardPeriodFilter, string> = {
@@ -60,6 +63,9 @@ export function HomeScreen() {
   };
   const latestMovements = dashboardData?.latestMovements ?? [];
   const pendingOrders = dashboardData?.pendingOrders ?? [];
+  const totalFlow = summary.totalIn + summary.totalOut;
+  const incomePercent = totalFlow > 0 ? summary.totalIn / totalFlow : 0;
+  const expensePercent = totalFlow > 0 ? summary.totalOut / totalFlow : 0;
 
   return (
     <Screen title="DulceFlow">
@@ -106,8 +112,18 @@ export function HomeScreen() {
         </View>
 
         <View style={styles.metricGrid}>
-          <SummaryMetric amount={formatAmount(summary.totalIn, currency)} label="Ingresos" tone="success" />
-          <SummaryMetric amount={formatAmount(summary.totalOut, currency)} label="Gastos" tone="danger" />
+          <SummaryMetric
+            amount={formatAmount(summary.totalIn, currency)}
+            label="Ingresos"
+            progress={incomePercent}
+            tone="success"
+          />
+          <SummaryMetric
+            amount={formatAmount(summary.totalOut, currency)}
+            label="Gastos"
+            progress={expensePercent}
+            tone="danger"
+          />
         </View>
       </View>
 
@@ -178,23 +194,31 @@ export function HomeScreen() {
 type SummaryMetricProps = {
   label: string;
   amount: string;
+  progress: number;
   tone: "success" | "danger";
 };
 
-function SummaryMetric({ label, amount, tone }: SummaryMetricProps) {
+function SummaryMetric({ label, amount, progress, tone }: SummaryMetricProps) {
+  const toneColor = tone === "success" ? INCOME_COLOR : EXPENSE_COLOR;
+  const progressWidth = `${Math.max(0, Math.min(progress, 1)) * 100}%` as `${number}%`;
+  const Icon = tone === "success" ? ArrowUpRight : ArrowDownRight;
+
   return (
     <View style={styles.metricCard}>
-      <View style={styles.metricHeader}>
-        <View style={[styles.metricIndicator, tone === "success" ? styles.successIndicator : styles.dangerIndicator]} />
-        <Text style={styles.metricLabel}>{label}</Text>
+      <View style={[styles.metricIcon, { backgroundColor: toneColor }]}>
+        <Icon color={colors.white} size={24} strokeWidth={2.4} />
       </View>
+      <Text style={styles.metricLabel}>{label}</Text>
       <Text
         adjustsFontSizeToFit
         numberOfLines={1}
-        style={[styles.metricAmount, tone === "success" ? styles.successAmount : styles.dangerAmount]}
+        style={styles.metricAmount}
       >
         {amount}
       </Text>
+      <View style={styles.metricProgressTrack}>
+        <View style={[styles.metricProgressFill, { backgroundColor: toneColor, width: progressWidth }]} />
+      </View>
     </View>
   );
 }
@@ -243,42 +267,39 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    minHeight: 104,
+    minHeight: 156,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     padding: spacing.lg,
-    gap: spacing.md,
+    gap: spacing.xs,
   },
-  metricHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  metricIndicator: {
-    width: 8,
-    height: 8,
+  metricIcon: {
+    width: 40,
+    height: 40,
     borderRadius: radius.pill,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
   },
   metricLabel: {
     color: colors.textMuted,
-    ...typography.caption,
-    textTransform: "uppercase",
+    ...typography.body,
   },
   metricAmount: {
     ...typography.section,
+    color: colors.text,
   },
-  successIndicator: {
-    backgroundColor: colors.success,
+  metricProgressTrack: {
+    height: 8,
+    overflow: "hidden",
+    borderRadius: radius.pill,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    marginTop: spacing.sm,
   },
-  dangerIndicator: {
-    backgroundColor: colors.danger,
-  },
-  successAmount: {
-    color: colors.success,
-  },
-  dangerAmount: {
-    color: colors.danger,
+  metricProgressFill: {
+    height: "100%",
+    borderRadius: radius.pill,
   },
 });

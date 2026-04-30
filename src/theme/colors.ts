@@ -16,22 +16,3 @@ export const colors = {
   white: "#FFFFFF",
   black: "#000000",
 };
-
-export const highContrastColors = {
-  background: "#000000",
-  backgroundAccent: "#050505",
-  surface: "#101010",
-  surfaceSoft: "#242424",
-  accent: "#FFFFFF",
-  accentStrong: "#EDEDED",
-  success: "#52FF91",
-  warning: "#FFE15A",
-  danger: "#FF6B6B",
-  text: "#FFFFFF",
-  textMuted: "#D6D6D6",
-  border: "rgba(255, 255, 255, 0.42)",
-  overlay: "rgba(0, 0, 0, 0.84)",
-  darkGray: "rgba(0, 0, 0, 0.84)",
-  white: "#FFFFFF",
-  black: "#000000",
-};

@@ -72,17 +72,13 @@ describe("SettingsRepository", () => {
     });
   });
 
-  it("saves and reads accessibility settings including false high contrast", async () => {
+  it("saves and reads accessibility settings", async () => {
     const repository = new SettingsRepository(createMockDatabaseClient().client);
 
-    await repository.saveAccessibilitySettingsAsync(
-      { fontScale: 1.2, highContrastEnabled: false },
-      "2026-04-27T14:00:00.000Z"
-    );
+    await repository.saveAccessibilitySettingsAsync({ fontScale: 1.2 }, "2026-04-27T14:00:00.000Z");
 
     await expect(repository.getAccessibilitySettingsAsync()).resolves.toEqual({
       fontScale: 1.2,
-      highContrastEnabled: false,
     });
   });
 
@@ -92,11 +88,6 @@ describe("SettingsRepository", () => {
     await repository.upsertAsync({
       key: "font_scale",
       value: "not-a-number",
-      updatedAt: "2026-04-27T14:00:00.000Z",
-    });
-    await repository.upsertAsync({
-      key: "high_contrast_enabled",
-      value: "true",
       updatedAt: "2026-04-27T14:00:00.000Z",
     });
 

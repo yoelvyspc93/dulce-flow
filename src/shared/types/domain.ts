@@ -99,5 +99,4 @@ export type BusinessSettings = {
 
 export type AccessibilitySettings = {
   fontScale: number;
-  highContrastEnabled: boolean;
 };

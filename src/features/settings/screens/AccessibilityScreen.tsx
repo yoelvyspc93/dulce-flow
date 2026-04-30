@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { saveAccessibilitySettingsAsync } from "@/features/settings/services/settings.service";
 import type { AccessibilitySettings } from "@/shared/types";
-import { Radio, Screen, Switch } from "@/shared/ui";
+import { Radio, Screen } from "@/shared/ui";
 import { useAccessibleTheme } from "@/shared/ui/useAccessibleTheme";
 import { defaultAccessibilitySettings, useAppStore } from "@/store/app.store";
 import { radius, spacing } from "@/theme";
@@ -88,28 +88,6 @@ export function AccessibilityScreen() {
               </Pressable>
             );
           })}
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.text }, theme.typography.section]}>Contraste</Text>
-        <View style={[styles.group, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <View style={styles.option}>
-            <View style={styles.optionText}>
-              <Text style={[styles.optionTitle, { color: theme.colors.text }, theme.typography.bodyStrong]}>
-                Alto contraste
-              </Text>
-              <Text style={[styles.optionDescription, { color: theme.colors.textMuted }, theme.typography.caption]}>
-                Refuerza bordes, textos y colores para baja vision.
-              </Text>
-            </View>
-            <Switch
-              accessibilityLabel="Alto contraste"
-              disabled={isSaving}
-              onValueChange={(value) => updateAccessibilityAsync({ highContrastEnabled: value })}
-              value={accessibilitySettings.highContrastEnabled}
-            />
-          </View>
         </View>
       </View>
     </Screen>

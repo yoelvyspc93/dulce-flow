@@ -18,7 +18,6 @@ export type AppStoreState = {
 
 export const defaultAccessibilitySettings: AccessibilitySettings = {
   fontScale: 1,
-  highContrastEnabled: false,
 };
 
 export const useAppStore = create<AppStoreState>((set) => ({

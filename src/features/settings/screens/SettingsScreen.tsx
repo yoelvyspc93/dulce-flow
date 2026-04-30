@@ -28,7 +28,7 @@ export function SettingsScreen() {
       <ListItem
         onPress={() => router.push("/accessibility")}
         title="Accesibilidad"
-        subtitle="Legibilidad y contraste"
+        subtitle="Legibilidad"
         trailing={<ChevronRight size={24} strokeWidth={2.4} color={colors.text} />}
       />
     </Screen>

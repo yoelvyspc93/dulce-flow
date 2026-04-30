@@ -9,7 +9,6 @@ const WEB_AVATAR_ID_KEY = "dulceflow.avatar_id";
 const WEB_PHONE_KEY = "dulceflow.phone";
 const WEB_ADDRESS_KEY = "dulceflow.address";
 const WEB_FONT_SCALE_KEY = "dulceflow.font_scale";
-const WEB_HIGH_CONTRAST_KEY = "dulceflow.high_contrast_enabled";
 
 function getWebStorage(): Storage | null {
   if (typeof globalThis === "undefined" || !("localStorage" in globalThis)) {
@@ -97,7 +96,6 @@ export async function loadAccessibilitySettingsAsync(): Promise<AccessibilitySet
 
   return {
     fontScale: Number.isFinite(fontScale) && fontScale > 0 ? fontScale : defaultAccessibilitySettings.fontScale,
-    highContrastEnabled: storage?.getItem(WEB_HIGH_CONTRAST_KEY) === "true",
   };
 }
 
@@ -134,7 +132,6 @@ export async function saveBusinessSettingsAsync(settings: BusinessSettings): Pro
 export async function saveAccessibilitySettingsAsync(settings: AccessibilitySettings): Promise<AccessibilitySettings> {
   const normalized: AccessibilitySettings = {
     fontScale: Math.min(1.35, Math.max(1, settings.fontScale)),
-    highContrastEnabled: settings.highContrastEnabled,
   };
 
   if (Platform.OS !== "web") {
@@ -143,7 +140,6 @@ export async function saveAccessibilitySettingsAsync(settings: AccessibilitySett
 
   const storage = getWebStorage();
   storage?.setItem(WEB_FONT_SCALE_KEY, String(normalized.fontScale));
-  storage?.setItem(WEB_HIGH_CONTRAST_KEY, normalized.highContrastEnabled ? "true" : "false");
 
   return normalized;
 }
