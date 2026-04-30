@@ -106,6 +106,20 @@ function compareDesc(left: string, right: string): number {
   return right.localeCompare(left);
 }
 
+function matchesSqlLike(value: string, pattern: string): boolean {
+  if (pattern.endsWith("%")) {
+    return value.startsWith(pattern.slice(0, -1));
+  }
+
+  return value === pattern;
+}
+
+function deleteMatching<T extends { id: string }>(rows: Map<string, T>, pattern: string): number {
+  const ids = Array.from(rows.keys()).filter((id) => matchesSqlLike(id, pattern));
+  ids.forEach((id) => rows.delete(id));
+  return ids.length;
+}
+
 function matchesOrderFilter(order: OrderRow, sql: string, values: SqlParams): boolean {
   let index = 0;
 
@@ -218,6 +232,10 @@ export function createMockDatabaseClient() {
         return result(1);
       }
 
+      if (sql.startsWith("DELETE FROM products") && sql.includes("LIKE")) {
+        return result(deleteMatching(products, asString(values[0])));
+      }
+
       if (sql.startsWith("DELETE FROM products")) {
         return result(products.delete(asString(values[0])) ? 1 : 0);
       }
@@ -250,6 +268,10 @@ export function createMockDatabaseClient() {
           updated_at: asString(values[4]),
         });
         return result(1);
+      }
+
+      if (sql.startsWith("DELETE FROM supplies") && sql.includes("LIKE")) {
+        return result(deleteMatching(supplies, asString(values[0])));
       }
 
       if (sql.startsWith("DELETE FROM supplies")) {
@@ -302,6 +324,10 @@ export function createMockDatabaseClient() {
         }
         expenses.set(id, { ...existing, status: asString(values[0]), updated_at: asString(values[1]) });
         return result(1);
+      }
+
+      if (sql.startsWith("DELETE FROM expenses") && sql.includes("LIKE")) {
+        return result(deleteMatching(expenses, asString(values[0])));
       }
 
       if (sql.startsWith("DELETE FROM expenses")) {
@@ -379,6 +405,10 @@ export function createMockDatabaseClient() {
         return result(1);
       }
 
+      if (sql.startsWith("DELETE FROM order_items") && sql.includes("LIKE")) {
+        return result(deleteMatching(orderItems, asString(values[0])));
+      }
+
       if (sql.startsWith("DELETE FROM order_items")) {
         const orderId = asString(values[0]);
         const ids = Array.from(orderItems.values())
@@ -405,6 +435,15 @@ export function createMockDatabaseClient() {
           reversed_movement_id: nullableString(values[11]),
         });
         return result(1);
+      }
+
+      if (sql.startsWith("DELETE FROM movements") && sql.includes("LIKE")) {
+        movementSummaryRows = null;
+        return result(deleteMatching(movements, asString(values[0])));
+      }
+
+      if (sql.startsWith("DELETE FROM orders") && sql.includes("LIKE")) {
+        return result(deleteMatching(orders, asString(values[0])));
       }
 
       if (sql.startsWith("UPDATE movements SET status")) {
@@ -552,6 +591,14 @@ export function createMockDatabaseClient() {
         return Array.from(orderItems.values())
           .filter((item) => item.order_id === orderId)
           .sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM order_items ORDER BY created_at DESC")) {
+        return Array.from(orderItems.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM movements ORDER BY created_at DESC")) {
+        return Array.from(movements.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
       }
 
       if (sql.includes("FROM movements") && sql.includes("GROUP BY direction, type, source_type")) {
