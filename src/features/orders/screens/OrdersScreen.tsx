@@ -11,6 +11,7 @@ import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Order } from "@/shared/types";
 import { formatOrderStatus, formatPeriod } from "@/shared/utils/labels";
+import { formatMoney } from "@/shared/utils/money";
 
 const STATUSES: OrderStatusFilter[] = ["all", "pending", "delivered", "cancelled"];
 const PERIODS: OrderPeriodFilter[] = ["today", "week", "month", "all"];
@@ -19,7 +20,7 @@ function formatOrderSubtitle(order: Order): string {
   const note = order.note?.trim();
   const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
   const customerName = order.customerName ?? "Cliente no registrado";
-  const baseSubtitle = `${customerName} - ${new Date(order.dueDate).toLocaleDateString()} - $${order.total.toFixed(2)}`;
+  const baseSubtitle = `${customerName} - ${new Date(order.dueDate).toLocaleDateString()} - ${formatMoney(order.total)}`;
 
   return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
 }

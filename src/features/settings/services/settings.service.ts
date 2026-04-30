@@ -5,6 +5,7 @@ import { defaultAccessibilitySettings } from "@/store/app.store";
 
 const WEB_BUSINESS_NAME_KEY = "dulceflow.business_name";
 const WEB_CURRENCY_KEY = "dulceflow.currency";
+const FIXED_CURRENCY = "CUP";
 const WEB_AVATAR_ID_KEY = "dulceflow.avatar_id";
 const WEB_PHONE_KEY = "dulceflow.phone";
 const WEB_ADDRESS_KEY = "dulceflow.address";
@@ -49,9 +50,11 @@ async function saveNativeBusinessSettingsAsync(settings: BusinessSettings): Prom
   const repository = new SettingsRepository(database);
   const updatedAt = new Date().toISOString();
 
-  await repository.saveBusinessSettingsAsync(settings, updatedAt);
+  const normalizedSettings = { ...settings, currency: FIXED_CURRENCY };
 
-  return settings;
+  await repository.saveBusinessSettingsAsync(normalizedSettings, updatedAt);
+
+  return normalizedSettings;
 }
 
 export async function loadAppSettingsAsync(): Promise<{
@@ -71,15 +74,14 @@ export async function loadBusinessSettingsAsync(): Promise<BusinessSettings | nu
 
   const storage = getWebStorage();
   const businessName = storage?.getItem(WEB_BUSINESS_NAME_KEY) ?? null;
-  const currency = storage?.getItem(WEB_CURRENCY_KEY) ?? null;
 
-  if (!businessName || !currency) {
+  if (!businessName) {
     return null;
   }
 
   return {
     businessName,
-    currency,
+    currency: FIXED_CURRENCY,
     avatarId: storage?.getItem(WEB_AVATAR_ID_KEY) ?? undefined,
     phone: storage?.getItem(WEB_PHONE_KEY) ?? undefined,
     address: storage?.getItem(WEB_ADDRESS_KEY) ?? undefined,
@@ -100,33 +102,35 @@ export async function loadAccessibilitySettingsAsync(): Promise<AccessibilitySet
 }
 
 export async function saveBusinessSettingsAsync(settings: BusinessSettings): Promise<BusinessSettings> {
+  const normalizedSettings = { ...settings, currency: FIXED_CURRENCY };
+
   if (Platform.OS !== "web") {
-    return saveNativeBusinessSettingsAsync(settings);
+    return saveNativeBusinessSettingsAsync(normalizedSettings);
   }
 
   const storage = getWebStorage();
-  storage?.setItem(WEB_BUSINESS_NAME_KEY, settings.businessName);
-  storage?.setItem(WEB_CURRENCY_KEY, settings.currency);
+  storage?.setItem(WEB_BUSINESS_NAME_KEY, normalizedSettings.businessName);
+  storage?.setItem(WEB_CURRENCY_KEY, FIXED_CURRENCY);
 
-  if (settings.avatarId) {
-    storage?.setItem(WEB_AVATAR_ID_KEY, settings.avatarId);
+  if (normalizedSettings.avatarId) {
+    storage?.setItem(WEB_AVATAR_ID_KEY, normalizedSettings.avatarId);
   } else {
     storage?.removeItem(WEB_AVATAR_ID_KEY);
   }
 
-  if (settings.phone) {
-    storage?.setItem(WEB_PHONE_KEY, settings.phone);
+  if (normalizedSettings.phone) {
+    storage?.setItem(WEB_PHONE_KEY, normalizedSettings.phone);
   } else {
     storage?.removeItem(WEB_PHONE_KEY);
   }
 
-  if (settings.address) {
-    storage?.setItem(WEB_ADDRESS_KEY, settings.address);
+  if (normalizedSettings.address) {
+    storage?.setItem(WEB_ADDRESS_KEY, normalizedSettings.address);
   } else {
     storage?.removeItem(WEB_ADDRESS_KEY);
   }
 
-  return settings;
+  return normalizedSettings;
 }
 
 export async function saveAccessibilitySettingsAsync(settings: AccessibilitySettings): Promise<AccessibilitySettings> {

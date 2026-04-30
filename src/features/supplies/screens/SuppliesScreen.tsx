@@ -6,6 +6,7 @@ import { listSuppliesAsync } from "@/features/supplies/services/supply.service";
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
+import { formatMoney } from "@/shared/utils/money";
 
 export function SuppliesScreen() {
   const [supplies, setSupplies] = useState<Supply[]>([]);
@@ -56,7 +57,7 @@ export function SuppliesScreen() {
             key={supply.id}
             onPress={() => router.push(`/supplies/${supply.id}`)}
             title={supply.name}
-            subtitle={`${supply.unit}${supply.defaultPrice ? ` - $${supply.defaultPrice.toFixed(2)}` : ""}`}
+            subtitle={`${supply.unit}${supply.defaultPrice ? ` - ${formatMoney(supply.defaultPrice)}` : ""}`}
             trailing={
               <Badge label={supply.isActive ? "Activo" : "Inactivo"} tone={supply.isActive ? "success" : "neutral"} />
             }

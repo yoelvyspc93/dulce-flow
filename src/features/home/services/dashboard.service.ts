@@ -72,7 +72,3 @@ export async function loadDashboardDataAsync(period: DashboardPeriodFilter): Pro
     range,
   };
 }
-
-export function formatAmount(amount: number, currency = "USD"): string {
-  return `${currency} ${amount.toFixed(2)}`;
-}

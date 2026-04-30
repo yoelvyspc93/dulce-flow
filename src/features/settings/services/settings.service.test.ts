@@ -56,13 +56,25 @@ describe("settings service", () => {
     });
     await expect(loadBusinessSettingsAsync()).resolves.toEqual({
       businessName: "Dulces Maria",
-      currency: "USD",
+      currency: "CUP",
       avatarId: "chef",
       phone: "555",
       address: "Centro",
     });
 
     await saveBusinessSettingsAsync({ businessName: "Dulces Maria", currency: "CUP" });
+    await expect(loadBusinessSettingsAsync()).resolves.toEqual({
+      businessName: "Dulces Maria",
+      currency: "CUP",
+      avatarId: undefined,
+      phone: undefined,
+      address: undefined,
+    });
+  });
+
+  it("loads web business settings with fixed currency when legacy storage has no currency", async () => {
+    storage.setItem("dulceflow.business_name", "Dulces Maria");
+
     await expect(loadBusinessSettingsAsync()).resolves.toEqual({
       businessName: "Dulces Maria",
       currency: "CUP",

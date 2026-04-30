@@ -10,13 +10,14 @@ import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
 import { formatPeriod } from "@/shared/utils/labels";
+import { formatMoney } from "@/shared/utils/money";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
 
 function formatExpenseSubtitle(expense: Expense): string {
   const note = expense.note?.trim();
   const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
-  const baseSubtitle = `$${expense.total.toFixed(2)} - ${expense.quantity} ${expense.unit}`;
+  const baseSubtitle = `${formatMoney(expense.total)} - ${expense.quantity} ${expense.unit}`;
 
   return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
 }

@@ -4,13 +4,13 @@ import { useCallback, useState } from "react";
 import { ImageBackground, StyleSheet, Text, View } from "react-native";
 
 import {
-  formatAmount,
   loadDashboardDataAsync,
   type DashboardData,
   type DashboardPeriodFilter,
 } from "@/features/home/services/dashboard.service";
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
+import { formatMoney } from "@/shared/utils/money";
 import { useAppStore } from "@/store/app.store";
 import { colors, radius, spacing, typography } from "@/theme";
 
@@ -32,7 +32,6 @@ export function HomeScreen() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const period = PERIODS[periodIndex];
-  const currency = businessSettings?.currency ?? "USD";
 
   useFocusEffect(
     useCallback(() => {
@@ -105,7 +104,7 @@ export function HomeScreen() {
                 numberOfLines={1}
                 style={[styles.heroAmount, { color: summary.netProfit < 0 ? colors.danger : colors.darkGray }]}
               >
-                {formatAmount(summary.netProfit, currency)}
+                {formatMoney(summary.netProfit)}
               </Text>
             </View>
           </ImageBackground>
@@ -113,13 +112,13 @@ export function HomeScreen() {
 
         <View style={styles.metricGrid}>
           <SummaryMetric
-            amount={formatAmount(summary.totalIn, currency)}
+            amount={formatMoney(summary.totalIn)}
             label="Ingresos"
             progress={incomePercent}
             tone="success"
           />
           <SummaryMetric
-            amount={formatAmount(summary.totalOut, currency)}
+            amount={formatMoney(summary.totalOut)}
             label="Gastos"
             progress={expensePercent}
             tone="danger"
@@ -154,7 +153,7 @@ export function HomeScreen() {
             key={order.id}
             onPress={() => router.push(`/orders/${order.id}`)}
             title={order.customerName ?? order.orderNumber}
-            subtitle={`${new Date(order.dueDate).toLocaleDateString()} - ${formatAmount(order.total, currency)}`}
+            subtitle={`${new Date(order.dueDate).toLocaleDateString()} - ${formatMoney(order.total)}`}
             trailing={<Badge label="Pendiente" tone="warning" />}
           />
         ))}
@@ -177,10 +176,10 @@ export function HomeScreen() {
           <ListItem
             key={movement.id}
             title={movement.description}
-            subtitle={`${movement.type} - ${new Date(movement.movementDate).toLocaleDateString()}`}
+            subtitle={`${new Date(movement.movementDate).toLocaleDateString()}`}
             trailing={
               <Badge
-                label={formatAmount(movement.amount, currency)}
+                label={formatMoney(movement.amount)}
                 tone={movement.direction === "in" ? "success" : "danger"}
               />
             }

@@ -1,8 +1,9 @@
 import { getDatabaseAsync } from "@/database/connection";
 import { MovementRepository, OrderRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
+import { formatMoney } from "@/shared/utils/money";
 
-import { formatAmount, getDashboardDateRange, loadDashboardDataAsync } from "./dashboard.service";
+import { getDashboardDateRange, loadDashboardDataAsync } from "./dashboard.service";
 
 jest.mock("@/database/connection", () => ({
   getDatabaseAsync: jest.fn(),
@@ -36,9 +37,11 @@ describe("getDashboardDateRange", () => {
     expect(getDashboardDateRange("month", now).startDate).toBe(new Date(2026, 3, 1).toISOString());
   });
 
-  it("formats amounts with default and custom currencies", () => {
-    expect(formatAmount(12)).toBe("USD 12.00");
-    expect(formatAmount(12.5, "CUP")).toBe("CUP 12.50");
+  it("formats money with fixed symbol, thousands and two decimals", () => {
+    expect(formatMoney(2)).toBe("$2.00");
+    expect(formatMoney(20.52)).toBe("$20.52");
+    expect(formatMoney(2200.5)).toBe("$2,200.50");
+    expect(formatMoney(0)).toBe("$0.00");
   });
 
   it("loads dashboard summary by period and latest movements without period filter", async () => {

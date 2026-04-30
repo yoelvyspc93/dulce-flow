@@ -4,26 +4,18 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { saveBusinessSettingsAsync } from "@/features/settings/services/settings.service";
 import { SectionHeader } from "@/shared/components";
-import { AVATAR_OPTIONS, AvatarButton, Button, Screen, SelectField, TextField } from "@/shared/ui";
+import { AVATAR_OPTIONS, AvatarButton, Button, Screen, TextField } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
 import { colors, radius, spacing, typography } from "@/theme";
-
-const CURRENCIES = ["USD", "CUP", "EUR"] as const;
 
 export function OnboardingScreen() {
   const existingSettings = useAppStore((state) => state.businessSettings);
   const hasCompletedOnboarding = useAppStore((state) => state.hasCompletedOnboarding);
   const updateBusinessSettings = useAppStore((state) => state.updateBusinessSettings);
   const [businessName, setBusinessName] = useState(existingSettings?.businessName ?? "");
-  const [currencyIndex, setCurrencyIndex] = useState(() => {
-    const index = CURRENCIES.findIndex((item) => item === existingSettings?.currency);
-    return index >= 0 ? index : 0;
-  });
   const [avatarId, setAvatarId] = useState(existingSettings?.avatarId ?? AVATAR_OPTIONS[0].id);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
-  const currency = CURRENCIES[currencyIndex];
 
   async function handleSaveAsync() {
     const trimmedName = businessName.trim();
@@ -39,7 +31,7 @@ export function OnboardingScreen() {
     try {
       const settings = await saveBusinessSettingsAsync({
         businessName: trimmedName,
-        currency,
+        currency: "CUP",
         avatarId,
       });
 
@@ -78,7 +70,7 @@ export function OnboardingScreen() {
 
       <SectionHeader
         title="Negocio"
-        subtitle="Tus datos se guardan en este dispositivo. Puedes cambiar nombre, moneda y avatar despues desde Ajustes > Configuracion inicial."
+        subtitle="Tus datos se guardan en este dispositivo. Puedes cambiar nombre y avatar despues desde Ajustes > Configuracion inicial."
       />
       <TextField
         label="Nombre del negocio"
@@ -86,15 +78,6 @@ export function OnboardingScreen() {
         placeholder="Dulces Maria"
         value={businessName}
       />
-      <SelectField
-        label="Moneda principal"
-        onValueChange={(selectedCurrency) => {
-          setCurrencyIndex(Math.max(0, CURRENCIES.findIndex((item) => item === selectedCurrency)));
-        }}
-        options={CURRENCIES.map((item) => ({ label: item, value: item }))}
-        value={currency}
-      />
-      <Text style={styles.helperText}>Toca el selector para elegir entre USD, CUP y EUR. La moneda se usa en estadisticas, pedidos y gastos.</Text>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       <View style={{ gap: 12, marginTop: 8 }}>
         <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar y continuar"} onPress={handleSaveAsync} />
@@ -117,11 +100,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     flexWrap: "wrap",
     gap: spacing.md,
-  },
-  helperText: {
-    color: colors.textMuted,
-    ...typography.caption,
-    marginTop: -4,
   },
   errorText: {
     color: colors.danger,

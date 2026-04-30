@@ -6,6 +6,7 @@ import { listProductsAsync } from "@/features/products/services/product.service"
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen } from "@/shared/ui";
 import type { Product } from "@/shared/types";
+import { formatMoney } from "@/shared/utils/money";
 
 export function ProductsScreen() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -56,7 +57,7 @@ export function ProductsScreen() {
             key={product.id}
             onPress={() => router.push(`/products/${product.id}`)}
             title={product.name}
-            subtitle={`$${product.price.toFixed(2)}${product.description ? ` - ${product.description}` : ""}`}
+            subtitle={`${formatMoney(product.price)}${product.description ? ` - ${product.description}` : ""}`}
             trailing={<Badge label={product.isActive ? "Activo" : "Inactivo"} tone={product.isActive ? "success" : "neutral"} />}
           />
         ))}

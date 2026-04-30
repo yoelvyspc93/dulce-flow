@@ -11,6 +11,7 @@ import {
 import { SUPPLY_UNITS } from "@/features/supplies/validations/supply.schema";
 import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, SurfaceCard, TextField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
+import { formatMoney } from "@/shared/utils/money";
 import { colors, spacing, typography } from "@/theme";
 
 export function ExpenseDetailsScreen() {
@@ -198,7 +199,7 @@ export function ExpenseDetailsScreen() {
       <SurfaceCard tone="accent">
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>{formatMoney(total)}</Text>
         </View>
       </SurfaceCard>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
