@@ -153,7 +153,7 @@ export function ExpenseDetailsScreen() {
       <ListItem
         title="Estado"
         subtitle="Los gastos eliminados salen del listado y no crean ingresos"
-        trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
+        trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "danger"} />}
       />
       <ListItem title="Impacto" subtitle="Cada gasto activo descuenta dinero del resumen financiero" />
       <TextField

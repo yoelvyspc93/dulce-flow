@@ -83,7 +83,7 @@ export function ExpensesScreen() {
             onPress={() => router.push(`/expenses/${expense.id}`)}
             title={expense.supplyName}
             subtitle={formatExpenseSubtitle(expense)}
-            trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
+            trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "danger"} />}
           />
         ))}
       </View>
