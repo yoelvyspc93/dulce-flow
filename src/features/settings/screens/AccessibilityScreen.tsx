@@ -1,13 +1,12 @@
-import { Check } from "lucide-react-native";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { saveAccessibilitySettingsAsync } from "@/features/settings/services/settings.service";
-import { Screen } from "@/shared/ui";
-import { useAccessibleTheme } from "@/shared/ui/useAccessibleTheme";
 import type { AccessibilitySettings } from "@/shared/types";
+import { Radio, Screen, Switch } from "@/shared/ui";
+import { useAccessibleTheme } from "@/shared/ui/useAccessibleTheme";
 import { defaultAccessibilitySettings, useAppStore } from "@/store/app.store";
-import { colors, radius, spacing } from "@/theme";
+import { radius, spacing } from "@/theme";
 
 type FontScaleOption = {
   label: string;
@@ -85,7 +84,7 @@ export function AccessibilityScreen() {
                     {option.description}
                   </Text>
                 </View>
-                {selected ? <Check color={theme.colors.accent} size={22} strokeWidth={2.6} /> : null}
+                <Radio accessibilityLabel={option.label} disabled={isSaving} selected={selected} />
               </Pressable>
             );
           })}
@@ -95,13 +94,7 @@ export function AccessibilityScreen() {
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.colors.text }, theme.typography.section]}>Contraste</Text>
         <View style={[styles.group, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
-          <Pressable
-            accessibilityRole="switch"
-            accessibilityState={{ checked: accessibilitySettings.highContrastEnabled }}
-            disabled={isSaving}
-            onPress={() => updateAccessibilityAsync({ highContrastEnabled: !accessibilitySettings.highContrastEnabled })}
-            style={({ pressed }) => [styles.option, pressed ? styles.pressed : null]}
-          >
+          <View style={styles.option}>
             <View style={styles.optionText}>
               <Text style={[styles.optionTitle, { color: theme.colors.text }, theme.typography.bodyStrong]}>
                 Alto contraste
@@ -110,29 +103,13 @@ export function AccessibilityScreen() {
                 Refuerza bordes, textos y colores para baja vision.
               </Text>
             </View>
-            <View
-              style={[
-                styles.switchTrack,
-                {
-                  backgroundColor: accessibilitySettings.highContrastEnabled
-                    ? theme.colors.accent
-                    : theme.colors.surfaceSoft,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.switchThumb,
-                  {
-                    backgroundColor: accessibilitySettings.highContrastEnabled
-                      ? colors.background
-                      : theme.colors.textMuted,
-                    transform: [{ translateX: accessibilitySettings.highContrastEnabled ? 18 : 0 }],
-                  },
-                ]}
-              />
-            </View>
-          </Pressable>
+            <Switch
+              accessibilityLabel="Alto contraste"
+              disabled={isSaving}
+              onValueChange={(value) => updateAccessibilityAsync({ highContrastEnabled: value })}
+              value={accessibilitySettings.highContrastEnabled}
+            />
+          </View>
         </View>
       </View>
     </Screen>
@@ -172,17 +149,5 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.86,
-  },
-  switchTrack: {
-    width: 46,
-    height: 28,
-    borderRadius: radius.pill,
-    padding: 3,
-    justifyContent: "center",
-  },
-  switchThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: radius.pill,
   },
 });

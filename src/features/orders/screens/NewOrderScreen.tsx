@@ -176,11 +176,11 @@ export function NewOrderScreen() {
               Subtotal: ${(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toFixed(2)}
             </Text>
             {items.length > 1 ? (
-              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="secondary" />
+              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="outlineLight" />
             ) : null}
           </View>
         ))}
-        <Button label="Adicionar producto" onPress={addItem} variant="secondary" />
+        <Button label="Adicionar producto" onPress={addItem} variant="outlineLight" />
       </View>
       <View style={styles.totals}>
         <Text style={styles.totalText}>Subtotal: ${subtotal.toFixed(2)}</Text>

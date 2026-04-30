@@ -205,7 +205,7 @@ export function ExpenseDetailsScreen() {
       {expense.status === "active" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Anular gasto" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
+          <Button label="Anular gasto" onPress={() => setIsDeleteDialogVisible(true)} variant="outlineLight" />
         </View>
       ) : null}
       <ConfirmDialog

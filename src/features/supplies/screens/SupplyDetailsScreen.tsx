@@ -187,10 +187,10 @@ export function SupplyDetailsScreen() {
         <Button
           label={supply.isActive ? "Desactivar insumo" : "Activar insumo"}
           onPress={handleToggleActiveAsync}
-          variant="secondary"
+          variant="outlineLight"
         />
         {usageCount === 0 ? (
-          <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
+          <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="outlineLight" />
         ) : (
           <Text style={styles.helperText}>Este insumo tiene historial. Para conservar gastos y recetas, solo se puede desactivar.</Text>
         )}

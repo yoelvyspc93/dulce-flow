@@ -29,15 +29,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   accentTone: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surface,
     borderColor: "rgba(127, 219, 255, 0.3)",
   },
   successTone: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surface,
     borderColor: "rgba(125, 226, 166, 0.28)",
   },
   dangerTone: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surface,
     borderColor: "rgba(255, 140, 140, 0.28)",
   },
 });

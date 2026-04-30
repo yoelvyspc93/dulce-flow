@@ -321,11 +321,11 @@ export function OrderDetailsScreen() {
               Subtotal: ${(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toFixed(2)}
             </Text>
             {isEditable && items.length > 1 ? (
-              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="secondary" />
+              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="outlineLight" />
             ) : null}
           </View>
         ))}
-        {isEditable ? <Button label="Adicionar producto" onPress={addItem} variant="secondary" /> : null}
+        {isEditable ? <Button label="Adicionar producto" onPress={addItem} variant="outlineLight" /> : null}
       </View>
       <View style={styles.totals}>
         <Text style={styles.totalText}>Subtotal: ${subtotal.toFixed(2)}</Text>
@@ -337,11 +337,11 @@ export function OrderDetailsScreen() {
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
           <Button label="Marcar entregado" onPress={() => setPendingAction("deliver")} />
-          <Button label="Cancelar pedido" onPress={() => setPendingAction("cancel")} variant="secondary" />
+          <Button label="Cancelar pedido" onPress={() => setPendingAction("cancel")} variant="outlineLight" />
         </View>
       ) : null}
       {order.status === "delivered" ? (
-        <Button label="Cancelar pedido entregado" onPress={() => setPendingAction("cancel")} variant="secondary" />
+        <Button label="Cancelar pedido entregado" onPress={() => setPendingAction("cancel")} variant="outlineLight" />
       ) : null}
       <ConfirmDialog
         confirmLabel={confirmation.confirmLabel}

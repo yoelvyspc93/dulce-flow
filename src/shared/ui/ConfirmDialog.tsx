@@ -1,7 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { Button, type ButtonVariant } from "@/shared/ui/Button";
 import { colors, radius, spacing, typography } from "@/theme";
-import { Button } from "@/shared/ui/Button";
 
 type ConfirmDialogProps = {
   visible: boolean;
@@ -9,7 +9,7 @@ type ConfirmDialogProps = {
   description: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  confirmVariant?: "primary" | "secondary" | "ghost";
+  confirmVariant?: ButtonVariant;
   isLoading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -21,7 +21,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
-  confirmVariant = "primary",
+  confirmVariant = "solid",
   isLoading = false,
   onConfirm,
   onCancel,
@@ -33,7 +33,7 @@ export function ConfirmDialog({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description}>{description}</Text>
           <View style={styles.actions}>
-            <Button disabled={isLoading} label={cancelLabel} onPress={onCancel} variant="secondary" />
+            <Button disabled={isLoading} label={cancelLabel} onPress={onCancel} variant="outlineLight" />
             <Button disabled={isLoading} label={isLoading ? "Procesando..." : confirmLabel} onPress={onConfirm} variant={confirmVariant} />
           </View>
         </Pressable>
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   dialog: {
     borderRadius: radius.lg,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.xl,

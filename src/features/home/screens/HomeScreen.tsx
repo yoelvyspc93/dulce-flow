@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Text, View } from "react-native";
+import { ImageBackground, StyleSheet, Text, View } from "react-native";
 
 import {
   formatAmount,
@@ -8,17 +8,19 @@ import {
   type DashboardData,
   type DashboardPeriodFilter,
 } from "@/features/home/services/dashboard.service";
-import { MetricCard, SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SelectField } from "@/shared/ui";
+import { SectionHeader } from "@/shared/components";
+import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import { useAppStore } from "@/store/app.store";
-import { colors, typography } from "@/theme";
+import { colors, radius, spacing, typography } from "@/theme";
+
+const HOME_DECORATIVE_IMAGE = require("../../../../assets/home-decorative.png");
 
 const PERIODS: DashboardPeriodFilter[] = ["today", "week", "month", "all"];
 const PERIOD_LABELS: Record<DashboardPeriodFilter, string> = {
   today: "Hoy",
-  week: "Esta semana",
-  month: "Este mes",
-  all: "Todo el historial",
+  week: "Semana",
+  month: "Mes",
+  all: "Año",
 };
 
 export function HomeScreen() {
@@ -62,34 +64,52 @@ export function HomeScreen() {
   return (
     <Screen title="DulceFlow">
       <View style={{ marginBottom: 8 }}>
-        <Text style={{ ...typography.title, color: colors.text }}>Hola,</Text>
+        <Text numberOfLines={1} style={styles.greeting}>Hola,</Text>
         <View style={{ alignItems: "center", flexDirection: "row" }}>
-          <Text style={{ ...typography.title, color: colors.text }}>{businessSettings?.businessName ?? "DulceFlow"} </Text>
+          <Text numberOfLines={1} style={styles.greeting}>{businessSettings?.businessName ?? "DulceFlow"} </Text>
           <Text accessibilityLabel="mano saludando" style={{ ...typography.title }}>
             👋
           </Text>
         </View>
       </View>
-
-      <View style={{ gap: 16 }}>
-        <MetricCard label="Ingresos del periodo" amount={formatAmount(summary.totalIn, currency)} tone="success" />
-        <MetricCard label="Gastos del periodo" amount={formatAmount(summary.totalOut, currency)} tone="danger" />
-        <MetricCard
-          label="Ganancia estimada"
-          amount={formatAmount(summary.netProfit, currency)}
-          tone={summary.netProfit < 0 ? "danger" : "default"}
+      <View style={styles.summarySection}>
+        <SegmentedControl
+          accessibilityLabel="Periodo del resumen financiero"
+          menuAccessibilityLabel="Mostrar todos los periodos"
+          onValueChange={(selectedPeriod) => {
+            setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
+          }}
+          options={PERIODS.map((item) => ({ label: PERIOD_LABELS[item], value: item }))}
+          visibleOptionCount={3}
+          value={period}
         />
-      </View>
 
-      <SelectField
-        label="Periodo"
-        onValueChange={(selectedPeriod) => {
-          setPeriodIndex(Math.max(0, PERIODS.findIndex((item) => item === selectedPeriod)));
-        }}
-        options={PERIODS.map((item) => ({ label: PERIOD_LABELS[item], value: item }))}
-        value={period}
-        helperText="Cambia el rango usado para ingresos, gastos y ganancia."
-      />
+        <View style={styles.heroCard}>
+          <ImageBackground
+            accessibilityIgnoresInvertColors
+            imageStyle={styles.heroImage}
+            resizeMode="cover"
+            source={HOME_DECORATIVE_IMAGE}
+            style={styles.heroBackground}
+          >
+            <View style={styles.heroContent}>
+              <Text style={styles.heroLabel}>Ganancia</Text>
+              <Text
+                adjustsFontSizeToFit
+                numberOfLines={1}
+                style={[styles.heroAmount, { color: summary.netProfit < 0 ? colors.danger : colors.darkGray }]}
+              >
+                {formatAmount(summary.netProfit, currency)}
+              </Text>
+            </View>
+          </ImageBackground>
+        </View>
+
+        <View style={styles.metricGrid}>
+          <SummaryMetric amount={formatAmount(summary.totalIn, currency)} label="Ingresos" tone="success" />
+          <SummaryMetric amount={formatAmount(summary.totalOut, currency)} label="Gastos" tone="danger" />
+        </View>
+      </View>
 
       <SectionHeader
         title="Accesos rapidos"
@@ -97,7 +117,7 @@ export function HomeScreen() {
       />
       <View style={{ gap: 12 }}>
         <Button label="Nuevo pedido" onPress={() => router.push("/orders/new")} />
-        <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} variant="secondary" />
+        <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} variant="outlineLight" />
       </View>
 
       <SectionHeader
@@ -154,3 +174,111 @@ export function HomeScreen() {
     </Screen>
   );
 }
+
+type SummaryMetricProps = {
+  label: string;
+  amount: string;
+  tone: "success" | "danger";
+};
+
+function SummaryMetric({ label, amount, tone }: SummaryMetricProps) {
+  return (
+    <View style={styles.metricCard}>
+      <View style={styles.metricHeader}>
+        <View style={[styles.metricIndicator, tone === "success" ? styles.successIndicator : styles.dangerIndicator]} />
+        <Text style={styles.metricLabel}>{label}</Text>
+      </View>
+      <Text
+        adjustsFontSizeToFit
+        numberOfLines={1}
+        style={[styles.metricAmount, tone === "success" ? styles.successAmount : styles.dangerAmount]}
+      >
+        {amount}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  summarySection: {
+    gap: spacing.md,
+  },
+  heroCard: {
+    minHeight: 154,
+    overflow: "hidden",
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.16)",
+    backgroundColor: colors.backgroundAccent,
+  },
+  heroBackground: {
+    minHeight: 154,
+    justifyContent: "center",
+  },
+  heroImage: {
+    borderRadius: radius.lg,
+  },
+  heroContent: {
+    width: "62%",
+    minHeight: 154,
+    justifyContent: "center",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+  },
+  greeting: {
+    ...typography.title,
+    color: colors.text
+  },
+  heroLabel: {
+    color: "rgba(255, 255, 255, 0.78)",
+    ...typography.bodyStrong,
+  },
+  heroAmount: {
+    ...typography.title,
+  },
+  metricGrid: {
+    flexDirection: "row",
+    gap: spacing.md,
+  },
+  metricCard: {
+    flex: 1,
+    minHeight: 104,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  metricHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  metricIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.pill,
+  },
+  metricLabel: {
+    color: colors.textMuted,
+    ...typography.caption,
+    textTransform: "uppercase",
+  },
+  metricAmount: {
+    ...typography.section,
+  },
+  successIndicator: {
+    backgroundColor: colors.success,
+  },
+  dangerIndicator: {
+    backgroundColor: colors.danger,
+  },
+  successAmount: {
+    color: colors.success,
+  },
+  dangerAmount: {
+    color: colors.danger,
+  },
+});

@@ -175,10 +175,10 @@ export function ProductDetailsScreen() {
         <Button
           label={product.isActive ? "Desactivar producto" : "Activar producto"}
           onPress={handleToggleActiveAsync}
-          variant="secondary"
+          variant="outlineLight"
         />
         {usageCount === 0 ? (
-          <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
+          <Button label="Eliminar permanentemente" onPress={() => setIsDeleteDialogVisible(true)} variant="outlineLight" />
         ) : (
           <Text style={styles.helperText}>Este producto tiene historial. Para conservar los pedidos, solo se puede desactivar.</Text>
         )}
