@@ -38,21 +38,25 @@ describe("migrateDatabaseAsync", () => {
     expect(mock.executedStatements.some((statement) => statement.includes("DROP TABLE IF EXISTS product_recipe_items"))).toBe(true);
   });
 
-  it("blocks v5 migration when expenses without supplies exist", async () => {
+  it("recovers v5 migration when expenses without supplies exist", async () => {
     const mock = createMockDatabaseClient();
     mock.setUserVersion(4);
     mock.seedLegacyExpenseWithoutSupply();
 
-    await expect(migrateDatabaseAsync(mock.client)).rejects.toThrow("EXPENSES_WITHOUT_SUPPLY");
-    expect(mock.getUserVersion()).toBe(4);
+    await migrateDatabaseAsync(mock.client);
+
+    expect(mock.getUserVersion()).toBe(6);
+    expect(mock.executedStatements.some((statement) => statement.includes("'legacy_supply_' || expenses_old.id"))).toBe(true);
   });
 
-  it("blocks v5 migration when supplies without established prices exist", async () => {
+  it("recovers v5 migration when supplies without established prices exist", async () => {
     const mock = createMockDatabaseClient();
     mock.setUserVersion(4);
     mock.seedLegacySupplyWithoutDefaultPrice();
 
-    await expect(migrateDatabaseAsync(mock.client)).rejects.toThrow("SUPPLIES_WITHOUT_DEFAULT_PRICE");
-    expect(mock.getUserVersion()).toBe(4);
+    await migrateDatabaseAsync(mock.client);
+
+    expect(mock.getUserVersion()).toBe(6);
+    expect(mock.executedStatements.some((statement) => statement.includes("WHEN default_price > 0"))).toBe(true);
   });
 });

@@ -178,7 +178,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    gap: spacing.sm,
   },
   option: {
     minHeight: 40,
@@ -187,7 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
   label: {
     textAlign: "center"
@@ -204,19 +203,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "flex-start",
-    padding: spacing.lg,
-    paddingTop: 92,
+    padding: spacing.md,
+    paddingTop: 100,
   },
   menu: {
     width: "100%",
-    maxWidth: 340,
-    maxHeight: 420,
+    maxWidth: 400,
     overflow: "hidden",
     borderRadius: radius.lg,
     borderWidth: 1,
   },
   menuOption: {
-    minHeight: 72,
+    minHeight: 64,
     paddingHorizontal: spacing.lg,
     flexDirection: "row",
     alignItems: "center",
@@ -228,7 +226,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   menuOptionLabel: {
     flex: 1,

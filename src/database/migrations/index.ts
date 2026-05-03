@@ -108,8 +108,45 @@ const MIGRATIONS: Migration[] = [
       `INSERT INTO supplies (
         id, name, unit, default_price, is_active, created_at, updated_at
       )
-      SELECT id, name, unit, default_price, is_active, created_at, updated_at
+      SELECT
+        id,
+        name,
+        unit,
+        CASE
+          WHEN default_price > 0 THEN default_price
+          ELSE COALESCE(
+            (
+              SELECT unit_price
+              FROM expenses_old
+              WHERE expenses_old.supply_id = supplies_old.id AND unit_price > 0
+              ORDER BY created_at DESC
+              LIMIT 1
+            ),
+            1
+          )
+        END,
+        is_active,
+        created_at,
+        updated_at
       FROM supplies_old;`,
+      `INSERT OR IGNORE INTO supplies (
+        id, name, unit, default_price, is_active, created_at, updated_at
+      )
+      SELECT
+        COALESCE(NULLIF(expenses_old.supply_id, ''), 'legacy_supply_' || expenses_old.id),
+        COALESCE(NULLIF(expenses_old.supply_name, ''), 'Insumo migrado'),
+        COALESCE(NULLIF(expenses_old.unit, ''), 'unidad'),
+        CASE
+          WHEN expenses_old.unit_price > 0 THEN expenses_old.unit_price
+          WHEN expenses_old.quantity > 0 AND expenses_old.total > 0 THEN expenses_old.total / expenses_old.quantity
+          ELSE 1
+        END,
+        1,
+        expenses_old.created_at,
+        expenses_old.updated_at
+      FROM expenses_old
+      LEFT JOIN supplies_old ON supplies_old.id = expenses_old.supply_id
+      WHERE supplies_old.id IS NULL;`,
       `CREATE TABLE expenses (
         id TEXT PRIMARY KEY NOT NULL,
         supply_id TEXT NOT NULL,
@@ -129,18 +166,27 @@ const MIGRATIONS: Migration[] = [
       )
       SELECT
         expenses_old.id,
-        expenses_old.supply_id,
-        expenses_old.supply_name,
+        COALESCE(NULLIF(expenses_old.supply_id, ''), 'legacy_supply_' || expenses_old.id),
+        COALESCE(NULLIF(expenses_old.supply_name, ''), supplies.name, 'Insumo migrado'),
         COALESCE(expenses_old.quantity, 1),
-        COALESCE(expenses_old.unit, supplies.unit),
-        COALESCE(expenses_old.unit_price, supplies.default_price),
-        expenses_old.total,
+        COALESCE(NULLIF(expenses_old.unit, ''), supplies.unit, 'unidad'),
+        CASE
+          WHEN expenses_old.unit_price > 0 THEN expenses_old.unit_price
+          WHEN expenses_old.quantity > 0 AND expenses_old.total > 0 THEN expenses_old.total / expenses_old.quantity
+          WHEN supplies.default_price > 0 THEN supplies.default_price
+          ELSE 1
+        END,
+        CASE
+          WHEN expenses_old.total > 0 THEN expenses_old.total
+          WHEN expenses_old.quantity > 0 THEN expenses_old.quantity * COALESCE(supplies.default_price, 1)
+          ELSE COALESCE(supplies.default_price, 1)
+        END,
         expenses_old.status,
         expenses_old.note,
         expenses_old.created_at,
         expenses_old.updated_at
       FROM expenses_old
-      INNER JOIN supplies_old supplies ON supplies.id = expenses_old.supply_id;`,
+      LEFT JOIN supplies ON supplies.id = COALESCE(NULLIF(expenses_old.supply_id, ''), 'legacy_supply_' || expenses_old.id);`,
       `CREATE TABLE product_recipe_items (
         id TEXT PRIMARY KEY NOT NULL,
         product_id TEXT NOT NULL,
@@ -177,26 +223,6 @@ const MIGRATIONS: Migration[] = [
   },
 ];
 
-async function assertCanApplyMigrationAsync(client: DatabaseClient, version: number): Promise<void> {
-  if (version !== 5) {
-    return;
-  }
-
-  const expensesWithoutSupply = await client.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM expenses WHERE supply_id IS NULL;"
-  );
-  if ((expensesWithoutSupply?.count ?? 0) > 0) {
-    throw new Error("EXPENSES_WITHOUT_SUPPLY");
-  }
-
-  const suppliesWithoutDefaultPrice = await client.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM supplies WHERE default_price IS NULL OR default_price <= 0;"
-  );
-  if ((suppliesWithoutDefaultPrice?.count ?? 0) > 0) {
-    throw new Error("SUPPLIES_WITHOUT_DEFAULT_PRICE");
-  }
-}
-
 export async function migrateDatabaseAsync(client: DatabaseClient): Promise<void> {
   const row = await client.getFirstAsync<{ user_version: number }>("PRAGMA user_version;");
   const currentVersion = row?.user_version ?? 0;
@@ -220,8 +246,6 @@ export async function migrateDatabaseAsync(client: DatabaseClient): Promise<void
 
   await client.withTransactionAsync(async (transaction) => {
     for (const migration of pendingMigrations) {
-      await assertCanApplyMigrationAsync(transaction, migration.version);
-
       for (const statement of migration.statements) {
         await transaction.execAsync(statement);
       }

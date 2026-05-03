@@ -12,8 +12,8 @@ type BadgeProps = {
 const badgeGradients: Record<NonNullable<BadgeProps["tone"]>, LinearGradientProps["colors"]> = {
   neutral: ["#BDFBE6", "#7FF4D6"],
   success: ["#B6EB9E", "#73B15D"],
-  warning: ["#F8B288", "#FCE49E"],
-  danger: ["#EEAAA3", "#FE958E"],
+  warning: ["#ECC791", "#FCE49E"],
+  danger: ["#EF9A91", "#FE958E"],
 };
 
 export function Badge({ label, tone = "neutral" }: BadgeProps) {
