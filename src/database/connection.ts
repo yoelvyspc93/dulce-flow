@@ -12,7 +12,10 @@ async function initializeDatabaseAsync(): Promise<DatabaseClient> {
 
 export async function getDatabaseAsync(): Promise<DatabaseClient> {
   if (!databasePromise) {
-    databasePromise = initializeDatabaseAsync();
+    databasePromise = initializeDatabaseAsync().catch((error: unknown) => {
+      databasePromise = null;
+      throw error;
+    });
   }
 
   return databasePromise;
