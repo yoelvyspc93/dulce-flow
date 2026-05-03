@@ -28,6 +28,8 @@ export default function Root({ children }: PropsWithChildren) {
         <link rel="icon" href={`${baseUrl}/favicon.png`} />
         <link rel="apple-touch-icon" href={`${baseUrl}/apple-touch-icon.png`} />
         <script dangerouslySetInnerHTML={{ __html: serviceWorkerRegistration }} />
+        <title>DulceFlow</title>
+        <meta name="description" content="Gestiona pedidos, productos, insumos y gastos de tu negocio de dulces." />
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>
