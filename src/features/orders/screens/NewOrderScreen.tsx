@@ -7,6 +7,7 @@ import { createOrderAsync } from "@/features/orders/services/order.service";
 import { listProductsAsync } from "@/features/products/services/product.service";
 import { Button, Screen, SelectField, TextField } from "@/shared/ui";
 import type { Product } from "@/shared/types";
+import { formatMoney } from "@/shared/utils/money";
 import { colors, spacing, typography } from "@/theme";
 
 type OrderLine = {
@@ -173,18 +174,18 @@ export function NewOrderScreen() {
               value={item.unitPrice}
             />
             <Text style={styles.lineSubtotal}>
-              Subtotal: ${(Number(item.quantity || 0) * Number(item.unitPrice || 0)).toFixed(2)}
+              Subtotal: {formatMoney(Number(item.quantity || 0) * Number(item.unitPrice || 0))}
             </Text>
             {items.length > 1 ? (
-              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="secondary" />
+              <Button label="Eliminar producto" onPress={() => removeItem(item.id)} variant="outlineLight" />
             ) : null}
           </View>
         ))}
-        <Button label="Adicionar producto" onPress={addItem} variant="secondary" />
+        <Button label="Adicionar producto" onPress={addItem} variant="outlineLight" />
       </View>
       <View style={styles.totals}>
-        <Text style={styles.totalText}>Subtotal: ${subtotal.toFixed(2)}</Text>
-        <Text style={styles.totalText}>Total: ${subtotal.toFixed(2)}</Text>
+        <Text style={styles.totalText}>Subtotal: {formatMoney(subtotal)}</Text>
+        <Text style={styles.totalText}>Total: {formatMoney(subtotal)}</Text>
       </View>
       <TextField label="Nota" onChangeText={setNote} placeholder="Detalles de entrega o decoracion" value={note} multiline />
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}

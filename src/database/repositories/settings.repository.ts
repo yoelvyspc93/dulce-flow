@@ -9,11 +9,11 @@ type SettingRow = {
 
 const BUSINESS_NAME_KEY = "business_name";
 const CURRENCY_KEY = "currency";
+const FIXED_CURRENCY = "CUP";
 const AVATAR_ID_KEY = "avatar_id";
 const PHONE_KEY = "phone";
 const ADDRESS_KEY = "address";
 const FONT_SCALE_KEY = "font_scale";
-const HIGH_CONTRAST_KEY = "high_contrast_enabled";
 
 function mapSettingRow(row: SettingRow): Setting {
   return {
@@ -58,7 +58,7 @@ export class SettingsRepository {
   async saveBusinessSettingsAsync(settings: BusinessSettings, updatedAt: string): Promise<void> {
     const entries: Setting[] = [
       { key: BUSINESS_NAME_KEY, value: settings.businessName, updatedAt },
-      { key: CURRENCY_KEY, value: settings.currency, updatedAt },
+      { key: CURRENCY_KEY, value: FIXED_CURRENCY, updatedAt },
     ];
 
     if (settings.phone !== undefined) {
@@ -85,15 +85,14 @@ export class SettingsRepository {
     const map = new Map(rows.map((row) => [row.key, row.value]));
 
     const businessName = map.get(BUSINESS_NAME_KEY);
-    const currency = map.get(CURRENCY_KEY);
 
-    if (!businessName || !currency) {
+    if (!businessName) {
       return null;
     }
 
     return {
       businessName,
-      currency,
+      currency: FIXED_CURRENCY,
       avatarId: map.get(AVATAR_ID_KEY),
       phone: map.get(PHONE_KEY),
       address: map.get(ADDRESS_KEY),
@@ -103,16 +102,11 @@ export class SettingsRepository {
   async saveAccessibilitySettingsAsync(settings: AccessibilitySettings, updatedAt: string): Promise<void> {
     await this.client.withTransactionAsync(async () => {
       await this.upsertAsync({ key: FONT_SCALE_KEY, value: String(settings.fontScale), updatedAt });
-      await this.upsertAsync({
-        key: HIGH_CONTRAST_KEY,
-        value: settings.highContrastEnabled ? "true" : "false",
-        updatedAt,
-      });
     });
   }
 
   async getAccessibilitySettingsAsync(): Promise<AccessibilitySettings | null> {
-    const rows = await this.getManyAsync([FONT_SCALE_KEY, HIGH_CONTRAST_KEY]);
+    const rows = await this.getManyAsync([FONT_SCALE_KEY]);
     const map = new Map(rows.map((row) => [row.key, row.value]));
     const fontScale = Number(map.get(FONT_SCALE_KEY));
 
@@ -122,7 +116,6 @@ export class SettingsRepository {
 
     return {
       fontScale,
-      highContrastEnabled: map.get(HIGH_CONTRAST_KEY) === "true",
     };
   }
 }

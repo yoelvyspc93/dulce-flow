@@ -25,8 +25,11 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-title" content="DulceFlow" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="manifest" href={`${baseUrl}/manifest.json`} />
+        <link rel="icon" href={`${baseUrl}/favicon.png`} />
         <link rel="apple-touch-icon" href={`${baseUrl}/apple-touch-icon.png`} />
         <script dangerouslySetInnerHTML={{ __html: serviceWorkerRegistration }} />
+        <title>DulceFlow</title>
+        <meta name="description" content="Gestiona pedidos, productos, insumos y gastos de tu negocio de dulces." />
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>

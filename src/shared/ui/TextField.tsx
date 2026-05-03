@@ -39,7 +39,7 @@ export function TextField({
         style={[
           styles.input,
           {
-            backgroundColor: theme.colors.surfaceElevated,
+            backgroundColor: theme.colors.surface,
             borderColor: theme.colors.border,
             color: theme.colors.text,
           },

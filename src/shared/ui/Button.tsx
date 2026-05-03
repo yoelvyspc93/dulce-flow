@@ -4,16 +4,26 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, radius, spacing } from "@/theme";
 import { useAccessibleTheme } from "./useAccessibleTheme";
 
+export type ButtonVariant = "solid" | "textAccent" | "textLight" | "outlineAccent" | "outlineLight";
+
 type ButtonProps = {
   label: string;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: ButtonVariant;
   onPress?: () => void;
   leftSlot?: ReactNode;
   disabled?: boolean;
 };
 
-export function Button({ label, variant = "primary", onPress, leftSlot, disabled = false }: ButtonProps) {
+export function Button({ label, variant = "solid", onPress, leftSlot, disabled = false }: ButtonProps) {
   const theme = useAccessibleTheme();
+  const isOutline = variant === "outlineAccent" || variant === "outlineLight";
+  const solidTextColor = theme.colors.accent === colors.white ? theme.colors.background : colors.white;
+  const textColor =
+    variant === "solid"
+      ? solidTextColor
+      : variant === "textLight" || variant === "outlineLight"
+      ? theme.colors.text
+      : theme.colors.accent;
 
   return (
     <Pressable
@@ -22,24 +32,15 @@ export function Button({ label, variant = "primary", onPress, leftSlot, disabled
       onPress={onPress}
       style={({ pressed }) => [
         styles.base,
-        variantStyles[variant],
-        variant === "primary"
-          ? { backgroundColor: theme.colors.accent }
-          : variant === "secondary"
-            ? { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }
-            : null,
+        isOutline ? styles.outline : null,
+        variant === "solid" ? { backgroundColor: theme.colors.accent } : null,
+        variant === "outlineAccent" ? { borderColor: theme.colors.accent } : null,
+        variant === "outlineLight" ? { borderColor: theme.colors.text } : null,
         disabled ? styles.disabled : pressed ? styles.pressed : null,
       ]}
     >
       {leftSlot ? <View style={styles.leftSlot}>{leftSlot}</View> : null}
-      <Text
-        style={[
-          styles.label,
-          labelStyles[variant],
-          theme.typography.bodyStrong,
-          variant === "primary" ? null : { color: variant === "ghost" ? theme.colors.accent : theme.colors.text },
-        ]}
-      >
+      <Text style={[styles.label, theme.typography.bodyStrong, { color: textColor }]}>
         {label}
       </Text>
     </Pressable>
@@ -48,7 +49,7 @@ export function Button({ label, variant = "primary", onPress, leftSlot, disabled
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52,
+    minHeight: 50,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.lg,
     alignItems: "center",
@@ -56,16 +57,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
   },
-  primary: {
-    backgroundColor: colors.accent,
-  },
-  secondary: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  ghost: {
+  outline: {
     backgroundColor: "transparent",
+    borderWidth: 1,
   },
   pressed: {
     opacity: 0.86,
@@ -77,29 +71,8 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     textAlign: "center",
   },
-  labelPrimary: {
-    color: "#032033",
-  },
-  labelSecondary: {
-    color: colors.text,
-  },
-  labelGhost: {
-    color: colors.accent,
-  },
   leftSlot: {
     alignItems: "center",
     justifyContent: "center",
   },
-});
-
-const variantStyles = StyleSheet.create({
-  primary: styles.primary,
-  secondary: styles.secondary,
-  ghost: styles.ghost,
-});
-
-const labelStyles = StyleSheet.create({
-  primary: styles.labelPrimary,
-  secondary: styles.labelSecondary,
-  ghost: styles.labelGhost,
 });

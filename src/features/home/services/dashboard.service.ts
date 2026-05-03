@@ -61,7 +61,7 @@ export async function loadDashboardDataAsync(period: DashboardPeriodFilter): Pro
 
   const [summary, latestMovements, pendingOrders] = await Promise.all([
     movementRepository.getSummaryByDateRangeAsync(range.startDate, range.endDate),
-    movementRepository.getLatestByDateRangeAsync(range.startDate, range.endDate, 10),
+    movementRepository.getLatestAsync(5),
     orderRepository.getPendingByDueDateAsync(5),
   ]);
 
@@ -71,8 +71,4 @@ export async function loadDashboardDataAsync(period: DashboardPeriodFilter): Pro
     pendingOrders,
     range,
   };
-}
-
-export function formatAmount(amount: number, currency = "USD"): string {
-  return `${currency} ${amount.toFixed(2)}`;
 }

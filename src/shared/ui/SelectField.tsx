@@ -1,6 +1,6 @@
+import { Check, ChevronDown } from "lucide-react-native";
 import { useState } from "react";
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
-import { Check, ChevronDown } from "lucide-react-native";
 
 import { colors, radius, spacing } from "@/theme";
 import { useAccessibleTheme } from "./useAccessibleTheme";
@@ -43,7 +43,7 @@ export function SelectField({ label, value, options, onValueChange, disabled = f
         onPress={() => setIsOpen(true)}
         style={({ pressed }) => [
           styles.control,
-          { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border },
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
           isDisabled ? styles.disabled : null,
           pressed ? styles.pressed : null,
         ]}
@@ -69,7 +69,7 @@ export function SelectField({ label, value, options, onValueChange, disabled = f
       ) : null}
       <Modal animationType="fade" onRequestClose={() => setIsOpen(false)} transparent visible={isOpen}>
         <Pressable onPress={() => setIsOpen(false)} style={[styles.modalOverlay, { backgroundColor: theme.colors.overlay }]}>
-          <Pressable style={[styles.menu, { backgroundColor: theme.colors.surfaceElevated, borderColor: theme.colors.border }]}>
+          <Pressable style={[styles.menu, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
             <FlatList
               data={options}
               ItemSeparatorComponent={() => <View style={styles.separator} />}

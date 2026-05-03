@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { LinearGradient, type LinearGradientProps } from "expo-linear-gradient";
+import { StyleSheet, Text } from "react-native";
 
 import { colors, radius, spacing } from "@/theme";
 import { useAccessibleTheme } from "./useAccessibleTheme";
@@ -8,21 +9,24 @@ type BadgeProps = {
   tone?: "neutral" | "success" | "warning" | "danger";
 };
 
+const badgeGradients: Record<NonNullable<BadgeProps["tone"]>, LinearGradientProps["colors"]> = {
+  neutral: ["#BDFBE6", "#7FF4D6"],
+  success: ["#B6EB9E", "#73B15D"],
+  warning: ["#F8B288", "#FCE49E"],
+  danger: ["#EEAAA3", "#FE958E"],
+};
+
 export function Badge({ label, tone = "neutral" }: BadgeProps) {
   const theme = useAccessibleTheme();
-  const textColor =
-    tone === "success"
-      ? theme.colors.success
-      : tone === "warning"
-        ? theme.colors.warning
-        : tone === "danger"
-          ? theme.colors.danger
-          : theme.colors.text;
-
   return (
-    <View style={[styles.base, toneStyles[tone]]}>
-      <Text style={[styles.text, theme.typography.caption, { color: textColor }]}>{label}</Text>
-    </View>
+    <LinearGradient
+      colors={badgeGradients[tone]}
+      end={{ x: 1, y: 0.5 }}
+      start={{ x: 0, y: 0.5 }}
+      style={styles.base}
+    >
+      <Text style={[styles.text, theme.typography.caption]}>{label}</Text>
+    </LinearGradient>
   );
 }
 
@@ -34,36 +38,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   text: {
+    color: colors.darkGray,
   },
-  neutral: {
-    backgroundColor: colors.surfaceSoft,
-  },
-  success: {
-    backgroundColor: "rgba(125, 226, 166, 0.16)",
-  },
-  warning: {
-    backgroundColor: "rgba(255, 210, 122, 0.16)",
-  },
-  danger: {
-    backgroundColor: "rgba(255, 140, 140, 0.16)",
-  },
-  textNeutral: {
-    color: colors.text,
-  },
-  textSuccess: {
-    color: colors.success,
-  },
-  textWarning: {
-    color: colors.warning,
-  },
-  textDanger: {
-    color: colors.danger,
-  },
-});
-
-const toneStyles = StyleSheet.create({
-  neutral: styles.neutral,
-  success: styles.success,
-  warning: styles.warning,
-  danger: styles.danger,
 });

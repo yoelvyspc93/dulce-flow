@@ -11,6 +11,7 @@ import {
 import { SUPPLY_UNITS } from "@/features/supplies/validations/supply.schema";
 import { Badge, Button, ConfirmDialog, EmptyState, ListItem, Screen, SelectField, SurfaceCard, TextField } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
+import { formatMoney } from "@/shared/utils/money";
 import { colors, spacing, typography } from "@/theme";
 
 export function ExpenseDetailsScreen() {
@@ -153,7 +154,7 @@ export function ExpenseDetailsScreen() {
       <ListItem
         title="Estado"
         subtitle="Los gastos eliminados salen del listado y no crean ingresos"
-        trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "neutral"} />}
+        trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "danger"} />}
       />
       <ListItem title="Impacto" subtitle="Cada gasto activo descuenta dinero del resumen financiero" />
       <TextField
@@ -198,14 +199,14 @@ export function ExpenseDetailsScreen() {
       <SurfaceCard tone="accent">
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>{formatMoney(total)}</Text>
         </View>
       </SurfaceCard>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
       {expense.status === "active" ? (
         <View style={{ gap: 12 }}>
           <Button disabled={isSaving} label={isSaving ? "Guardando..." : "Guardar cambios"} onPress={handleSaveAsync} />
-          <Button label="Anular gasto" onPress={() => setIsDeleteDialogVisible(true)} variant="secondary" />
+          <Button label="Anular gasto" onPress={() => setIsDeleteDialogVisible(true)} variant="outlineLight" />
         </View>
       ) : null}
       <ConfirmDialog

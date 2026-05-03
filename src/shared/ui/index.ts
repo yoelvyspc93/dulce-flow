@@ -1,12 +1,15 @@
 export { AmountText } from "./AmountText";
 export { AvatarButton, AVATAR_OPTIONS, getAvatarOption } from "./AvatarButton";
 export { Badge } from "./Badge";
-export { Button } from "./Button";
+export { Button, type ButtonVariant } from "./Button";
 export { ConfirmDialog } from "./ConfirmDialog";
 export { EmptyState } from "./EmptyState";
 export { IconButton } from "./IconButton";
 export { ListItem } from "./ListItem";
+export { Radio } from "./Radio";
 export { Screen } from "./Screen";
+export { SegmentedControl, type SegmentedControlOption } from "./SegmentedControl";
 export { SelectField } from "./SelectField";
 export { SurfaceCard } from "./SurfaceCard";
+export { Switch } from "./Switch";
 export { TextField } from "./TextField";

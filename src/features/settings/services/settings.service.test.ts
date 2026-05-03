@@ -56,7 +56,7 @@ describe("settings service", () => {
     });
     await expect(loadBusinessSettingsAsync()).resolves.toEqual({
       businessName: "Dulces Maria",
-      currency: "USD",
+      currency: "CUP",
       avatarId: "chef",
       phone: "555",
       address: "Centro",
@@ -72,29 +72,36 @@ describe("settings service", () => {
     });
   });
 
+  it("loads web business settings with fixed currency when legacy storage has no currency", async () => {
+    storage.setItem("dulceflow.business_name", "Dulces Maria");
+
+    await expect(loadBusinessSettingsAsync()).resolves.toEqual({
+      businessName: "Dulces Maria",
+      currency: "CUP",
+      avatarId: undefined,
+      phone: undefined,
+      address: undefined,
+    });
+  });
+
   it("loads default web accessibility settings for invalid storage values", async () => {
     storage.setItem("dulceflow.font_scale", "0");
-    storage.setItem("dulceflow.high_contrast_enabled", "false");
 
     await expect(loadAccessibilitySettingsAsync()).resolves.toEqual({
       fontScale: defaultAccessibilitySettings.fontScale,
-      highContrastEnabled: false,
     });
   });
 
   it("normalizes and stores web accessibility settings", async () => {
-    await expect(saveAccessibilitySettingsAsync({ fontScale: 2, highContrastEnabled: true })).resolves.toEqual({
+    await expect(saveAccessibilitySettingsAsync({ fontScale: 2 })).resolves.toEqual({
       fontScale: 1.35,
-      highContrastEnabled: true,
     });
     await expect(loadAccessibilitySettingsAsync()).resolves.toEqual({
       fontScale: 1.35,
-      highContrastEnabled: true,
     });
 
-    await expect(saveAccessibilitySettingsAsync({ fontScale: 0.5, highContrastEnabled: false })).resolves.toEqual({
+    await expect(saveAccessibilitySettingsAsync({ fontScale: 0.5 })).resolves.toEqual({
       fontScale: 1,
-      highContrastEnabled: false,
     });
   });
 });

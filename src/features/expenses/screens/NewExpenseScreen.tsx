@@ -8,6 +8,7 @@ import { listSuppliesAsync } from "@/features/supplies/services/supply.service";
 import { SUPPLY_UNITS } from "@/features/supplies/validations/supply.schema";
 import { Button, Screen, SelectField, SurfaceCard, TextField } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
+import { formatMoney } from "@/shared/utils/money";
 import { colors, spacing, typography } from "@/theme";
 
 export function NewExpenseScreen() {
@@ -114,7 +115,7 @@ export function NewExpenseScreen() {
       <SurfaceCard tone="accent">
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+          <Text style={styles.totalValue}>{formatMoney(total)}</Text>
         </View>
       </SurfaceCard>
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}

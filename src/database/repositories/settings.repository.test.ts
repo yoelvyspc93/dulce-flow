@@ -42,7 +42,7 @@ describe("SettingsRepository", () => {
 
     expect(settings).toEqual({
       businessName: "Dulces Maria",
-      currency: "USD",
+      currency: "CUP",
       avatarId: "chef",
       phone: "+53 555 1234",
       address: undefined,
@@ -72,17 +72,31 @@ describe("SettingsRepository", () => {
     });
   });
 
-  it("saves and reads accessibility settings including false high contrast", async () => {
+  it("reads business settings with fixed currency when legacy rows have no currency", async () => {
     const repository = new SettingsRepository(createMockDatabaseClient().client);
 
-    await repository.saveAccessibilitySettingsAsync(
-      { fontScale: 1.2, highContrastEnabled: false },
-      "2026-04-27T14:00:00.000Z"
-    );
+    await repository.upsertAsync({
+      key: "business_name",
+      value: "Dulces Maria",
+      updatedAt: "2026-04-27T14:00:00.000Z",
+    });
+
+    await expect(repository.getBusinessSettingsAsync()).resolves.toEqual({
+      businessName: "Dulces Maria",
+      currency: "CUP",
+      avatarId: undefined,
+      phone: undefined,
+      address: undefined,
+    });
+  });
+
+  it("saves and reads accessibility settings", async () => {
+    const repository = new SettingsRepository(createMockDatabaseClient().client);
+
+    await repository.saveAccessibilitySettingsAsync({ fontScale: 1.2 }, "2026-04-27T14:00:00.000Z");
 
     await expect(repository.getAccessibilitySettingsAsync()).resolves.toEqual({
       fontScale: 1.2,
-      highContrastEnabled: false,
     });
   });
 
@@ -92,11 +106,6 @@ describe("SettingsRepository", () => {
     await repository.upsertAsync({
       key: "font_scale",
       value: "not-a-number",
-      updatedAt: "2026-04-27T14:00:00.000Z",
-    });
-    await repository.upsertAsync({
-      key: "high_contrast_enabled",
-      value: "true",
       updatedAt: "2026-04-27T14:00:00.000Z",
     });
 

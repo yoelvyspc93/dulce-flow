@@ -1,16 +1,15 @@
 import { useMemo } from "react";
 
 import { useAppStore } from "@/store/app.store";
-import { colors, highContrastColors, scaleTypographyToken, typography } from "@/theme";
+import { colors, scaleTypographyToken, typography } from "@/theme";
 
 export function useAccessibleTheme() {
   const accessibilitySettings = useAppStore((state) => state.accessibilitySettings);
-  const palette = accessibilitySettings.highContrastEnabled ? highContrastColors : colors;
   const fontScale = accessibilitySettings.fontScale;
 
   return useMemo(
     () => ({
-      colors: palette,
+      colors,
       typography: {
         hero: scaleTypographyToken(typography.hero, fontScale),
         title: scaleTypographyToken(typography.title, fontScale),
@@ -20,6 +19,6 @@ export function useAccessibleTheme() {
         caption: scaleTypographyToken(typography.caption, fontScale),
       },
     }),
-    [fontScale, palette]
+    [fontScale]
   );
 }

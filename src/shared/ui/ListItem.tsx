@@ -24,8 +24,8 @@ export function ListItem({ title, subtitle, trailing, onPress }: ListItemProps) 
       ]}
     >
       <View style={styles.textBlock}>
-        <Text style={[styles.title, { color: theme.colors.text }, theme.typography.bodyStrong]}>{title}</Text>
-        {subtitle ? <Text style={[styles.subtitle, { color: theme.colors.textMuted }, theme.typography.caption]}>{subtitle}</Text> : null}
+        <Text numberOfLines={1} style={[styles.title, { color: theme.colors.text }, theme.typography.bodyStrong]}>{title}</Text>
+        {subtitle ? <Text numberOfLines={2} style={[styles.subtitle, { color: theme.colors.textMuted }, theme.typography.caption]}>{subtitle}</Text> : null}
       </View>
       {trailing ? <View>{trailing}</View> : null}
     </Pressable>

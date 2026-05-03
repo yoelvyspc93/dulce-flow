@@ -1,8 +1,9 @@
 import { getDatabaseAsync } from "@/database/connection";
 import { MovementRepository, OrderRepository } from "@/database/repositories";
 import { createMockDatabaseClient } from "@/database/test-utils/createMockDatabaseClient";
+import { formatMoney } from "@/shared/utils/money";
 
-import { formatAmount, getDashboardDateRange, loadDashboardDataAsync } from "./dashboard.service";
+import { getDashboardDateRange, loadDashboardDataAsync } from "./dashboard.service";
 
 jest.mock("@/database/connection", () => ({
   getDatabaseAsync: jest.fn(),
@@ -36,12 +37,14 @@ describe("getDashboardDateRange", () => {
     expect(getDashboardDateRange("month", now).startDate).toBe(new Date(2026, 3, 1).toISOString());
   });
 
-  it("formats amounts with default and custom currencies", () => {
-    expect(formatAmount(12)).toBe("USD 12.00");
-    expect(formatAmount(12.5, "CUP")).toBe("CUP 12.50");
+  it("formats money with fixed symbol, thousands and two decimals", () => {
+    expect(formatMoney(2)).toBe("$2.00");
+    expect(formatMoney(20.52)).toBe("$20.52");
+    expect(formatMoney(2200.5)).toBe("$2,200.50");
+    expect(formatMoney(0)).toBe("$0.00");
   });
 
-  it("loads dashboard summary and latest movements", async () => {
+  it("loads dashboard summary by period and latest movements without period filter", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);
     const movementRepository = new MovementRepository(mock.client);
@@ -74,6 +77,45 @@ describe("getDashboardDateRange", () => {
       updatedAt: "2026-04-28T11:00:00.000Z",
     });
     await movementRepository.createAsync({
+      id: "movement_yesterday",
+      type: "income",
+      direction: "in",
+      sourceType: "order",
+      sourceId: "order_yesterday",
+      amount: 100,
+      description: "Ingreso ayer",
+      status: "active",
+      movementDate: "2026-04-27T12:00:00.000Z",
+      createdAt: "2026-04-27T12:00:00.000Z",
+      updatedAt: "2026-04-27T12:00:00.000Z",
+    });
+    await movementRepository.createAsync({
+      id: "movement_older_1",
+      type: "income",
+      direction: "in",
+      sourceType: "order",
+      sourceId: "order_older_1",
+      amount: 100,
+      description: "Ingreso anterior 1",
+      status: "active",
+      movementDate: "2026-04-26T11:00:00.000Z",
+      createdAt: "2026-04-26T11:00:00.000Z",
+      updatedAt: "2026-04-26T11:00:00.000Z",
+    });
+    await movementRepository.createAsync({
+      id: "movement_older_2",
+      type: "income",
+      direction: "in",
+      sourceType: "order",
+      sourceId: "order_older_2",
+      amount: 100,
+      description: "Ingreso anterior 2",
+      status: "active",
+      movementDate: "2026-04-25T11:00:00.000Z",
+      createdAt: "2026-04-25T11:00:00.000Z",
+      updatedAt: "2026-04-25T11:00:00.000Z",
+    });
+    await movementRepository.createAsync({
       id: "movement_old",
       type: "income",
       direction: "in",
@@ -102,7 +144,13 @@ describe("getDashboardDateRange", () => {
     jest.useRealTimers();
 
     expect(data.summary).toEqual({ totalIn: 20, totalOut: 5, netProfit: 15 });
-    expect(data.latestMovements.map((movement) => movement.id)).toEqual(["movement_2", "movement_1"]);
+    expect(data.latestMovements.map((movement) => movement.id)).toEqual([
+      "movement_2",
+      "movement_1",
+      "movement_yesterday",
+      "movement_older_1",
+      "movement_older_2",
+    ]);
     expect(data.pendingOrders.map((order) => order.id)).toEqual(["order_1"]);
   });
 });
