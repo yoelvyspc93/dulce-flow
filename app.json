@@ -4,22 +4,24 @@
     "slug": "dulce-flow",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/expo.icon/Assets/grid.png",
+    "icon": "./assets/icon.png",
     "scheme": "dulceflow",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/icon.png"
     },
     "android": {
+      "package": "com.yoelvyspc93.dulceflow",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#07111F",
-        "foregroundImage": "./assets/expo.icon/Assets/grid.png"
+        "foregroundImage": "./assets/icon.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/expo.icon/Assets/grid.png"
+      "favicon": "./assets/icon.png"
     },
     "plugins": [
       [
@@ -35,11 +37,11 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/expo.icon/Assets/grid.png",
+          "image": "./assets/icon.png",
           "imageWidth": 76,
           "android": {
             "backgroundColor": "#07111F",
-            "image": "./assets/expo.icon/Assets/grid.png",
+            "image": "./assets/icon.png",
             "imageWidth": 76
           }
         }
@@ -49,6 +51,17 @@
       "baseUrl": "/dulce-flow",
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "headers": {
+          "Cross-Origin-Embedder-Policy": "credentialless",
+          "Cross-Origin-Opener-Policy": "same-origin"
+        }
+      },
+      "eas": {
+        "projectId": "746b014e-b7ee-471f-97a2-c7d01876b06f"
+      }
     }
   }
 }

@@ -101,7 +101,7 @@ export function HomeScreen() {
               <Text
                 adjustsFontSizeToFit
                 numberOfLines={1}
-                style={[styles.heroAmount, { color: summary.netProfit < 0 ? colors.danger : colors.darkGray }]}
+                style={styles.heroAmount}
               >
                 {formatMoney(summary.netProfit)}
               </Text>
@@ -258,6 +258,7 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     ...typography.title,
+    color: colors.darkGray,
   },
   metricGrid: {
     flexDirection: "row",
