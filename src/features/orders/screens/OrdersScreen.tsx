@@ -8,7 +8,7 @@ import {
   type OrderStatusFilter,
 } from "@/features/orders/services/order.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
+import { Badge, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Order } from "@/shared/types";
 import { formatDisplayDate } from "@/shared/utils/date";
 import { formatOrderStatus } from "@/shared/utils/labels";
@@ -54,9 +54,8 @@ export function OrdersScreen() {
   );
 
   return (
-    <Screen title="Pedidos">
+    <Screen addAction={{ accessibilityLabel: "Crear pedido", onPress: () => router.push("/orders/new") }} title="Pedidos">
       <View style={{ gap: 12 }}>
-        <Button label="Crear pedido" onPress={() => router.push("/orders/new")} />
         <SegmentedControl
           accessibilityLabel="Filtro por estado"
           menuAccessibilityLabel="Mostrar todos los estados"

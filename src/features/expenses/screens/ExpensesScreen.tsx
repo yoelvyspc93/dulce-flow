@@ -10,7 +10,7 @@ import {
 } from "@/features/expenses/services/expense.service";
 import { SectionHeader } from "@/shared/components";
 import type { Expense } from "@/shared/types";
-import { Button, EmptyState, Screen, SegmentedControl } from "@/shared/ui";
+import { EmptyState, Screen, SegmentedControl } from "@/shared/ui";
 import { formatPeriod } from "@/shared/utils/labels";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
@@ -44,9 +44,8 @@ export function ExpensesScreen() {
   );
 
   return (
-    <Screen title="Gastos">
+    <Screen addAction={{ accessibilityLabel: "Registrar gasto", onPress: () => router.push("/expenses/new") }} title="Gastos">
       <View style={{ gap: 12 }}>
-        <Button label="Registrar gasto" onPress={() => router.push("/expenses/new")} />
         <SegmentedControl
           accessibilityLabel="Filtro por periodo"
           menuAccessibilityLabel="Mostrar todos los periodos"

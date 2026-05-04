@@ -1,5 +1,5 @@
 import { type Href, router, usePathname } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Plus } from "lucide-react-native";
 import type { PropsWithChildren } from "react";
 import {
   KeyboardAvoidingView,
@@ -23,6 +23,10 @@ type ScreenProps = PropsWithChildren<{
   scrollable?: boolean;
   backHref?: Href;
   onBackPress?: () => void;
+  addAction?: {
+    accessibilityLabel: string;
+    onPress: () => void;
+  };
 }>;
 
 export function Screen({
@@ -30,6 +34,7 @@ export function Screen({
   scrollable = true,
   backHref,
   onBackPress,
+  addAction,
   children,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
@@ -69,7 +74,7 @@ export function Screen({
             accessibilityRole="button"
             onPress={handleBack}
             style={({ pressed }) => [
-              styles.backButton,
+              styles.toolbarButton,
               { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
               pressed ? styles.pressed : null,
             ]}
@@ -80,6 +85,20 @@ export function Screen({
         <Text numberOfLines={1} style={[styles.title, { color: theme.colors.text }, theme.typography.section]}>
           {title}
         </Text>
+        {addAction ? (
+          <Pressable
+            accessibilityLabel={addAction.accessibilityLabel}
+            accessibilityRole="button"
+            onPress={addAction.onPress}
+            style={({ pressed }) => [
+              styles.toolbarButton,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+              pressed ? styles.pressed : null,
+            ]}
+          >
+            <Plus color={theme.colors.text} size={22} strokeWidth={2.4} />
+          </Pressable>
+        ) : null}
         <AvatarButton
           avatarId={avatarId}
           onPress={() => {
@@ -153,7 +172,7 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
   },
-  backButton: {
+  toolbarButton: {
     width: 40,
     height: 40,
     borderRadius: radius.pill,

@@ -5,7 +5,7 @@ import { View } from "react-native";
 
 import { listSuppliesAsync } from "@/features/supplies/services/supply.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
+import { Badge, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Supply } from "@/shared/types";
 import { formatMoney } from "@/shared/utils/money";
 
@@ -62,9 +62,12 @@ export function SuppliesScreen() {
   );
 
   return (
-    <Screen title="Insumos" backHref="/(tabs)/settings">
+    <Screen
+      addAction={{ accessibilityLabel: "Nuevo insumo", onPress: () => router.push("/supplies/new") }}
+      title="Insumos"
+      backHref="/(tabs)/settings"
+    >
       <View style={{ gap: 12 }}>
-        <Button label="Nuevo insumo" onPress={() => router.push("/supplies/new")} />
         <SegmentedControl
           accessibilityLabel="Filtro por estado del insumo"
           onValueChange={(selectedFilter) => setActivityFilter(selectedFilter as ActivityFilter)}

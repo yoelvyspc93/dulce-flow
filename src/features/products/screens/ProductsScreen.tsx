@@ -5,7 +5,7 @@ import { View } from "react-native";
 
 import { listProductsAsync } from "@/features/products/services/product.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
+import { Badge, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Product } from "@/shared/types";
 import { formatMoney } from "@/shared/utils/money";
 
@@ -62,9 +62,12 @@ export function ProductsScreen() {
   );
 
   return (
-    <Screen title="Productos" backHref="/(tabs)/settings">
+    <Screen
+      addAction={{ accessibilityLabel: "Nuevo producto", onPress: () => router.push("/products/new") }}
+      title="Productos"
+      backHref="/(tabs)/settings"
+    >
       <View style={{ gap: 12 }}>
-        <Button label="Nuevo producto" onPress={() => router.push("/products/new")} />
         <SegmentedControl
           accessibilityLabel="Filtro por estado del producto"
           onValueChange={(selectedFilter) => setActivityFilter(selectedFilter as ActivityFilter)}
