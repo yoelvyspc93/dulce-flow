@@ -107,6 +107,28 @@ describe("order financial rules", () => {
     expect(orders.map((order) => order.id)).toEqual(["order_1"]);
   });
 
+  it("lists orders with pagination while keeping unpaginated calls compatible", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+    const repository = new OrderRepository(mock.client);
+
+    await repository.createAsync({ ...baseOrder, id: "order_a", orderNumber: "ORD-A", createdAt: "2026-04-29T10:00:00.000Z" }, []);
+    await repository.createAsync({ ...baseOrder, id: "order_c", orderNumber: "ORD-C", createdAt: "2026-04-28T10:00:00.000Z" }, []);
+    await repository.createAsync({ ...baseOrder, id: "order_b", orderNumber: "ORD-B", createdAt: "2026-04-28T10:00:00.000Z" }, []);
+
+    const firstPage = await listOrdersAsync({ status: "all", limit: 2 });
+    const secondPage = await listOrdersAsync({
+      status: "all",
+      cursor: { createdAt: firstPage[1].createdAt, id: firstPage[1].id },
+      limit: 2,
+    });
+    const allOrders = await listOrdersAsync({ status: "all" });
+
+    expect(firstPage.map((order) => order.id)).toEqual(["order_a", "order_c"]);
+    expect(secondPage.map((order) => order.id)).toEqual(["order_b"]);
+    expect(allOrders.map((order) => order.id)).toEqual(["order_a", "order_c", "order_b"]);
+  });
+
   it("returns order details with items and null for missing orders", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);

@@ -60,4 +60,26 @@ describe("ExpenseRepository", () => {
     await repository.deleteAsync("expense_1");
     await expect(repository.getByIdAsync("expense_1")).resolves.toBeNull();
   });
+
+  it("paginates filtered expenses by created date and id cursor", async () => {
+    const repository = new ExpenseRepository(createMockDatabaseClient().client);
+
+    await repository.createAsync({ ...baseExpense, id: "expense_a", createdAt: "2026-04-29T10:00:00.000Z" });
+    await repository.createAsync({ ...baseExpense, id: "expense_c", createdAt: "2026-04-28T10:00:00.000Z" });
+    await repository.createAsync({ ...baseExpense, id: "expense_b", createdAt: "2026-04-28T10:00:00.000Z" });
+    await repository.createAsync({ ...baseExpense, id: "expense_old", createdAt: "2026-04-01T10:00:00.000Z" });
+
+    const firstPage = await repository.getFilteredAsync({
+      startDate: "2026-04-27T00:00:00.000Z",
+      limit: 2,
+    });
+    expect(firstPage.map((expense) => expense.id)).toEqual(["expense_a", "expense_c"]);
+
+    const secondPage = await repository.getFilteredAsync({
+      startDate: "2026-04-27T00:00:00.000Z",
+      cursor: { createdAt: firstPage[1].createdAt, id: firstPage[1].id },
+      limit: 2,
+    });
+    expect(secondPage.map((expense) => expense.id)).toEqual(["expense_b"]);
+  });
 });

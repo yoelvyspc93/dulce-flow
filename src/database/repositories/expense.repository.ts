@@ -15,6 +15,11 @@ type ExpenseRow = {
   updated_at: string;
 };
 
+export type ExpenseListCursor = {
+  createdAt: string;
+  id: string;
+};
+
 function mapExpenseRow(row: ExpenseRow): Expense {
   return {
     id: row.id,
@@ -41,18 +46,30 @@ export class ExpenseRepository {
 
   async getFilteredAsync(filters?: {
     startDate?: string | null;
+    cursor?: ExpenseListCursor | null;
+    limit?: number;
   }): Promise<Expense[]> {
     const clauses: string[] = [];
-    const params: string[] = [];
+    const params: (string | number)[] = [];
 
     if (filters?.startDate) {
       clauses.push("created_at >= ?");
       params.push(filters.startDate);
     }
 
+    if (filters?.cursor) {
+      clauses.push("(created_at < ? OR (created_at = ? AND id < ?))");
+      params.push(filters.cursor.createdAt, filters.cursor.createdAt, filters.cursor.id);
+    }
+
     const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+    const limit = filters?.limit ? " LIMIT ?" : "";
+    if (filters?.limit) {
+      params.push(filters.limit);
+    }
+
     const rows = await this.client.getAllAsync<ExpenseRow>(
-      `SELECT * FROM expenses ${where} ORDER BY created_at DESC;`,
+      `SELECT * FROM expenses ${where} ORDER BY created_at DESC, id DESC${limit};`,
       params
     );
     return rows.map(mapExpenseRow);

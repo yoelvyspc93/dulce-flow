@@ -106,6 +106,10 @@ function compareDesc(left: string, right: string): number {
   return right.localeCompare(left);
 }
 
+function compareByCreatedAtAndIdDesc<T extends { created_at: string; id: string }>(left: T, right: T): number {
+  return compareDesc(left.created_at, right.created_at) || compareDesc(left.id, right.id);
+}
+
 function matchesSqlLike(value: string, pattern: string): boolean {
   if (pattern.endsWith("%")) {
     return value.startsWith(pattern.slice(0, -1));
@@ -147,12 +151,33 @@ function matchesOrderFilter(order: OrderRow, sql: string, values: SqlParams): bo
     }
   }
 
+  if (sql.includes("(created_at < ? OR (created_at = ? AND id < ?))")) {
+    const cursorCreatedAt = asString(values[index]);
+    const cursorId = asString(values[index + 2]);
+    index += 3;
+    if (!(order.created_at < cursorCreatedAt || (order.created_at === cursorCreatedAt && order.id < cursorId))) {
+      return false;
+    }
+  }
+
   return true;
 }
 
 function matchesExpenseFilter(expense: ExpenseRow, sql: string, values: SqlParams): boolean {
+  let index = 0;
+
   if (sql.includes("created_at >= ?")) {
-    if (expense.created_at < asString(values[0])) {
+    if (expense.created_at < asString(values[index])) {
+      return false;
+    }
+    index += 1;
+  }
+
+  if (sql.includes("(created_at < ? OR (created_at = ? AND id < ?))")) {
+    const cursorCreatedAt = asString(values[index]);
+    const cursorId = asString(values[index + 2]);
+    index += 3;
+    if (!(expense.created_at < cursorCreatedAt || (expense.created_at === cursorCreatedAt && expense.id < cursorId))) {
       return false;
     }
   }
@@ -612,7 +637,7 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("SELECT * FROM expenses ORDER BY created_at DESC")) {
-        return Array.from(expenses.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+        return Array.from(expenses.values()).sort(compareByCreatedAtAndIdDesc) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM expenses ORDER BY created_at ASC")) {
@@ -620,13 +645,15 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("SELECT * FROM expenses")) {
-        return Array.from(expenses.values())
+        const limit = sql.includes(" LIMIT ?") ? Number(values[values.length - 1] ?? 0) : 0;
+        const filtered = Array.from(expenses.values())
           .filter((expense) => matchesExpenseFilter(expense, sql, values))
-          .sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+          .sort(compareByCreatedAtAndIdDesc);
+        return (limit > 0 ? filtered.slice(0, limit) : filtered) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM orders ORDER BY created_at DESC")) {
-        return Array.from(orders.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+        return Array.from(orders.values()).sort(compareByCreatedAtAndIdDesc) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM orders ORDER BY created_at ASC")) {
@@ -645,7 +672,7 @@ export function createMockDatabaseClient() {
         const limit = sql.includes(" LIMIT ?") ? Number(values[values.length - 1] ?? 0) : 0;
         const filtered = Array.from(orders.values())
           .filter((order) => matchesOrderFilter(order, sql, values))
-          .sort((left, right) => compareDesc(left.created_at, right.created_at));
+          .sort(compareByCreatedAtAndIdDesc);
         return (limit > 0 ? filtered.slice(0, limit) : filtered) as T[];
       }
 

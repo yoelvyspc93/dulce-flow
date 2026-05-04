@@ -66,7 +66,7 @@ export function Screen({
   }
 
   const content = (
-    <View style={styles.inner}>
+    <View style={[styles.inner, !scrollable ? styles.innerFill : null]}>
       <View style={styles.toolbar}>
         {!isTabScreen ? (
           <Pressable
@@ -109,7 +109,7 @@ export function Screen({
           size="sm"
         />
       </View>
-      <View style={styles.body}>{children}</View>
+      <View style={[styles.body, !scrollable ? styles.bodyFill : null]}>{children}</View>
     </View>
   );
 
@@ -162,6 +162,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
     gap: spacing.xl,
   },
+  innerFill: {
+    paddingBottom: 0,
+  },
   toolbar: {
     minHeight: 56,
     flexDirection: "row",
@@ -185,5 +188,8 @@ const styles = StyleSheet.create({
   },
   body: {
     gap: spacing.lg,
+  },
+  bodyFill: {
+    flex: 1,
   },
 });

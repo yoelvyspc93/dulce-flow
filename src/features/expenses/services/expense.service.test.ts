@@ -109,6 +109,28 @@ describe("expense financial rules", () => {
     expect(expenses.map((expense) => expense.id)).toEqual(["expense_1"]);
   });
 
+  it("lists expenses with pagination while keeping unpaginated calls compatible", async () => {
+    const mock = createMockDatabaseClient();
+    mockedGetDatabaseAsync.mockResolvedValue(mock.client);
+    const repository = new ExpenseRepository(mock.client);
+
+    await repository.createAsync({ ...baseExpense, id: "expense_a", createdAt: "2026-04-29T10:00:00.000Z" });
+    await repository.createAsync({ ...baseExpense, id: "expense_c", createdAt: "2026-04-28T10:00:00.000Z" });
+    await repository.createAsync({ ...baseExpense, id: "expense_b", createdAt: "2026-04-28T10:00:00.000Z" });
+
+    const firstPage = await listExpensesAsync({ period: "all", limit: 2 });
+    const secondPage = await listExpensesAsync({
+      period: "all",
+      cursor: { createdAt: firstPage[1].createdAt, id: firstPage[1].id },
+      limit: 2,
+    });
+    const allExpenses = await listExpensesAsync({ period: "all" });
+
+    expect(firstPage.map((expense) => expense.id)).toEqual(["expense_a", "expense_c"]);
+    expect(secondPage.map((expense) => expense.id)).toEqual(["expense_b"]);
+    expect(allExpenses.map((expense) => expense.id)).toEqual(["expense_a", "expense_c", "expense_b"]);
+  });
+
   it("creates an expense and matching movement in one operation", async () => {
     const mock = createMockDatabaseClient();
     mockedGetDatabaseAsync.mockResolvedValue(mock.client);

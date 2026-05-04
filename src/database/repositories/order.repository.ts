@@ -28,6 +28,11 @@ type OrderItemRow = {
   created_at: string;
 };
 
+export type OrderListCursor = {
+  createdAt: string;
+  id: string;
+};
+
 function mapOrderRow(row: OrderRow): Order {
   return {
     id: row.id,
@@ -71,6 +76,7 @@ export class OrderRepository {
     status?: OrderStatus | "all";
     startDate?: string | null;
     customerQuery?: string;
+    cursor?: OrderListCursor | null;
     limit?: number;
   }): Promise<Order[]> {
     const clauses: string[] = [];
@@ -93,6 +99,11 @@ export class OrderRepository {
       params.push(like, like);
     }
 
+    if (filters?.cursor) {
+      clauses.push("(created_at < ? OR (created_at = ? AND id < ?))");
+      params.push(filters.cursor.createdAt, filters.cursor.createdAt, filters.cursor.id);
+    }
+
     const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
     const limit = filters?.limit ? " LIMIT ?" : "";
     if (filters?.limit) {
@@ -100,7 +111,7 @@ export class OrderRepository {
     }
 
     const rows = await this.client.getAllAsync<OrderRow>(
-      `SELECT * FROM orders ${where} ORDER BY created_at DESC${limit};`,
+      `SELECT * FROM orders ${where} ORDER BY created_at DESC, id DESC${limit};`,
       params
     );
     return rows.map(mapOrderRow);

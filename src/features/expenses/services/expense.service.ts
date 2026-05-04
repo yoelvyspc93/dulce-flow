@@ -1,5 +1,6 @@
 import { getDatabaseAsync } from "@/database/connection";
 import { ExpenseRepository, MovementRepository, SupplyRepository } from "@/database/repositories";
+import type { ExpenseListCursor } from "@/database/repositories/expense.repository";
 import { createId } from "@/shared/utils/id";
 import type { Expense, Movement } from "@/shared/types";
 
@@ -53,6 +54,8 @@ export function calculateExpenseTotal(values: Pick<ExpenseFormValues, "quantity"
 
 export async function listExpensesAsync(filters?: {
   period?: ExpensePeriodFilter;
+  cursor?: ExpenseListCursor | null;
+  limit?: number;
 }): Promise<Expense[]> {
   const database = await getDatabaseAsync();
   const period = filters?.period ?? "all";
@@ -60,6 +63,8 @@ export async function listExpensesAsync(filters?: {
 
   return new ExpenseRepository(database).getFilteredAsync({
     startDate: start?.toISOString() ?? null,
+    cursor: filters?.cursor,
+    limit: filters?.limit,
   });
 }
 

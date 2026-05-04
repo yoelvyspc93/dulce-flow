@@ -1,5 +1,6 @@
 import { getDatabaseAsync } from "@/database/connection";
 import { MovementRepository, OrderRepository, ProductRepository } from "@/database/repositories";
+import type { OrderListCursor } from "@/database/repositories/order.repository";
 import { createId } from "@/shared/utils/id";
 import type { Movement, Order, OrderItem, OrderStatus } from "@/shared/types";
 
@@ -102,6 +103,8 @@ export async function listOrdersAsync(filters?: {
   status?: OrderStatusFilter;
   period?: OrderPeriodFilter;
   customerQuery?: string;
+  cursor?: OrderListCursor | null;
+  limit?: number;
 }): Promise<Order[]> {
   const database = await getDatabaseAsync();
   const status = filters?.status ?? "all";
@@ -112,6 +115,8 @@ export async function listOrdersAsync(filters?: {
     status,
     startDate: start?.toISOString() ?? null,
     customerQuery: filters?.customerQuery,
+    cursor: filters?.cursor,
+    limit: filters?.limit,
   });
 }
 
