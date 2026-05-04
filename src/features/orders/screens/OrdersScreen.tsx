@@ -9,6 +9,7 @@ import {
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Order } from "@/shared/types";
+import { formatDisplayDate } from "@/shared/utils/date";
 import { formatOrderStatus } from "@/shared/utils/labels";
 import { formatMoney } from "@/shared/utils/money";
 
@@ -18,7 +19,7 @@ function formatOrderSubtitle(order: Order): string {
   const note = order.note?.trim();
   const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
   const customerName = order.customerName ?? "Cliente no registrado";
-  const baseSubtitle = `${customerName} - ${new Date(order.dueDate).toLocaleDateString()} - ${formatMoney(order.total)}`;
+  const baseSubtitle = `${customerName} - ${formatDisplayDate(order.dueDate)} - ${formatMoney(order.total)}`;
 
   return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
 }

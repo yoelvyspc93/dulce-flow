@@ -10,6 +10,7 @@ import {
 } from "@/features/home/services/dashboard.service";
 import { SectionHeader } from "@/shared/components";
 import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
+import { formatDisplayDate } from "@/shared/utils/date";
 import { formatMoney } from "@/shared/utils/money";
 import { useAppStore } from "@/store/app.store";
 import { colors, radius, spacing, typography } from "@/theme";
@@ -152,7 +153,7 @@ export function HomeScreen() {
             key={order.id}
             onPress={() => router.push(`/orders/${order.id}`)}
             title={order.customerName ?? order.orderNumber}
-            subtitle={`${new Date(order.dueDate).toLocaleDateString()} - ${formatMoney(order.total)}`}
+            subtitle={`${formatDisplayDate(order.dueDate)} - ${formatMoney(order.total)}`}
             trailing={<Badge label="Pendiente" tone="warning" />}
           />
         ))}
@@ -175,7 +176,7 @@ export function HomeScreen() {
           <ListItem
             key={movement.id}
             title={movement.description}
-            subtitle={`${new Date(movement.movementDate).toLocaleDateString()}`}
+            subtitle={formatDisplayDate(movement.movementDate)}
             trailing={
               <Badge
                 label={formatMoney(movement.amount)}

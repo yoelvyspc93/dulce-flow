@@ -5,7 +5,7 @@ export const colors = {
   surfaceSoft: "#1A3154",
   accent: "#216EFA",
   accentStrong: "#1866F8",
-  success: "#222423",
+  success: "#7DBE6A",
   warning: "#FFD27A",
   danger: "#FF8C8C",
   text: "#F6FBFF",

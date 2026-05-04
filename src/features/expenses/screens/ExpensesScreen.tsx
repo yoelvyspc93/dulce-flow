@@ -2,25 +2,17 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
+import { ExpenseCard } from "@/features/expenses/components/ExpenseCard";
 import {
   listExpensesAsync,
   type ExpensePeriodFilter,
 } from "@/features/expenses/services/expense.service";
 import { SectionHeader } from "@/shared/components";
-import { Badge, Button, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
 import type { Expense } from "@/shared/types";
+import { Button, EmptyState, Screen, SegmentedControl } from "@/shared/ui";
 import { formatPeriod } from "@/shared/utils/labels";
-import { formatMoney } from "@/shared/utils/money";
 
 const PERIODS: ExpensePeriodFilter[] = ["today", "week", "month", "all"];
-
-function formatExpenseSubtitle(expense: Expense): string {
-  const note = expense.note?.trim();
-  const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
-  const baseSubtitle = `${formatMoney(expense.total)} - ${expense.quantity} ${expense.unit}`;
-
-  return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
-}
 
 export function ExpensesScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -80,12 +72,10 @@ export function ExpensesScreen() {
 
       <View style={{ gap: 12 }}>
         {expenses.map((expense) => (
-          <ListItem
+          <ExpenseCard
             key={expense.id}
+            expense={expense}
             onPress={() => router.push(`/expenses/${expense.id}`)}
-            title={expense.supplyName}
-            subtitle={formatExpenseSubtitle(expense)}
-            trailing={<Badge label={expense.status === "active" ? "Activo" : "Anulado"} tone={expense.status === "active" ? "success" : "danger"} />}
           />
         ))}
       </View>
