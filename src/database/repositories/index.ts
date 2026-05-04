@@ -1,3 +1,4 @@
+export { BackupRepository } from "./backup.repository";
 export { ExpenseRepository } from "./expense.repository";
 export { MovementRepository, type DashboardSummary } from "./movement.repository";
 export { OrderRepository } from "./order.repository";

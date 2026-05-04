@@ -200,6 +200,12 @@ export function createMockDatabaseClient() {
         return result(1);
       }
 
+      if (sql.startsWith("DELETE FROM settings")) {
+        const changes = settings.size;
+        settings.clear();
+        return result(changes);
+      }
+
       if (sql.startsWith("INSERT INTO products")) {
         products.set(asString(values[0]), {
           id: asString(values[0]),
@@ -573,6 +579,10 @@ export function createMockDatabaseClient() {
           .sort((left, right) => left.key.localeCompare(right.key)) as T[];
       }
 
+      if (sql.startsWith("SELECT * FROM settings ORDER BY key ASC")) {
+        return Array.from(settings.values()).sort((left, right) => left.key.localeCompare(right.key)) as T[];
+      }
+
       if (sql.startsWith("SELECT * FROM products WHERE is_active")) {
         return Array.from(products.values())
           .filter((product) => product.is_active === 1)
@@ -581,6 +591,10 @@ export function createMockDatabaseClient() {
 
       if (sql.startsWith("SELECT * FROM products ORDER BY created_at DESC")) {
         return Array.from(products.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM products ORDER BY created_at ASC")) {
+        return Array.from(products.values()).sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM supplies WHERE is_active")) {
@@ -593,8 +607,16 @@ export function createMockDatabaseClient() {
         return Array.from(supplies.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
       }
 
+      if (sql.startsWith("SELECT * FROM supplies ORDER BY created_at ASC")) {
+        return Array.from(supplies.values()).sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
+      }
+
       if (sql.startsWith("SELECT * FROM expenses ORDER BY created_at DESC")) {
         return Array.from(expenses.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM expenses ORDER BY created_at ASC")) {
+        return Array.from(expenses.values()).sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM expenses")) {
@@ -605,6 +627,10 @@ export function createMockDatabaseClient() {
 
       if (sql.startsWith("SELECT * FROM orders ORDER BY created_at DESC")) {
         return Array.from(orders.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM orders ORDER BY created_at ASC")) {
+        return Array.from(orders.values()).sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
       }
 
       if (sql.startsWith("SELECT * FROM orders WHERE status = 'pending'")) {
@@ -634,8 +660,16 @@ export function createMockDatabaseClient() {
         return Array.from(orderItems.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
       }
 
+      if (sql.startsWith("SELECT * FROM order_items ORDER BY created_at ASC")) {
+        return Array.from(orderItems.values()).sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
+      }
+
       if (sql.startsWith("SELECT * FROM movements ORDER BY created_at DESC")) {
         return Array.from(movements.values()).sort((left, right) => compareDesc(left.created_at, right.created_at)) as T[];
+      }
+
+      if (sql.startsWith("SELECT * FROM movements ORDER BY created_at ASC")) {
+        return Array.from(movements.values()).sort((left, right) => left.created_at.localeCompare(right.created_at)) as T[];
       }
 
       if (sql.includes("FROM movements") && sql.includes("GROUP BY direction, type, source_type")) {
