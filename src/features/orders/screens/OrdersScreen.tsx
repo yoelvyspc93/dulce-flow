@@ -7,23 +7,13 @@ import {
   listOrdersAsync,
   type OrderStatusFilter,
 } from "@/features/orders/services/order.service";
+import { OrderCard } from "@/features/orders/components/OrderCard";
 import { SectionHeader } from "@/shared/components";
-import { Badge, EmptyState, ListItem, Screen, SegmentedControl } from "@/shared/ui";
+import { EmptyState, Screen, SegmentedControl } from "@/shared/ui";
 import type { Order } from "@/shared/types";
-import { formatDisplayDate } from "@/shared/utils/date";
 import { formatOrderStatus } from "@/shared/utils/labels";
-import { formatMoney } from "@/shared/utils/money";
 
 const STATUSES: OrderStatusFilter[] = ["all", "pending", "delivered", "cancelled"];
-
-function formatOrderSubtitle(order: Order): string {
-  const note = order.note?.trim();
-  const shortNote = note && note.length > 48 ? `${note.slice(0, 48)}...` : note;
-  const customerName = order.customerName ?? "Cliente no registrado";
-  const baseSubtitle = `${customerName} - ${formatDisplayDate(order.dueDate)} - ${formatMoney(order.total)}`;
-
-  return shortNote ? `${baseSubtitle} - Nota: ${shortNote}` : baseSubtitle;
-}
 
 export function OrdersScreen() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -83,17 +73,10 @@ export function OrdersScreen() {
 
       <View style={{ gap: 12 }}>
         {orders.map((order) => (
-          <ListItem
+          <OrderCard
             key={order.id}
+            order={order}
             onPress={() => router.push(`/orders/${order.id}`)}
-            title={order.orderNumber}
-            subtitle={formatOrderSubtitle(order)}
-            trailing={
-              <Badge
-                label={formatOrderStatus(order.status)}
-                tone={order.status === "delivered" ? "success" : order.status === "cancelled" ? "danger" : "warning"}
-              />
-            }
           />
         ))}
       </View>
