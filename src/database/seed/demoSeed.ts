@@ -245,13 +245,12 @@ function buildExpenses(now: Date): DemoExpense[] {
 }
 
 async function cleanupDemoDataAsync(client: DatabaseClient): Promise<void> {
-  const pattern = `${DEMO_PREFIX}%`;
-  await client.runAsync("DELETE FROM movements WHERE id LIKE ?;", [pattern]);
-  await client.runAsync("DELETE FROM expenses WHERE id LIKE ?;", [pattern]);
-  await client.runAsync("DELETE FROM order_items WHERE id LIKE ?;", [pattern]);
-  await client.runAsync("DELETE FROM orders WHERE id LIKE ?;", [pattern]);
-  await client.runAsync("DELETE FROM products WHERE id LIKE ?;", [pattern]);
-  await client.runAsync("DELETE FROM supplies WHERE id LIKE ?;", [pattern]);
+  await client.runAsync("DELETE FROM movements;");
+  await client.runAsync("DELETE FROM order_items;");
+  await client.runAsync("DELETE FROM expenses;");
+  await client.runAsync("DELETE FROM orders;");
+  await client.runAsync("DELETE FROM products;");
+  await client.runAsync("DELETE FROM supplies;");
 }
 
 async function insertProductsAsync(client: DatabaseClient, now: string): Promise<void> {

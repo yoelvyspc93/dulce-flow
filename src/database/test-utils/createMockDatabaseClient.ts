@@ -237,6 +237,12 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("DELETE FROM products")) {
+        if (values.length === 0) {
+          const changes = products.size;
+          products.clear();
+          return result(changes);
+        }
+
         return result(products.delete(asString(values[0])) ? 1 : 0);
       }
 
@@ -275,6 +281,12 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("DELETE FROM supplies")) {
+        if (values.length === 0) {
+          const changes = supplies.size;
+          supplies.clear();
+          return result(changes);
+        }
+
         return result(supplies.delete(asString(values[0])) ? 1 : 0);
       }
 
@@ -331,6 +343,12 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("DELETE FROM expenses")) {
+        if (values.length === 0) {
+          const changes = expenses.size;
+          expenses.clear();
+          return result(changes);
+        }
+
         return result(expenses.delete(asString(values[0])) ? 1 : 0);
       }
 
@@ -410,6 +428,12 @@ export function createMockDatabaseClient() {
       }
 
       if (sql.startsWith("DELETE FROM order_items")) {
+        if (values.length === 0) {
+          const changes = orderItems.size;
+          orderItems.clear();
+          return result(changes);
+        }
+
         const orderId = asString(values[0]);
         const ids = Array.from(orderItems.values())
           .filter((item) => item.order_id === orderId)
@@ -442,8 +466,21 @@ export function createMockDatabaseClient() {
         return result(deleteMatching(movements, asString(values[0])));
       }
 
+      if (sql.startsWith("DELETE FROM movements")) {
+        movementSummaryRows = null;
+        const changes = movements.size;
+        movements.clear();
+        return result(changes);
+      }
+
       if (sql.startsWith("DELETE FROM orders") && sql.includes("LIKE")) {
         return result(deleteMatching(orders, asString(values[0])));
+      }
+
+      if (sql.startsWith("DELETE FROM orders")) {
+        const changes = orders.size;
+        orders.clear();
+        return result(changes);
       }
 
       if (sql.startsWith("UPDATE movements SET status")) {

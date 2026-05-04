@@ -18,6 +18,7 @@ type OrderRow = {
 };
 
 type OrderItemRow = {
+  id: string;
   order_id: string;
   subtotal: number;
 };
@@ -29,10 +30,17 @@ type ExpenseRow = {
 };
 
 type MovementRow = {
+  id: string;
   source_type: "order" | "expense" | "manual";
   source_id: string | null;
   amount: number;
   status: "active" | "voided" | "reversed";
+};
+
+type SettingRow = {
+  key: string;
+  value: string;
+  updated_at: string;
 };
 
 const now = new Date("2026-04-30T12:00:00.000Z");
@@ -67,31 +75,70 @@ describe("seedDemoDatabaseAsync", () => {
     expect(rows.movements).toHaveLength(154);
   });
 
-  it("removes only previous demo rows before replacing the dataset", async () => {
+  it("removes operational rows before replacing the dataset and preserves settings", async () => {
     const mock = createMockDatabaseClient();
+    const timestamp = now.toISOString();
 
     await mock.client.runAsync(
       `INSERT INTO products (
         id, name, price, description, image_uri, is_active, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-      ["product_user_1", "Producto real", 12, null, null, 1, now.toISOString(), now.toISOString()]
+      ["product_user_1", "Producto real", 12, null, null, 1, timestamp, timestamp]
     );
     await mock.client.runAsync(
       `INSERT INTO supplies (
         id, name, unit, default_price, is_active, created_at, updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      ["supply_user_1", "Insumo real", "kg", 2, 1, now.toISOString(), now.toISOString()]
+      ["supply_user_1", "Insumo real", "kg", 2, 1, timestamp, timestamp]
+    );
+    await mock.client.runAsync(
+      `INSERT INTO orders (
+        id, order_number, customer_name, customer_phone, subtotal, total, status,
+        due_date, note, delivered_at, cancelled_at, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      ["order_user_1", "ORD-USER-1", "Cliente real", "555", 12, 12, "delivered", timestamp, null, timestamp, null, timestamp, timestamp]
+    );
+    await mock.client.runAsync(
+      `INSERT INTO order_items (
+        id, order_id, product_id, product_name, quantity, unit_price, subtotal, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+      ["order_item_user_1", "order_user_1", "product_user_1", "Producto real", 1, 12, 12, timestamp]
+    );
+    await mock.client.runAsync(
+      `INSERT INTO expenses (
+        id, supply_id, supply_name, quantity, unit, unit_price, total, status, note, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      ["expense_user_1", "supply_user_1", "Insumo real", 1, "kg", 2, 2, "active", null, timestamp, timestamp]
+    );
+    await mock.client.runAsync(
+      `INSERT INTO movements (
+        id, type, direction, source_type, source_id, amount, description,
+        status, movement_date, created_at, updated_at, reversed_movement_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+      ["movement_user_1", "income", "in", "order", "order_user_1", 12, "Ingreso real", "active", timestamp, timestamp, timestamp, null]
+    );
+    await mock.client.runAsync(
+      "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?);",
+      ["business", "{\"name\":\"DulceFlow\"}", timestamp]
     );
 
     await seedDemoDatabaseAsync(mock.client, now);
-    await seedDemoDatabaseAsync(mock.client, now);
 
     const rows = await getSeedRows(mock.client);
+    const setting = await mock.client.getFirstAsync<SettingRow>("SELECT * FROM settings WHERE key = ?;", ["business"]);
 
-    expect(rows.products.some((product) => product.id === "product_user_1")).toBe(true);
-    expect(rows.supplies.some((supply) => supply.id === "supply_user_1")).toBe(true);
-    expect(rows.products.filter((product) => product.id.startsWith("demo_"))).toHaveLength(30);
-    expect(rows.supplies.filter((supply) => supply.id.startsWith("demo_"))).toHaveLength(35);
+    expect(rows.products.some((product) => product.id === "product_user_1")).toBe(false);
+    expect(rows.supplies.some((supply) => supply.id === "supply_user_1")).toBe(false);
+    expect(rows.orders.some((order) => order.id === "order_user_1")).toBe(false);
+    expect(rows.orderItems.some((item) => item.id === "order_item_user_1")).toBe(false);
+    expect(rows.expenses.some((expense) => expense.id === "expense_user_1")).toBe(false);
+    expect(rows.movements.some((movement) => movement.id === "movement_user_1")).toBe(false);
+    expect(setting).toEqual({ key: "business", value: "{\"name\":\"DulceFlow\"}", updated_at: timestamp });
+    expect(rows.products).toHaveLength(30);
+    expect(rows.supplies).toHaveLength(35);
+    expect(rows.orders).toHaveLength(80);
+    expect(rows.expenses).toHaveLength(90);
+    expect(rows.movements).toHaveLength(154);
   });
 
   it("keeps order totals and order movements consistent with status", async () => {
