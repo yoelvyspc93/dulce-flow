@@ -16,16 +16,16 @@ const lineHeight = 1.3;
 export const typography: Record<string, TypographyToken> = {
   hero: {
     fontFamily: fontFamily.bold,
-    fontSize: 34,
-    lineHeight: 34 * lineHeight,
+    fontSize: 32,
+    lineHeight: 32 * lineHeight,
     fontWeight: "700",
     letterSpacing: 0,
   },
   title: {
-    fontFamily: fontFamily.bold,
-    fontSize: 26,
-    lineHeight: 26 * lineHeight,
-    fontWeight: "700",
+    fontFamily: fontFamily.medium,
+    fontSize: 22,
+    lineHeight: 22 * lineHeight,
+    fontWeight: "500",
     letterSpacing: 0,
   },
   section: {

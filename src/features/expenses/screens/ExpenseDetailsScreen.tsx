@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { AlertTriangle, SearchX } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
@@ -134,8 +135,12 @@ export function ExpenseDetailsScreen() {
   if (loadErrorMessage) {
     return (
       <Screen title="Detalle de gasto" backHref="/expenses">
-        <EmptyState eyebrow="Gasto" title="No se pudo cargar" description={loadErrorMessage} />
-        <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
+        <EmptyState
+          action={{ label: "Volver a gastos", onPress: () => router.replace("/expenses") }}
+          icon={AlertTriangle}
+          title="No se pudo cargar"
+          description={loadErrorMessage}
+        />
       </Screen>
     );
   }
@@ -143,8 +148,12 @@ export function ExpenseDetailsScreen() {
   if (!expense) {
     return (
       <Screen title="Detalle de gasto" backHref="/expenses">
-        <EmptyState eyebrow="Gasto" title="Gasto no encontrado" description="Vuelve al listado y selecciona otro gasto." />
-        <Button label="Volver a gastos" onPress={() => router.replace("/expenses")} />
+        <EmptyState
+          action={{ label: "Volver a gastos", onPress: () => router.replace("/expenses") }}
+          icon={SearchX}
+          title="Gasto no encontrado"
+          description="Vuelve al listado y selecciona otro gasto."
+        />
       </Screen>
     );
   }

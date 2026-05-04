@@ -1,4 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
+import { Package } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
@@ -79,7 +80,8 @@ export function SuppliesScreen() {
 
       {filteredSupplies.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin insumos"
+          action={{ label: "Nuevo insumo", onPress: () => router.push("/supplies/new") }}
+          icon={Package}
           title={EMPTY_STATE_TITLES[activityFilter]}
           description="Crea insumos para registrar compras y gastos mas rapido."
         />

@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react-native";
+import { Activity, ArrowDownRight, ArrowUpRight, Clock } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { ImageBackground, StyleSheet, Text, View } from "react-native";
 
@@ -141,7 +141,8 @@ export function HomeScreen() {
       />
       {pendingOrders.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin pendientes"
+          action={{ label: "Nuevo pedido", onPress: () => router.push("/orders/new") }}
+          icon={Clock}
           title="No tienes pedidos pendientes"
           description="Cuando crees pedidos, apareceran aqui ordenados por fecha."
         />
@@ -165,7 +166,8 @@ export function HomeScreen() {
       />
       {latestMovements.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin datos"
+          action={{ label: "Registrar gasto", onPress: () => router.push("/expenses/new") }}
+          icon={Activity}
           title="Todavia no tienes movimientos"
           description="Cuando registres ventas o gastos, apareceran aqui con impacto financiero."
         />

@@ -1,4 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
+import { ShoppingBag } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
@@ -79,7 +80,8 @@ export function ProductsScreen() {
 
       {filteredProducts.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin productos"
+          action={{ label: "Nuevo producto", onPress: () => router.push("/products/new") }}
+          icon={ShoppingBag}
           title={EMPTY_STATE_TITLES[activityFilter]}
           description="Crea productos para venderlos despues dentro de tus pedidos."
         />

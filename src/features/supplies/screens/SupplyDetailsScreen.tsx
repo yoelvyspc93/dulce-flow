@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { AlertTriangle, SearchX } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { ZodError } from "zod";
@@ -145,8 +146,12 @@ export function SupplyDetailsScreen() {
   if (loadErrorMessage) {
     return (
       <Screen title="Detalle de insumo" backHref="/supplies">
-        <EmptyState eyebrow="Insumo" title="No se pudo cargar" description={loadErrorMessage} />
-        <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
+        <EmptyState
+          action={{ label: "Volver al catalogo", onPress: () => router.replace("/supplies") }}
+          icon={AlertTriangle}
+          title="No se pudo cargar"
+          description={loadErrorMessage}
+        />
       </Screen>
     );
   }
@@ -154,8 +159,12 @@ export function SupplyDetailsScreen() {
   if (!supply) {
     return (
       <Screen title="Detalle de insumo" backHref="/supplies">
-        <EmptyState eyebrow="Insumo" title="Insumo no encontrado" description="Vuelve al catalogo y selecciona otro insumo." />
-        <Button label="Volver al catalogo" onPress={() => router.replace("/supplies")} />
+        <EmptyState
+          action={{ label: "Volver al catalogo", onPress: () => router.replace("/supplies") }}
+          icon={SearchX}
+          title="Insumo no encontrado"
+          description="Vuelve al catalogo y selecciona otro insumo."
+        />
       </Screen>
     );
   }

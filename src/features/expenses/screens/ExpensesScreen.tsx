@@ -1,4 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
+import { Receipt } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
@@ -64,7 +65,8 @@ export function ExpensesScreen() {
       />
       {expenses.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin gastos"
+          action={{ label: "Registrar gasto", onPress: () => router.push("/expenses/new") }}
+          icon={Receipt}
           title="Todavia no tienes gastos registrados"
           description="Agrega tu primer gasto para calcular mejor tus ganancias."
         />

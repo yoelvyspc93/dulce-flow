@@ -1,4 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
+import { ClipboardList } from "lucide-react-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
@@ -74,7 +75,8 @@ export function OrdersScreen() {
       />
       {orders.length === 0 && !isLoading ? (
         <EmptyState
-          eyebrow="Sin pedidos"
+          action={{ label: "Crear pedido", onPress: () => router.push("/orders/new") }}
+          icon={ClipboardList}
           title="Todavia no tienes pedidos"
           description="Crea tu primer pedido para empezar a registrar ventas y entregas."
         />
